@@ -12,7 +12,7 @@
 #include "PluginEditor.h"
 
 //==============================================================================
-JsamplerAudioProcessor::JsamplerAudioProcessor()
+SamplerAudioProcessor::SamplerAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
      : AudioProcessor (BusesProperties()
                      #if ! JucePlugin_IsMidiEffect
@@ -24,23 +24,19 @@ JsamplerAudioProcessor::JsamplerAudioProcessor()
                        )
 #endif
 {
-    formatManager = std::shared_ptr<AudioFormatManager> (new AudioFormatManager());
-    (*formatManager).registerBasicFormats();
-    transportSource = std::shared_ptr<AudioTransportSource> (new AudioTransportSource());
-    
 }
 
-JsamplerAudioProcessor::~JsamplerAudioProcessor()
+SamplerAudioProcessor::~SamplerAudioProcessor()
 {
 }
 
 //==============================================================================
-const String JsamplerAudioProcessor::getName() const
+const String SamplerAudioProcessor::getName() const
 {
     return JucePlugin_Name;
 }
 
-bool JsamplerAudioProcessor::acceptsMidi() const
+bool SamplerAudioProcessor::acceptsMidi() const
 {
    #if JucePlugin_WantsMidiInput
     return true;
@@ -49,7 +45,7 @@ bool JsamplerAudioProcessor::acceptsMidi() const
    #endif
 }
 
-bool JsamplerAudioProcessor::producesMidi() const
+bool SamplerAudioProcessor::producesMidi() const
 {
    #if JucePlugin_ProducesMidiOutput
     return true;
@@ -58,7 +54,7 @@ bool JsamplerAudioProcessor::producesMidi() const
    #endif
 }
 
-bool JsamplerAudioProcessor::isMidiEffect() const
+bool SamplerAudioProcessor::isMidiEffect() const
 {
    #if JucePlugin_IsMidiEffect
     return true;
@@ -67,50 +63,50 @@ bool JsamplerAudioProcessor::isMidiEffect() const
    #endif
 }
 
-double JsamplerAudioProcessor::getTailLengthSeconds() const
+double SamplerAudioProcessor::getTailLengthSeconds() const
 {
     return 0.0;
 }
 
-int JsamplerAudioProcessor::getNumPrograms()
+int SamplerAudioProcessor::getNumPrograms()
 {
     return 1;   // NB: some hosts don't cope very well if you tell them there are 0 programs,
                 // so this should be at least 1, even if you're not really implementing programs.
 }
 
-int JsamplerAudioProcessor::getCurrentProgram()
+int SamplerAudioProcessor::getCurrentProgram()
 {
     return 0;
 }
 
-void JsamplerAudioProcessor::setCurrentProgram (int index)
+void SamplerAudioProcessor::setCurrentProgram (int index)
 {
 }
 
-const String JsamplerAudioProcessor::getProgramName (int index)
+const String SamplerAudioProcessor::getProgramName (int index)
 {
-    return "fuckface";
+    return {};
 }
 
-void JsamplerAudioProcessor::changeProgramName (int index, const String& newName)
+void SamplerAudioProcessor::changeProgramName (int index, const String& newName)
 {
 }
 
 //==============================================================================
-void JsamplerAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+void SamplerAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
 }
 
-void JsamplerAudioProcessor::releaseResources()
+void SamplerAudioProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
-bool JsamplerAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
+bool SamplerAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 {
   #if JucePlugin_IsMidiEffect
     ignoreUnused (layouts);
@@ -133,7 +129,7 @@ bool JsamplerAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts)
 }
 #endif
 
-void JsamplerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& midiMessages)
+void SamplerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& midiMessages)
 {
     ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
@@ -163,54 +159,33 @@ void JsamplerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffe
 }
 
 //==============================================================================
-bool JsamplerAudioProcessor::hasEditor() const
+bool SamplerAudioProcessor::hasEditor() const
 {
     return true; // (change this to false if you choose to not supply an editor)
 }
 
-AudioProcessorEditor* JsamplerAudioProcessor::createEditor()
+AudioProcessorEditor* SamplerAudioProcessor::createEditor()
 {
-    return new JsamplerAudioProcessorEditor (*this);
+    return new SamplerAudioProcessorEditor (*this);
 }
 
 //==============================================================================
-void JsamplerAudioProcessor::getStateInformation (MemoryBlock& destData)
+void SamplerAudioProcessor::getStateInformation (MemoryBlock& destData)
 {
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
 }
 
-void JsamplerAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
+void SamplerAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
-}
-
-bool JsamplerAudioProcessor::loadFile(AudioThumbnail &thumbnail)
-{
-    FileChooser chooser ("Select a Wave file to play...", {}, "*.wav");
-
-    if (chooser.browseForFileToOpen())
-    {
-        auto file = chooser.getResult();
-        formatReader = std::shared_ptr<AudioFormatReader> ((*formatManager).createReaderFor (file));
-
-        if (formatReader != nullptr)
-        {
-            std::unique_ptr<AudioFormatReaderSource> newSource (new AudioFormatReaderSource (&(*formatReader), true));
-            (*transportSource).setSource (newSource.get(), 0, nullptr, formatReader->sampleRate);
-            readerSource.reset (newSource.release());
-            //thumbnail.setSource (new FileInputSource (file));
-            return true;
-        }
-    }
-    return false;
 }
 
 //==============================================================================
 // This creates new instances of the plugin..
 AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
-    return new JsamplerAudioProcessor();
+    return new SamplerAudioProcessor();
 }

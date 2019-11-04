@@ -15,12 +15,12 @@
 //==============================================================================
 /**
 */
-class JsamplerAudioProcessor  : public AudioProcessor
+class SamplerAudioProcessor  : public AudioProcessor
 {
 public:
     //==============================================================================
-    JsamplerAudioProcessor();
-    ~JsamplerAudioProcessor();
+    SamplerAudioProcessor();
+    ~SamplerAudioProcessor();
 
     //==============================================================================
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
@@ -55,20 +55,7 @@ public:
     void getStateInformation (MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
-    //==============================================================================
-    bool loadFile(AudioThumbnail &thumbnail);
-
-    float volume;
-
-    std::shared_ptr<AudioFormatManager> formatManager;
-    std::shared_ptr<AudioFormatReaderSource> readerSource;
-    std::shared_ptr<AudioFormatReader> formatReader;
-    std::shared_ptr<AudioTransportSource> transportSource;
-
 private:
     //==============================================================================
-
-
-
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JsamplerAudioProcessor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SamplerAudioProcessor)
 };

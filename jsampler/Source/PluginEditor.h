@@ -12,7 +12,7 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "PluginProcessor.h"
-
+#include "AudioPreview.h"
 //==============================================================================
 /**
 */
@@ -27,20 +27,24 @@ public:
     void paint (Graphics&) override;
     void resized() override;
 
+    Colour bgColor = Colour::fromString("FF292C36");
+    float goldenRatio = 1.618f;
+
+
 private:
-    // This reference is provided as a quick way for your editor to
-    // access the processor object that created it.
-    JsamplerAudioProcessor& processor;
+    std::shared_ptr<JsamplerAudioProcessor> processor;
 
     void sliderValueChanged (Slider* slider) override; // [3]
-
-
     Slider midiVolume; // [1]
 
-    Rectangle<int> topArea;
-    Rectangle<int> topRightArea;
+    AudioPreview audioPreview;
 
-    float goldenRatio = 1.618f;
+    Rectangle<int> topArea;
+    Rectangle<int> topAreaRightSideBar;
+    Rectangle<int> topAreaLeftSideBar;
+
+
+
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JsamplerAudioProcessorEditor)
 };

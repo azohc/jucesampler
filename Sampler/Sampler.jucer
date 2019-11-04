@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="qPZrWx" name="jsampler" projectType="audioplug" jucerVersion="5.4.5">
-  <MAINGROUP id="d5RCLA" name="jsampler">
-    <GROUP id="{073B6319-8BC3-929D-4E22-66C01E47ECB8}" name="Source">
-      <FILE id="DLWK9K" name="AudioPreview.h" compile="0" resource="0" file="Source/AudioPreview.h"/>
-      <FILE id="rOqfrl" name="PluginProcessor.cpp" compile="1" resource="0"
+<JUCERPROJECT id="oWfbQZ" name="Sampler" projectType="audioplug" jucerVersion="5.4.5">
+  <MAINGROUP id="BkkyvB" name="Sampler">
+    <GROUP id="{33229E8B-F3CD-6BB0-771B-06E291FA31DC}" name="Source">
+      <FILE id="rFJMTx" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
-      <FILE id="fDjhQO" name="PluginProcessor.h" compile="0" resource="0"
+      <FILE id="WxsuVu" name="PluginProcessor.h" compile="0" resource="0"
             file="Source/PluginProcessor.h"/>
-      <FILE id="QrB2wM" name="PluginEditor.cpp" compile="1" resource="0"
+      <FILE id="B7Ns3H" name="PluginEditor.cpp" compile="1" resource="0"
             file="Source/PluginEditor.cpp"/>
-      <FILE id="mqIM0o" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
+      <FILE id="h3l2O2" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
     </GROUP>
   </MAINGROUP>
   <EXPORTFORMATS>

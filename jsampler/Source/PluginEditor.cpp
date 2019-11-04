@@ -13,27 +13,31 @@
 
 //==============================================================================
 JsamplerAudioProcessorEditor::JsamplerAudioProcessorEditor (JsamplerAudioProcessor& p)
-    : AudioProcessorEditor (&p), processor (p)
+    : AudioProcessorEditor (&p), processor (std::shared_ptr<JsamplerAudioProcessor> (&p))
+
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     setResizable(false, false);
     setSize (1024, 576);
-    
 
-    // these define the parameters of our slider object
-    midiVolume.setSliderStyle (Slider::LinearBarVertical);
-    midiVolume.setRange(0.0, 127.0, 1.0);
-    midiVolume.setTextBoxStyle (Slider::NoTextBox, false, 90, 0);
-    midiVolume.setPopupDisplayEnabled (true, false, this);
-    midiVolume.setTextValueSuffix (" Volume");
-    midiVolume.setValue(1.0);
+    addAndMakeVisible (&audioPreview);
+    audioPreview.formatManager = (*processor).formatManager;
+    audioPreview.transportSource = (*processor).transportSource;
+    audioPreview.processor = processor;
 
-    // this function adds the slider to the editor
-    addAndMakeVisible (&midiVolume);
-    // add the listener to the slider
-    midiVolume.addListener (this);
+    //// these define the parameters of our slider object
+    //midiVolume.setSliderStyle (Slider::LinearBarVertical);
+    //midiVolume.setRange(0.0, 127.0, 1.0);
+    //midiVolume.setTextBoxStyle (Slider::NoTextBox, false, 90, 0);
+    //midiVolume.setPopupDisplayEnabled (true, false, this);
+    //midiVolume.setTextValueSuffix (" Volume");
+    //midiVolume.setValue(1.0);
 
+    //// this function adds the slider to the editor
+    //addAndMakeVisible (&midiVolume);
+    //// add the listener to the slider
+    //midiVolume.addListener (this);
 }
 
 JsamplerAudioProcessorEditor::~JsamplerAudioProcessorEditor()
@@ -43,17 +47,14 @@ JsamplerAudioProcessorEditor::~JsamplerAudioProcessorEditor()
 //==============================================================================
 void JsamplerAudioProcessorEditor::paint (Graphics& g)
 {
-    // (Our component is opaque, so we must completely fill the background with a solid colour)
-    g.fillAll (getLookAndFeel().findColour (ResizableWindow::backgroundColourId));
+    g.fillAll (bgColor);
+    
+    g.setColour (bgColor.darker(1.0f));
+    g.fillRect (topAreaLeftSideBar);
+    g.fillRect (topAreaRightSideBar);
 
-    g.setColour (Colours::ghostwhite);
+    g.setColour (bgColor.darker(0.3f));
     g.fillRect (topArea);
-
-    g.setColour (Colours::navajowhite);
-    g.fillRect (topRightArea);
-    //g.setColour (Colours::white);
-    //g.setFont (15.0f);
-    //g.drawFittedText ("Hello World!", getLocalBounds(), Justification::centred, 1);
 }
 
 void JsamplerAudioProcessorEditor::resized()
@@ -61,16 +62,13 @@ void JsamplerAudioProcessorEditor::resized()
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
     auto area = getBounds();
-    topArea = area.removeFromTop(area.getHeight() - (area.getHeight() / goldenRatio));
+    topArea = area.removeFromTop (area.getHeight() - (area.getHeight() / goldenRatio));
 
-    topRightArea = topArea.removeFromRight(topArea.getWidth() - (topArea.getWidth() / goldenRatio));
-
-    midiVolume.setBounds (topRightArea.getX() + (topRightArea.getWidth() * 0.75), \
-                          topRightArea.getY() + (topRightArea.getHeight() * 0.05), \
-                          (topRightArea.getWidth() * 0.15), (topRightArea.getHeight() * 0.75));
+    audioPreview.setBounds (topArea);
 }
 
 void JsamplerAudioProcessorEditor::sliderValueChanged (Slider* slider)
 {
-    processor.volume = midiVolume.getValue();
+    (*processor).volume = midiVolume.getValue();
 }
+

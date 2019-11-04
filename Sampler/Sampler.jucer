@@ -3,12 +3,12 @@
 <JUCERPROJECT id="oWfbQZ" name="Sampler" projectType="audioplug" jucerVersion="5.4.5">
   <MAINGROUP id="BkkyvB" name="Sampler">
     <GROUP id="{33229E8B-F3CD-6BB0-771B-06E291FA31DC}" name="Source">
+      <FILE id="dSLBxc" name="SamplerThumbnail.h" compile="0" resource="0"
+            file="Source/SamplerThumbnail.h"/>
       <FILE id="rFJMTx" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
       <FILE id="WxsuVu" name="PluginProcessor.h" compile="0" resource="0"
             file="Source/PluginProcessor.h"/>
-      <FILE id="B7Ns3H" name="PluginEditor.cpp" compile="1" resource="0"
-            file="Source/PluginEditor.cpp"/>
       <FILE id="h3l2O2" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
     </GROUP>
   </MAINGROUP>

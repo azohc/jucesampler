@@ -436,9 +436,6 @@
     <ClCompile Include="..\..\Source\PluginProcessor.cpp">
       <Filter>Sampler\Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\PluginEditor.cpp">
-      <Filter>Sampler\Source</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\JUCE\modules\juce_audio_basics\buffers\juce_AudioChannelSet.cpp">
       <Filter>JUCE Modules\juce_audio_basics\buffers</Filter>
     </ClCompile>
@@ -2430,6 +2427,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Source\SamplerThumbnail.h">
+      <Filter>Sampler\Source</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\PluginProcessor.h">
       <Filter>Sampler\Source</Filter>
     </ClInclude>

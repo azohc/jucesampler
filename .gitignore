@@ -1,4 +1,4 @@
 */Builds/VisualStudio2017/.vs
 */Builds/VisualStudio2017/x64
-JUCE/examples/DemoRunner/Builds/*/.vs
-JUCE/examples/DemoRunner/Builds/*/x64
+JUCE/examples/DemoRunner/Builds/
+JUCE/examples/DemoRunner/Builds/

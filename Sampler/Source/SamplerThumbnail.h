@@ -18,6 +18,7 @@
 class SamplerThumbnail: 
     public Component, 
     public ChangeListener,
+    public FileDragAndDropTarget,
     public ChangeBroadcaster,
     private ScrollBar::Listener,
     private Timer
@@ -47,34 +48,18 @@ public:
         thumbnail.removeChangeListener (this);
     }
 
-    void setURL (const URL& url)
+    void setFile (const File& file)
     {
-        InputSource* inputSource = nullptr;
+        thumbnail.setSource (new FileInputSource (file));
 
-    #if ! JUCE_IOS
-        if (url.isLocalFile())
-        {
-            inputSource = new FileInputSource (url.getLocalFile());
-        } else
-        #endif
-        {
-            if (inputSource == nullptr)
-                inputSource = new URLInputSource (url);
-        }
+        Range<double> newRange (0.0, thumbnail.getTotalLength());
+        scrollbar.setRangeLimits (newRange);
+        setRange (newRange);
 
-        if (inputSource != nullptr)
-        {
-            thumbnail.setSource (inputSource);
-
-            Range<double> newRange (0.0, thumbnail.getTotalLength());
-            scrollbar.setRangeLimits (newRange);
-            setRange (newRange);
-
-            startTimerHz (40);
-        }
+        startTimerHz (40);
     }
 
-    URL getLastDroppedFile() const noexcept { return lastFileDropped; }
+    File getLastDroppedFile() const noexcept { return lastFileDropped; }
 
     void setZoomFactor (double amount)
     {
@@ -130,6 +115,17 @@ public:
         repaint();
     }
 
+    bool isInterestedInFileDrag (const StringArray&) override
+    {
+        return true;
+    }
+
+    void filesDropped (const StringArray& files, int, int) override
+    {
+        lastFileDropped = File (files[0]);
+        sendChangeMessage();
+    }
+
     void mouseDown (const MouseEvent& e) override
     {
         mouseDrag (e);
@@ -175,7 +171,7 @@ private:
 
     DrawableRectangle currentPositionMarker;
 
-    URL lastFileDropped;    //TODO
+    File lastFileDropped;
 
 
     float timeToX (const double time) const

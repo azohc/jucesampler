@@ -19,7 +19,7 @@
 */
 class SamplerAudioProcessorEditor:
     public AudioProcessorEditor,
-    private ChangeListener
+    public ChangeListener
 {
 public:
     SamplerAudioProcessorEditor (SamplerAudioProcessor& p) : AudioProcessorEditor (&p), processor (p)
@@ -45,7 +45,6 @@ public:
 
         thumbnail.reset (new SamplerThumbnail (formatManager, transportSource, zoomSlider));
         addAndMakeVisible (thumbnail.get());
-        thumbnail->addChangeListener (this);
 
         addAndMakeVisible (startStopButton);
         startStopButton.setColour (TextButton::buttonColourId, Colour (0xff79ed7f));
@@ -54,7 +53,7 @@ public:
 
         // audio setup
         formatManager.registerBasicFormats();
-
+        thumbnail->addChangeListener(this);
         thread.startThread (3);
         audioDeviceManager.addAudioCallback (&audioSourcePlayer);
         audioSourcePlayer.setSource (&transportSource);
@@ -69,11 +68,8 @@ public:
         audioSourcePlayer.setSource (nullptr);
 
         audioDeviceManager.removeAudioCallback (&audioSourcePlayer);
-
-        thumbnail->removeChangeListener (this);
     }
 
-    //==============================================================================
     void paint (Graphics& g) override
     {
         g.fillAll (Colour::fromString("FF292C36"));
@@ -98,10 +94,6 @@ public:
     }
 
 
-
-    //==============================================================================
-
-
 private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
@@ -111,7 +103,7 @@ private:
     AudioFormatManager formatManager;
     TimeSliceThread thread { "audio file preview" };
 
-    URL currentAudioFile;
+    File currentAudioFile;
     AudioSourcePlayer audioSourcePlayer;
     AudioTransportSource transportSource;
     std::unique_ptr<AudioFormatReaderSource> currentAudioFileSource;
@@ -124,20 +116,29 @@ private:
 
     //==============================================================================
 
-    void showAudioResource (URL resource)
+    void loadFile()
     {
-        if (loadURLIntoTransport (resource))
-        {
-            currentAudioFile = std::move (resource);
-            zoomSlider.setEnabled (true);
-            followTransportButton.setEnabled (true);
-        }
+        FileChooser fc ("Choose a Wave file...", {}, "*wav", true);
 
-        zoomSlider.setValue (0, dontSendNotification);
-        thumbnail->setURL (currentAudioFile); // TODO method that prompts the user for a wav file and loads it
+        if (fc.browseForFileToOpen())
+        {
+            auto file = fc.getResult();
+            showAudioResource(file);
+        }
     }
 
-    bool loadURLIntoTransport (const URL& audioURL)
+    void showAudioResource (const File& file)
+    {
+        if (loadFileIntoTransport (file))
+        {
+            zoomSlider.setEnabled (true);
+            followTransportButton.setEnabled (true);
+            zoomSlider.setValue (0, dontSendNotification);
+            thumbnail->setFile (file);
+        }
+    }
+
+    bool loadFileIntoTransport (const File& file)
     {
         // unload the previous file source and delete it..
         transportSource.stop();
@@ -147,7 +148,7 @@ private:
         AudioFormatReader* reader = nullptr;
 
         if (reader == nullptr)
-            reader = formatManager.createReaderFor (audioURL.createInputStream (false));
+            reader = formatManager.createReaderFor (file);
 
         if (reader != nullptr)
         {
@@ -155,8 +156,8 @@ private:
 
             // ..and plug it into our transport source
             transportSource.setSource (currentAudioFileSource.get(),
-                                       32768,                   // tells it to buffer this many samples ahead
-                                       &thread,                 // this is the background thread to use for reading-ahead TODO necessary?
+                                       32768,                   // tells it to buffer this many samples ahead TODO necessary? if not 0, nullptr
+                                       &thread,                 // this is the background thread to use for reading-ahead TODO necessary? 
                                        reader->sampleRate);     // allows for sample rate correction
 
             return true;
@@ -185,7 +186,7 @@ private:
     void changeListenerCallback (ChangeBroadcaster* source) override
     {
         if (source == thumbnail.get())
-            showAudioResource (URL (thumbnail->getLastDroppedFile()));
+            showAudioResource (File (thumbnail->getLastDroppedFile()));
     }
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SamplerAudioProcessorEditor)

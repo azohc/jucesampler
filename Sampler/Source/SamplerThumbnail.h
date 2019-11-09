@@ -26,10 +26,12 @@ class SamplerThumbnail:
 public:
     SamplerThumbnail(AudioFormatManager& formatManager,
                      AudioTransportSource& source,
-                     Slider& slider): 
+                     Slider& slider,
+                     HashMap<String, Colour>& colorMap):
         transportSource (source),
         zoomSlider (slider),
-        thumbnail (512, formatManager, thumbnailCache)
+        thumbnail (512, formatManager, thumbnailCache),
+        colors (colorMap)
     {
         thumbnail.addChangeListener (this);
 
@@ -37,9 +39,13 @@ public:
         scrollbar.setRangeLimits (visibleRange);
         scrollbar.setAutoHide (false);
         scrollbar.addListener (this);
+        scrollbar.setColour (ScrollBar::backgroundColourId, colors["bluedark"]);
+        scrollbar.setColour (ScrollBar::thumbColourId, colors["blue"]);
 
-        currentPositionMarker.setFill (Colours::white.withAlpha (0.85f));
+
+        currentPositionMarker.setFill (colors["graylite"]);
         addAndMakeVisible (currentPositionMarker);
+
     }
 
     ~SamplerThumbnail()
@@ -87,8 +93,8 @@ public:
 
     void paint (Graphics& g) override
     {
-        g.fillAll (Colours::darkgrey);
-        g.setColour (Colours::lightblue);
+        g.fillAll (colors["bluedark"]);
+        g.setColour (colors["fg"]);
 
         if (thumbnail.getTotalLength() > 0.0)
         {
@@ -100,7 +106,7 @@ public:
         } else
         {
             g.setFont (14.0f);
-            g.drawFittedText ("(No audio file selected)", getLocalBounds(), Justification::centred, 2);
+            g.drawFittedText ("Drag and drop audio file here to load it", getLocalBounds(), Justification::centred, 2);
         }
     }
 
@@ -139,23 +145,33 @@ public:
 
     void mouseUp (const MouseEvent&) override
     {
-        transportSource.start();
     }
 
     void mouseWheelMove (const MouseEvent&, const MouseWheelDetails& wheel) override
     {
         if (thumbnail.getTotalLength() > 0.0)
         {
-            auto newStart = visibleRange.getStart() - wheel.deltaX * (visibleRange.getLength()) / 10.0;
+            auto newStart = visibleRange.getStart() + wheel.deltaX * (visibleRange.getLength()) / 10.0;
             newStart = jlimit (0.0, jmax (0.0, thumbnail.getTotalLength() - (visibleRange.getLength())), newStart);
 
             if (canMoveTransport())
                 setRange ({ newStart, newStart + visibleRange.getLength() });
 
             if (wheel.deltaY != 0.0f)
-                zoomSlider.setValue (zoomSlider.getValue() - wheel.deltaY);
+                zoomSlider.setValue (zoomSlider.getValue() + wheel.deltaY);
 
             repaint();
+        }
+    }
+
+    double getCurrentPosition ()
+    {
+        if (thumbnail.getTotalLength() > 0)
+        {
+            return transportSource.getCurrentPosition();
+        } else
+        {
+            return 0;
         }
     }
 
@@ -169,11 +185,11 @@ private:
     Range<double> visibleRange;
     bool isFollowingTransport = false;
 
-    DrawableRectangle currentPositionMarker;
-
     File lastFileDropped;
 
-
+    DrawableRectangle currentPositionMarker;
+    HashMap<String, Colour>& colors;
+   
     float timeToX (const double time) const
     {
         if (visibleRange.getLength() <= 0)
@@ -210,7 +226,7 @@ private:
 
     void updateCursorPosition()
     {
-        currentPositionMarker.setVisible (transportSource.isPlaying() || isMouseButtonDown());
+        currentPositionMarker.setVisible (thumbnail.getTotalLength() > 0);
 
         currentPositionMarker.setRectangle (Rectangle<float> (timeToX (transportSource.getCurrentPosition()) - 0.75f, 0,
                                             1.5f, (float) (getHeight() - scrollbar.getHeight())));

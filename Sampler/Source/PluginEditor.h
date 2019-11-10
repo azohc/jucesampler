@@ -17,20 +17,13 @@
 //==============================================================================
 /**
 */
-class SamplerAudioProcessorEditor:
+class SamplerAudioProcessorEditor :
     public AudioProcessorEditor,
-    public ChangeListener,
-    private Timer
+    public ChangeListener
 {
 public:
     SamplerAudioProcessorEditor (SamplerAudioProcessor& p) : AudioProcessorEditor (&p), processor (p)
     {
-        //addAndMakeVisible (zoomLabel);
-        //zoomLabel.setFont (Font (15.00f, Font::plain));
-        //zoomLabel.setJustificationType (Justification::centredRight);
-        //zoomLabel.setEditable (false, false, false);
-        //zoomLabel.setColour (TextEditor::textColourId, Colours::black);
-        //zoomLabel.setColour (TextEditor::backgroundColourId, Colour (0x00000000));
         colors.set("bgdark", colorBgDark);
         colors.set("bglite", colorBgLight);
         colors.set("bg", colorBg);
@@ -43,7 +36,6 @@ public:
         colors.set("gray", colorGray);
         colors.set("graylite", colorGrayLight);
 
-        startTimer (11);
 
         // THUMBNAIL 
         thumbnail.reset (new SamplerThumbnail (formatManager, transportSource, zoomSlider, colors));
@@ -89,10 +81,11 @@ public:
 
         // audio setup
         formatManager.registerBasicFormats();
-        thumbnail->addChangeListener(this);
-        thread.startThread (3);
+        thumbnail->addChangeListener (this);
+        //thread.startThread (3);
         audioDeviceManager.addAudioCallback (&audioSourcePlayer);
         audioSourcePlayer.setSource (&transportSource);
+        
 
         setOpaque (true);
         setSize (1024, 576);
@@ -169,7 +162,7 @@ private:
 
     AudioDeviceManager audioDeviceManager;
     AudioFormatManager formatManager;
-    TimeSliceThread thread { "audio file preview" };
+    //TimeSliceThread thread { "audio file preview" };
 
     File currentAudioFile;
     AudioSourcePlayer audioSourcePlayer;
@@ -255,8 +248,8 @@ private:
 
             // ..and plug it into our transport source
             transportSource.setSource (currentAudioFileSource.get(),
-                                       32768,                   // tells it to buffer this many samples ahead TODO necessary? if not 0, nullptr
-                                       &thread,                 // this is the background thread to use for reading-ahead TODO necessary? 
+                                       0,                   // tells it to buffer this many samples ahead TODO necessary? if not 0, nullptr
+                                       nullptr,                 // this is the background thread to use for reading-ahead TODO necessary? 
                                        reader->sampleRate);     // allows for sample rate correction
 
             return true;
@@ -284,12 +277,13 @@ private:
     void changeListenerCallback (ChangeBroadcaster* source) override
     {
         if (source == thumbnail.get())
-            showAudioResource (File (thumbnail->getLastDroppedFile()));
-    }
+        {
+            if (thumbnail.get()->newFileDropped)
+                showAudioResource (File (thumbnail->getLastDroppedFile()));
+            else 
+                currentPositionLabel.setText (String::formatted("Position: " + (String) thumbnail->getCurrentPosition()), NotificationType::dontSendNotification);
+        }
 
-    void timerCallback() override
-    {
-        currentPositionLabel.setText (String::formatted("Position: " + (String)thumbnail->getCurrentPosition()), NotificationType::dontSendNotification);
     }
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SamplerAudioProcessorEditor)

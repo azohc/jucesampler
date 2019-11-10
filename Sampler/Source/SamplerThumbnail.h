@@ -129,6 +129,7 @@ public:
     void filesDropped (const StringArray& files, int, int) override
     {
         lastFileDropped = File (files[0]);
+        newFileDropped = true;
         sendChangeMessage();
     }
 
@@ -174,6 +175,8 @@ public:
             return 0;
         }
     }
+
+    bool newFileDropped = false;
 
 private:
     AudioTransportSource& transportSource;
@@ -230,6 +233,7 @@ private:
 
         currentPositionMarker.setRectangle (Rectangle<float> (timeToX (transportSource.getCurrentPosition()) - 0.75f, 0,
                                             1.5f, (float) (getHeight() - scrollbar.getHeight())));
+        sendChangeMessage();
     }
 
 

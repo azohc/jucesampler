@@ -141,7 +141,10 @@ public:
     void mouseDrag (const MouseEvent& e) override
     {
         if (canMoveTransport())
-            transportSource.setPosition (jmax (0.0, xToTime ((float) e.x)));
+        {
+            auto newPos = jmin (jmax (0.0, xToTime ((float) e.x)), transportSource.getLengthInSeconds());
+            transportSource.setPosition (newPos);
+        }
     }
 
     void mouseUp (const MouseEvent&) override

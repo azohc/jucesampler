@@ -22,7 +22,16 @@ class SamplerAudioProcessorEditor :
     public ChangeListener
 {
 public:
-    SamplerAudioProcessorEditor (SamplerAudioProcessor& p) : AudioProcessorEditor (&p), processor (p)
+    SamplerAudioProcessorEditor (SamplerAudioProcessor& p, 
+                                 AudioTransportSource& transport, 
+                                 AudioSourcePlayer& player, 
+                                 AudioDeviceManager& manager) 
+        : AudioProcessorEditor (&p), 
+        processor (p), 
+        state (Stopped),
+        transportSource (transport), 
+        sourcePlayer (player),
+        deviceManager (manager)
     {
         colors.set("bgdark", colorBgDark);
         colors.set("bglite", colorBgLight);
@@ -50,6 +59,38 @@ public:
         currentPositionLabel.setColour (Label::backgroundColourId, colorBg);
         currentPositionLabel.setColour (Label::textColourId, colorFg);
         
+        addAndMakeVisible (loopLabel);
+        loopLabel.setFont (Font (15.00f, Font::plain));
+        loopLabel.setJustificationType (Justification::left);
+        loopLabel.setEditable (false, false, false); // TODO make editable
+        //loopLabel.setColour (Label::backgroundWhenEditingColourId)
+        loopLabel.setColour (Label::backgroundColourId, colorBg);
+        loopLabel.setColour (Label::textColourId, colorFg);
+
+        addAndMakeVisible (fullLoopToggle);
+        fullLoopToggle.setRadioGroupId(LoopMode);
+        fullLoopToggle.setColour (TextButton::buttonColourId, colorBg);
+        fullLoopToggle.setColour (TextButton::textColourOffId, colorFg);
+        fullLoopToggle.setEnabled (false);
+        fullLoopToggle.onClick = [this] () { 
+            auto l = !currentAudioFileSource.get()->isLooping();
+            currentAudioFileSource.get()->setLooping(l);
+            fullLoopToggle.setToggleState (l, dontSendNotification);
+        };
+
+        addAndMakeVisible (selectionLoopToggle);
+        selectionLoopToggle.setRadioGroupId(LoopMode);
+        selectionLoopToggle.setColour (TextButton::buttonColourId, colorBg);
+        selectionLoopToggle.setColour (TextButton::textColourOffId, colorFg);
+        selectionLoopToggle.setEnabled (false); // TODO enable when selection exists
+        selectionLoopToggle.setClickingTogglesState (true);
+
+
+        addAndMakeVisible (startTimeChopButton);
+        startTimeChopButton.setColour (TextButton::buttonColourId, colorBg);
+        startTimeChopButton.setColour (TextButton::textColourOffId, colorFg);
+        startTimeChopButton.onClick = [this] { startTimeChopClicked(); };
+        startTimeChopButton.setEnabled (false);
 
         addAndMakeVisible (followTransportButton);
         followTransportButton.onClick = [this] { updateFollowTransportState(); };
@@ -72,20 +113,26 @@ public:
         playButton.setColour (TextButton::buttonColourId, colorBg);
         playButton.setColour (TextButton::textColourOffId, colorFg);
         playButton.onClick = [this] { playButtonClicked(); };
+        playButton.setEnabled (false);
 
         addAndMakeVisible (loadButton);
         loadButton.setColour (TextButton::buttonColourId, colorBg);
         loadButton.setColour (TextButton::textColourOffId, colorFg);
         loadButton.onClick = [this] { loadFile(); };
+        loadButton.setEnabled (true);
+
+        addAndMakeVisible (stopButton);
+        stopButton.setColour (TextButton::buttonColourId, colorBg);
+        stopButton.setColour (TextButton::textColourOffId, colorFg);
+        stopButton.onClick = [this] { stopButtonClicked(); };
+        stopButton.setEnabled (false);
 
 
         // audio setup
         formatManager.registerBasicFormats();
         thumbnail->addChangeListener (this);
-        //thread.startThread (3);
-        audioDeviceManager.addAudioCallback (&audioSourcePlayer);
-        audioSourcePlayer.setSource (&transportSource);
-        
+        transportSource.addChangeListener (this);
+        thread.startThread (3);     
 
         setOpaque (true);
         setSize (1024, 576);
@@ -93,10 +140,6 @@ public:
 
     ~SamplerAudioProcessorEditor()
     {
-        transportSource.setSource (nullptr);
-        audioSourcePlayer.setSource (nullptr);
-
-        audioDeviceManager.removeAudioCallback (&audioSourcePlayer);
     }
 
     void paint (Graphics& g) override
@@ -115,6 +158,7 @@ public:
             path.addRectangle (r);
             g.strokePath (path, PathStrokeType (s), {});
         };
+
 
         g.setColour (colorBgDark);
         strokeRect (rectControls, 2);
@@ -140,14 +184,30 @@ public:
         // Controls
         auto rectControlsAux = rectControls;
         auto buttonHeight = small (small (rectControlsAux.getHeight()));
+
         loadButton.setBounds (rectControlsAux.removeFromTop (buttonHeight).reduced (4));
         playButton.setBounds (rectControlsAux.removeFromTop (buttonHeight).reduced (4));
+        stopButton.setBounds (rectControlsAux.removeFromTop (buttonHeight).reduced (4));
 
-        // Thumbnail functions
+
+        // Thumbnail functions      TODO use flex to distribute evenly
         auto rectThumbnailFunctsAux = rectThumbnailFuncts.reduced(1);
-        currentPositionLabel.setBounds (rectThumbnailFunctsAux.removeFromLeft (small (rectThumbnailFunctsAux.getWidth())));
+        auto functionWidth = small (small (rectThumbnailFunctsAux.getWidth()));
+
+        currentPositionLabel.setBounds (rectThumbnailFunctsAux.removeFromLeft (functionWidth)); // flex1
+
+        rectLoopFunctions = rectThumbnailFunctsAux.removeFromLeft (functionWidth);
+        auto loopFns = rectLoopFunctions;                                                       // flex2
+        loopLabel.setBounds (loopFns.removeFromLeft (small (loopFns.getWidth())));
+        fullLoopToggle.setBounds (loopFns.removeFromLeft (loopFns.getWidth() / 2));
+        selectionLoopToggle.setBounds (loopFns.removeFromLeft (loopFns.getWidth()));
+
+        startTimeChopButton.setBounds (rectThumbnailFunctsAux.removeFromLeft (functionWidth));  // flex3
+
         //followTransportButton.setBounds (rectThumbnailFunctsAux.removeFromLeft (small (small (rectThumbnailFunctsAux.getWidth()))));
         
+
+        // Thumbnail
         rectThumbnail = r;
         auto rectThumbnailAux = rectThumbnail;
         zoomSlider.setBounds (rectThumbnailAux.removeFromRight (small (small (rectThumbnailAux.getHeight()))));
@@ -156,33 +216,49 @@ public:
 
 
 private:
-    // This reference is provided as a quick way for your editor to
-    // access the processor object that created it.
+    enum TransportState
+    {
+        Stopped,
+        Starting,
+        Playing,
+        Stopping,
+        Pausing,
+        Paused
+    };
+    enum RadioButtonIds
+    {
+        LoopMode = 1001
+    };
+
     SamplerAudioProcessor& processor;
 
-    AudioDeviceManager audioDeviceManager;
+    AudioDeviceManager& deviceManager;
     AudioFormatManager formatManager;
-    //TimeSliceThread thread { "audio file preview" };
+    TimeSliceThread thread { "audio file preview" };
 
     File currentAudioFile;
-    AudioSourcePlayer audioSourcePlayer;
-    AudioTransportSource transportSource;
+    AudioSourcePlayer& sourcePlayer;
+    AudioTransportSource& transportSource;
     std::unique_ptr<AudioFormatReaderSource> currentAudioFileSource;
 
     std::unique_ptr<SamplerThumbnail> thumbnail;
     Slider zoomSlider { Slider::LinearVertical, Slider::NoTextBox };
     TextButton playButton { "Play" };
-    TextButton stopButton { "Stop" };   // TODO add buttons to controls
-    TextButton loopButton { "Loop" };
-    TextButton loadButton { "Load sample" };
+    TextButton stopButton { "Stop" };   
+    TextButton loadButton { "Load" };
 
     //==============================================================================
     // THUMBNAIL FUNCTIONS
     Label currentPositionLabel { "currentPositionLabel", "Position: " };
-    TextButton startTimeChop { "Chop from here", "Creates a new chop with a start time equal to the current position" };
+    TextButton startTimeChopButton { "Chop from here", "Creates a new chop with a start time equal to the current position" };
     ToggleButton followTransportButton { "Follow Transport" };
 
-    // MOVE&ZOOM on chop selection
+    Label loopLabel { "loopLabel", "Loop" };
+    ToggleButton fullLoopToggle { "F" };
+    ToggleButton selectionLoopToggle { "S" };
+    
+
+    // TODO MOVE&ZOOM on chop selection
 
     //==============================================================================
     // RECTANGLES
@@ -191,6 +267,7 @@ private:
     Rectangle<int> rectChopList;
     Rectangle<int> rectThumbnailFuncts;
     Rectangle<int> rectThumbnail;
+    Rectangle<int> rectLoopFunctions;
 
     // COLORS
     Colour colorBgDark = Colour::fromString("FF252420");
@@ -207,7 +284,10 @@ private:
 
     HashMap<String, Colour> colors;
 
+    TransportState state;
+
     //==============================================================================
+
     void loadFile()
     {
         FileChooser fc ("Choose a Wave file...", {}, "*wav", true);
@@ -227,6 +307,9 @@ private:
             followTransportButton.setEnabled (true);
             zoomSlider.setValue (0, dontSendNotification);
             thumbnail->setFile (file);
+            playButton.setEnabled (true);
+            fullLoopToggle.setEnabled (true);
+            startTimeChopButton.setEnabled (true);
         }
     }
 
@@ -248,8 +331,8 @@ private:
 
             // ..and plug it into our transport source
             transportSource.setSource (currentAudioFileSource.get(),
-                                       0,                   // tells it to buffer this many samples ahead TODO necessary? if not 0, nullptr
-                                       nullptr,                 // this is the background thread to use for reading-ahead TODO necessary? 
+                                       32768,                   // tells it to buffer this many samples ahead TODO necessary? if not 0, nullptr
+                                       &thread,                 // this is the background thread to use for reading-ahead TODO necessary? 
                                        reader->sampleRate);     // allows for sample rate correction
 
             return true;
@@ -260,12 +343,34 @@ private:
 
     void playButtonClicked()
     {
-        if (transportSource.isPlaying())
+        if (!playButton.isEnabled()) return;
+
+        if (state == Paused || state == Stopped)
         {
-            transportSource.setPosition(0);
-        } else
+            changeState (Starting);
+        } else if (state == Playing)
         {
-            transportSource.start();
+            changeState (Pausing);
+        }
+    }
+
+    void stopButtonClicked()
+    {
+        if (state == Playing)
+            changeState (Stopping);
+        else
+            changeState (Stopped);
+    }
+
+    void startTimeChopClicked()
+    {
+        auto currentTime = transportSource.getCurrentPosition();
+        auto chops = processor.getChopList();
+        chops->add(Chop { currentTime, transportSource.getLengthInSeconds(), "" });
+
+        for (auto i = 0; i < chops->size(); i++)
+        {
+            Logger::getCurrentLogger()->writeToLog((String) chops->operator[](i).start);
         }
     }
 
@@ -283,7 +388,53 @@ private:
             else 
                 currentPositionLabel.setText (String::formatted("Position: " + (String) thumbnail->getCurrentPosition()), NotificationType::dontSendNotification);
         }
+        if (source == &transportSource)
+        {
+            if (transportSource.isPlaying())
+                changeState (Playing);
+            else if (state == Stopping || state == Playing)
+                changeState (Stopped);
+            else if (state == Pausing)
+                changeState (Paused);
+        }
+    }
 
+    void changeState (TransportState newState)
+    {
+        if (state != newState)
+        {
+            state = newState;
+
+            switch (state)
+            {
+                case Starting:
+                    transportSource.start();
+                    break;
+
+                case Pausing:
+                    transportSource.stop();
+                    break;
+
+                case Stopping:
+                    transportSource.stop();
+                    break;
+
+                case Playing:
+                    playButton.setButtonText ("Pause");
+                    stopButton.setEnabled (true);
+                    break;
+
+                case Paused:
+                    playButton.setButtonText ("Play");
+                    break;
+
+                case Stopped:
+                    playButton.setButtonText ("Play");
+                    stopButton.setEnabled (false);
+                    transportSource.setPosition (0.0);
+                    break;
+            }
+        }
     }
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SamplerAudioProcessorEditor)

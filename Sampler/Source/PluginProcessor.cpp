@@ -24,6 +24,7 @@ SamplerAudioProcessor::SamplerAudioProcessor()
                        )
 #endif
 {
+    chops = Array<Chop> ();
 }
 
 SamplerAudioProcessor::~SamplerAudioProcessor()
@@ -95,14 +96,20 @@ void SamplerAudioProcessor::changeProgramName (int index, const String& newName)
 //==============================================================================
 void SamplerAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
+    transportSource.prepareToPlay(samplesPerBlock, sampleRate);
+    sourcePlayer.prepareToPlay(sampleRate, samplesPerBlock);
+    sourcePlayer.setSource (&transportSource);
+    
+    deviceManager.initialiseWithDefaultDevices(getTotalNumInputChannels(), getTotalNumOutputChannels());
+    deviceManager.addAudioCallback (&sourcePlayer);
 }
 
 void SamplerAudioProcessor::releaseResources()
 {
-    // When playback stops, you can use this as an opportunity to free up any
-    // spare memory, etc.
+    deviceManager.removeAudioCallback (&sourcePlayer);
+    transportSource.releaseResources();
+    transportSource.setSource (nullptr);
+    sourcePlayer.setSource (nullptr);
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -166,7 +173,7 @@ bool SamplerAudioProcessor::hasEditor() const
 
 AudioProcessorEditor* SamplerAudioProcessor::createEditor()
 {
-    return new SamplerAudioProcessorEditor (*this);
+    return new SamplerAudioProcessorEditor (*this, transportSource, sourcePlayer, deviceManager);
 }
 
 //==============================================================================
@@ -181,6 +188,11 @@ void SamplerAudioProcessor::setStateInformation (const void* data, int sizeInByt
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
+}
+
+Array<Chop>* SamplerAudioProcessor::getChopList()
+{
+    return &chops;
 }
 
 //==============================================================================

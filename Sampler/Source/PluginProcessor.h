@@ -12,6 +12,13 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 
+struct Chop
+{
+    double start;
+    double end;
+    String mappedTo;
+};
+
 //==============================================================================
 /**
 */
@@ -54,8 +61,18 @@ public:
     //==============================================================================
     void getStateInformation (MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
+    
+    //==============================================================================
+    Array<Chop>* getChopList ();
 
 private:
     //==============================================================================
+
+    AudioTransportSource transportSource;
+    AudioSourcePlayer sourcePlayer;
+    AudioDeviceManager deviceManager;
+
+    Array<Chop> chops;
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SamplerAudioProcessor)
 };

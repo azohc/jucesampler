@@ -18,7 +18,7 @@
 class ChopListComponent    : public Component, public TableListBoxModel
 {
 public:
-    ChopListComponent()
+    ChopListComponent(Array<Chop>& chopList): chops (chopList)
     {
         // Load some data from an embedded XML file..
         loadData();
@@ -31,24 +31,24 @@ public:
         table.setColour (ListBox::outlineColourId, Colours::grey);
         table.setOutlineThickness (1);
 
-        // Add some columns to the table header, based on the column list in our database..
-        forEachXmlChildElement (*columnList, columnXml)
-        {
-            table.getHeader().addColumn (columnXml->getStringAttribute ("name"),
-                                         columnXml->getIntAttribute ("columnId"),
-                                         columnXml->getIntAttribute ("width"),
-                                         50, 400,
-                                         TableHeaderComponent::defaultFlags);
-        }
+        //// Add some columns to the table header, based on the column list in our database..
+        //forEachXmlChildElement (*columnList, columnXml)
+        //{
+        //    table.getHeader().addColumn (columnXml->getStringAttribute ("name"),
+        //                                 columnXml->getIntAttribute ("columnId"),
+        //                                 columnXml->getIntAttribute ("width"),
+        //                                 50, 400,
+        //                                 TableHeaderComponent::defaultFlags);
+        //}
 
         // we could now change some initial settings..
-        table.getHeader().setSortColumnId (1, true); // sort forwards by the ID column
-        table.getHeader().setColumnVisible (7, false); // hide the "length" column until the user shows it
+        //table.getHeader().setSortColumnId (1, true); // sort forwards by the ID column
+        //table.getHeader().setColumnVisible (7, false); // hide the "length" column until the user shows it
 
         // un-comment this line to have a go of stretch-to-fit mode
         // table.getHeader().setStretchToFitActive (true);
 
-        table.setMultipleSelectionEnabled (true);
+        table.setMultipleSelectionEnabled (false);
     }
 
     // This is overloaded from TableListBoxModel, and must return the total number of rows in our table
@@ -183,17 +183,22 @@ public:
     void resized() override
     {
         // position our table with a gap around its edge
-        table.setBoundsInset (BorderSize<int> (8));
+        table.setBoundsInset (BorderSize<int> (4));
+    }
+
+    void reloadData()
+    {
+        loadData();
     }
 
 private:
     TableListBox table;     
     Font font { 14.0f };
+    Array<Chop>& chops;
     
-    std::unique_ptr<XmlElement> demoData;  // This is the XML document loaded from the embedded file "demo table data.xml"
-    XmlElement* columnList = nullptr;     // A pointer to the sub-node of demoData that contains the list of columns
-    XmlElement* dataList = nullptr;     // A pointer to the sub-node of demoData that contains the list of data rows
-    int numRows;                          // The number of rows of data we've got
+    XmlElement* columnList = nullptr;
+    XmlElement* dataList = nullptr;
+    int numRows;
 
     //==============================================================================
     // This is a custom Label component, which we use for the table's editable text columns.
@@ -311,14 +316,45 @@ private:
         int direction;
     };
 
+    XmlElement* getChopData()
+    {
+        XmlElement* data = new XmlElement("data");
+        for (int i = 0; i < chops.size(); i++)
+        {
+            XmlElement* chop = data->createNewChildElement("chop");
+            XmlElement* start = chop->createNewChildElement("start");
+            XmlElement* end = chop->createNewChildElement("end");
+            XmlElement* mappedTo = chop->createNewChildElement("mappedTo");
+            start->addTextElement ((String) chops[i].start);
+            end->addTextElement ((String) chops[i].end);
+            mappedTo->addTextElement (chops[i].mappedTo);
+        }
+
+        data->writeTo(File::getCurrentWorkingDirectory(), {});
+        return data;
+    }
+
+    XmlElement* getChopColumns()
+    {
+        XmlElement* columns = new XmlElement("columns");
+        XmlElement* start = columns->createNewChildElement("start");
+        XmlElement* end = columns->createNewChildElement("end");
+        XmlElement* mappedTo = columns->createNewChildElement("mappedTo");
+        start->addTextElement ("Start time");
+        end->addTextElement ("End time");
+        mappedTo->addTextElement ("Mapped to");
+
+        columns->writeTo(File::getCurrentWorkingDirectory(), {});
+
+        return columns;
+    }
+
     //==============================================================================
-    // this loads the embedded database XML file into memory
+    // load chops into memory
     void loadData()
     {
-        //demoData = parseXML (loadEntireAssetIntoString ("demo table data.xml"));
-
-        dataList = demoData->getChildByName ("DATA");
-        columnList = demoData->getChildByName ("COLUMNS");
+        dataList = getChopData();
+        columnList = getChopColumns();
 
         numRows = dataList->getNumChildElements();
     }

@@ -13,7 +13,7 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "PluginProcessor.h"
 #include "SamplerThumbnail.h"
-
+#include "ChopListComponent.h"
 //==============================================================================
 /**
 */
@@ -25,13 +25,15 @@ public:
     SamplerAudioProcessorEditor (SamplerAudioProcessor& p, 
                                  AudioTransportSource& transport, 
                                  AudioSourcePlayer& player, 
-                                 AudioDeviceManager& manager) 
+                                 AudioDeviceManager& manager,
+                                 Array<Chop>& chops) 
         : AudioProcessorEditor (&p), 
         processor (p), 
         state (Stopped),
         transportSource (transport), 
         sourcePlayer (player),
-        deviceManager (manager)
+        deviceManager (manager),
+        chopList (chops)
     {
         colors.set("bgdark", colorBgDark);
         colors.set("bglite", colorBgLight);
@@ -85,7 +87,6 @@ public:
         selectionLoopToggle.setEnabled (false); // TODO enable when selection exists
         selectionLoopToggle.setClickingTogglesState (true);
 
-
         addAndMakeVisible (startTimeChopButton);
         startTimeChopButton.setColour (TextButton::buttonColourId, colorBg);
         startTimeChopButton.setColour (TextButton::textColourOffId, colorFg);
@@ -107,7 +108,6 @@ public:
         zoomSlider.setColour (Slider::thumbColourId, colorBlue);
 
 
-
         // BUTTONS
         addAndMakeVisible (playButton);
         playButton.setColour (TextButton::buttonColourId, colorBg);
@@ -126,6 +126,10 @@ public:
         stopButton.setColour (TextButton::textColourOffId, colorFg);
         stopButton.onClick = [this] { stopButtonClicked(); };
         stopButton.setEnabled (false);
+
+
+        // CHOPLIST
+        addAndMakeVisible (chopList);
 
 
         // audio setup
@@ -207,6 +211,10 @@ public:
         //followTransportButton.setBounds (rectThumbnailFunctsAux.removeFromLeft (small (small (rectThumbnailFunctsAux.getWidth()))));
         
 
+        // Choplist
+        chopList.setBounds (rectChopList);
+    
+
         // Thumbnail
         rectThumbnail = r;
         auto rectThumbnailAux = rectThumbnail;
@@ -243,6 +251,10 @@ private:
 
     std::unique_ptr<SamplerThumbnail> thumbnail;
     Slider zoomSlider { Slider::LinearVertical, Slider::NoTextBox };
+
+    ChopListComponent chopList;
+    //==============================================================================
+    // CONTROLS
     TextButton playButton { "Play" };
     TextButton stopButton { "Stop" };   
     TextButton loadButton { "Load" };
@@ -257,7 +269,6 @@ private:
     ToggleButton fullLoopToggle { "F" };
     ToggleButton selectionLoopToggle { "S" };
     
-
     // TODO MOVE&ZOOM on chop selection
 
     //==============================================================================
@@ -269,6 +280,7 @@ private:
     Rectangle<int> rectThumbnail;
     Rectangle<int> rectLoopFunctions;
 
+    //==============================================================================
     // COLORS
     Colour colorBgDark = Colour::fromString("FF252420");
     Colour colorBg =  Colour::fromString("FF544F4C");
@@ -366,12 +378,13 @@ private:
     {
         auto currentTime = transportSource.getCurrentPosition();
         auto chops = processor.getChopList();
-        chops->add(Chop { currentTime, transportSource.getLengthInSeconds(), "" });
+        chops->add (Chop { currentTime, transportSource.getLengthInSeconds(), "" });
+        chopList.reloadData();
 
-        for (auto i = 0; i < chops->size(); i++)
-        {
-            Logger::getCurrentLogger()->writeToLog((String) chops->operator[](i).start);
-        }
+        //for (auto i = 0; i < chops->size(); i++)
+        //{
+        //    Logger::getCurrentLogger()->writeToLog((String) chops->operator[](i).start);
+        //}
     }
 
     void updateFollowTransportState()

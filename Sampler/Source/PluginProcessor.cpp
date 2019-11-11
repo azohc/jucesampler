@@ -173,7 +173,7 @@ bool SamplerAudioProcessor::hasEditor() const
 
 AudioProcessorEditor* SamplerAudioProcessor::createEditor()
 {
-    return new SamplerAudioProcessorEditor (*this, transportSource, sourcePlayer, deviceManager);
+    return new SamplerAudioProcessorEditor (*this, transportSource, sourcePlayer, deviceManager, chops);
 }
 
 //==============================================================================

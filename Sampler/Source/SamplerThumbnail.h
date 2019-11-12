@@ -214,7 +214,6 @@ private:
         return !(isFollowingTransport && transportSource.isPlaying());
     }
 
-
     void scrollBarMoved (ScrollBar* scrollBarThatHasMoved, double newRangeStart) override
     {
         if (scrollBarThatHasMoved == &scrollbar)

@@ -21,7 +21,7 @@ public:
     ChopListComponent(Array<Chop>& chopList): chops (chopList)
     {
         // Load some data from an embedded XML file..
-        loadData();
+        initTableData();
 
         // Create our table component and add it to this component..
         addAndMakeVisible (table);
@@ -31,24 +31,29 @@ public:
         table.setColour (ListBox::outlineColourId, Colours::grey);
         table.setOutlineThickness (1);
 
-        //// Add some columns to the table header, based on the column list in our database..
-        //forEachXmlChildElement (*columnList, columnXml)
-        //{
-        //    table.getHeader().addColumn (columnXml->getStringAttribute ("name"),
-        //                                 columnXml->getIntAttribute ("columnId"),
-        //                                 columnXml->getIntAttribute ("width"),
-        //                                 50, 400,
-        //                                 TableHeaderComponent::defaultFlags);
-        //}
+        // Add some columns to the table header, based on the column list
+        forEachXmlChildElement (*chopXml->getChildByName (COLUMNS), columnXml)
+        {
+            table.getHeader().addColumn (columnXml->getStringAttribute (COLATR_NAME),
+                                         columnXml->getIntAttribute (COLATR_ID),
+                                         columnXml->getIntAttribute (COLATR_WIDTH),
+                                         30, -1, TableHeaderComponent::notResizable);
+        }
 
         // we could now change some initial settings..
         //table.getHeader().setSortColumnId (1, true); // sort forwards by the ID column
         //table.getHeader().setColumnVisible (7, false); // hide the "length" column until the user shows it
 
         // un-comment this line to have a go of stretch-to-fit mode
-        // table.getHeader().setStretchToFitActive (true);
+        table.getHeader().setStretchToFitActive (true);
 
         table.setMultipleSelectionEnabled (false);
+    }
+
+    ~ChopListComponent()
+    {
+        delete chopXml;
+        chopXml = nullptr;
     }
 
     // This is overloaded from TableListBoxModel, and must return the total number of rows in our table
@@ -76,7 +81,7 @@ public:
         g.setColour (getLookAndFeel().findColour (ListBox::textColourId));
         g.setFont (font);
 
-        if (auto* rowElement = dataList->getChildElement (rowNumber))
+        if (auto* rowElement = chopXml->getChildByName (DATA)->getChildElement (rowNumber))
         {
             auto text = rowElement->getStringAttribute (getAttributeNameForColumnId (columnId));
 
@@ -94,7 +99,7 @@ public:
         if (newSortColumnId != 0)
         {
             DemoDataSorter sorter (getAttributeNameForColumnId (newSortColumnId), isForwards);
-            dataList->sortChildElements (sorter);
+            chopXml->getChildByName (DATA)->sortChildElements (sorter);
 
             table.updateContent();
         }
@@ -146,7 +151,7 @@ public:
         // find the widest bit of text in this column..
         for (int i = getNumRows(); --i >= 0;)
         {
-            if (auto* rowElement = dataList->getChildElement (i))
+            if (auto* rowElement = chopXml->getChildByName (DATA)->getChildElement (i))
             {
                 auto text = rowElement->getStringAttribute (getAttributeNameForColumnId (columnId));
 
@@ -160,23 +165,23 @@ public:
     // A couple of quick methods to set and get cell values when the user changes them
     int getRating (const int rowNumber) const
     {
-        return dataList->getChildElement (rowNumber)->getIntAttribute ("Rating");
+        return chopXml->getChildByName (DATA)->getChildElement (rowNumber)->getIntAttribute ("Rating");
     }
 
     void setRating (const int rowNumber, const int newRating)
     {
-        dataList->getChildElement (rowNumber)->setAttribute ("Rating", newRating);
+        chopXml->getChildByName (DATA)->getChildElement (rowNumber)->setAttribute ("Rating", newRating);
     }
 
     String getText (const int columnNumber, const int rowNumber) const
     {
-        return dataList->getChildElement (rowNumber)->getStringAttribute (getAttributeNameForColumnId(columnNumber));
+        return chopXml->getChildByName (DATA)->getChildElement (rowNumber)->getStringAttribute (getAttributeNameForColumnId(columnNumber));
     }
 
     void setText (const int columnNumber, const int rowNumber, const String& newText)
     {
         auto columnName = table.getHeader().getColumnName (columnNumber);
-        dataList->getChildElement (rowNumber)->setAttribute (columnName, newText);
+        chopXml->getChildByName (DATA)->getChildElement (rowNumber)->setAttribute (columnName, newText);
     }
 
     //==============================================================================
@@ -188,7 +193,7 @@ public:
 
     void reloadData()
     {
-        loadData();
+        chopsToXml();
     }
 
 private:
@@ -196,9 +201,29 @@ private:
     Font font { 14.0f };
     Array<Chop>& chops;
     
-    XmlElement* columnList = nullptr;
-    XmlElement* dataList = nullptr;
+    XmlElement* chopXml = nullptr;
     int numRows;
+
+    enum ColumnIds
+    {
+        COLID_START = 1011,
+        COLID_END = 1012,
+        COLID_MAPTO = 1013
+    };
+
+    const String CHOPS = "CHOPS";
+    const String COLUMNS = "COLUMNS";
+    const String COLUMN = "COLUMN";
+    const String COLATR_ID = "columnId";
+    const String COLATR_NAME = "name";
+    const String COLATR_WIDTH = "width";
+
+    const String DATA = "DATA";
+    const String ITEM = "ITEM";
+    const String COL_START = "Start";
+    const String COL_END = "End";
+    const String COL_TRIGG = "Trigger";
+     
 
     //==============================================================================
     // This is a custom Label component, which we use for the table's editable text columns.
@@ -316,56 +341,54 @@ private:
         int direction;
     };
 
-    XmlElement* getChopData()
+    XmlElement* chopsToXml()
     {
-        XmlElement* data = new XmlElement("data");
+        XmlElement* xml = new XmlElement(CHOPS);
+
+        XmlElement* columns = xml->createNewChildElement(COLUMNS);
+
+        XmlElement* columnStart = columns->createNewChildElement(COLUMN);
+        columnStart->setAttribute (COLATR_ID, COLID_START);
+        columnStart->setAttribute (COLATR_NAME, COL_START);
+        columnStart->setAttribute (COLATR_WIDTH, 50);
+
+        XmlElement* columnEnd = columns->createNewChildElement(COLUMN);
+        columnEnd->setAttribute (COLATR_ID, COLID_END);
+        columnEnd->setAttribute (COLATR_NAME, COL_END);
+        columnEnd->setAttribute (COLATR_WIDTH, 50);
+
+        XmlElement* columnMappedTo = columns->createNewChildElement(COLUMN);
+        columnMappedTo->setAttribute (COLATR_ID, COLID_MAPTO);
+        columnMappedTo->setAttribute (COLATR_NAME, COL_TRIGG);
+        columnMappedTo->setAttribute (COLATR_WIDTH, 50);
+
+        XmlElement* data = xml->createNewChildElement(DATA);
         for (int i = 0; i < chops.size(); i++)
         {
-            XmlElement* chop = data->createNewChildElement("chop");
-            XmlElement* start = chop->createNewChildElement("start");
-            XmlElement* end = chop->createNewChildElement("end");
-            XmlElement* mappedTo = chop->createNewChildElement("mappedTo");
-            start->addTextElement ((String) chops[i].start);
-            end->addTextElement ((String) chops[i].end);
-            mappedTo->addTextElement (chops[i].mappedTo);
+            XmlElement* chop = data->createNewChildElement(ITEM);
+            chop->setAttribute(COL_START, chops[i].start);
+            chop->setAttribute(COL_END, chops[i].end);
+            chop->setAttribute(COL_TRIGG, chops[i].mappedTo);
         }
-
-        data->writeTo(File::getCurrentWorkingDirectory(), {});
-        return data;
-    }
-
-    XmlElement* getChopColumns()
-    {
-        XmlElement* columns = new XmlElement("columns");
-        XmlElement* start = columns->createNewChildElement("start");
-        XmlElement* end = columns->createNewChildElement("end");
-        XmlElement* mappedTo = columns->createNewChildElement("mappedTo");
-        start->addTextElement ("Start time");
-        end->addTextElement ("End time");
-        mappedTo->addTextElement ("Mapped to");
-
-        columns->writeTo(File::getCurrentWorkingDirectory(), {});
-
-        return columns;
+        xml->writeTo(File::getCurrentWorkingDirectory().getChildFile ("chops.xml"), {});
+        return xml;
     }
 
     //==============================================================================
     // load chops into memory
-    void loadData()
+    void initTableData()
     {
-        dataList = getChopData();
-        columnList = getChopColumns();
-
-        numRows = dataList->getNumChildElements();
+        chopXml = chopsToXml();        
+        numRows = 0;
     }
 
     // (a utility method to search our XML for the attribute that matches a column ID)
     String getAttributeNameForColumnId (const int columnId) const
     {
-        forEachXmlChildElement (*columnList, columnXml)
+        forEachXmlChildElement (*chopXml->getChildByName (COLUMNS), columnXml)
         {
-            if (columnXml->getIntAttribute ("columnId") == columnId)
-                return columnXml->getStringAttribute ("name");
+            if (columnXml->getIntAttribute (COLATR_ID) == columnId)
+                return columnXml->getStringAttribute (COLATR_NAME);
         }
 
         return {};

@@ -27,10 +27,12 @@ public:
     SamplerThumbnail(AudioFormatManager& formatManager,
                      AudioTransportSource& source,
                      Slider& slider,
+                     Array<Chop>& chopList,
                      HashMap<String, Colour>& colorMap):
         transportSource (source),
         zoomSlider (slider),
         thumbnail (512, formatManager, thumbnailCache),
+        chops (chopList),
         colors (colorMap)
     {
         thumbnail.addChangeListener (this);
@@ -41,7 +43,6 @@ public:
         scrollbar.addListener (this);
         scrollbar.setColour (ScrollBar::backgroundColourId, colors["bluedark"]);
         scrollbar.setColour (ScrollBar::thumbColourId, colors["blue"]);
-
 
         currentPositionMarker.setFill (colors["graylite"]);
         addAndMakeVisible (currentPositionMarker);
@@ -168,15 +169,15 @@ public:
         }
     }
 
-    double getCurrentPosition ()
+    void addChopMarker (Chop& chop)
     {
-        if (thumbnail.getTotalLength() > 0)
-        {
-            return transportSource.getCurrentPosition();
-        } else
-        {
-            return 0;
-        }
+        DrawableRectangle* rect = new DrawableRectangle();
+        rect->setFill (colors["red"]);
+        rect->setRectangle (Rectangle<float> (timeToX (chop.start) - 0.75f, 0,
+                           1.5f, (float) (getHeight() - scrollbar.getHeight())));
+        rect->setVisible (true);
+
+        chopStartMarkerMap.set (chop.id, rect);
     }
 
     bool newFileDropped = false;
@@ -193,7 +194,11 @@ private:
 
     File lastFileDropped;
 
+    Array<Chop>& chops;
+
     DrawableRectangle currentPositionMarker;
+    HashMap<int, DrawableRectangle*> chopStartMarkerMap;
+
     HashMap<String, Colour>& colors;
    
     float timeToX (const double time) const
@@ -235,6 +240,11 @@ private:
 
         currentPositionMarker.setRectangle (Rectangle<float> (timeToX (transportSource.getCurrentPosition()) - 0.75f, 0,
                                             1.5f, (float) (getHeight() - scrollbar.getHeight())));
+        
+        for (auto it = chopStartMarkerMap.begin(); it != chopStartMarkerMap.end(); it.next())
+        {
+
+        }
         sendChangeMessage();
     }
 

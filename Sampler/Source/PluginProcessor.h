@@ -14,9 +14,11 @@
 
 struct Chop
 {
+    int id;
     double start;
     double end;
     String mappedTo;
+    bool visible;
 };
 
 //==============================================================================

@@ -48,7 +48,7 @@ public:
 
 
         // THUMBNAIL 
-        thumbnail.reset (new SamplerThumbnail (formatManager, transportSource, zoomSlider, colors));
+        thumbnail.reset (new SamplerThumbnail (formatManager, transportSource, zoomSlider, chops, colors));
         addAndMakeVisible (thumbnail.get());
 
         // THUMBNAIL FUNCTIONS
@@ -377,13 +377,10 @@ private:
     {
         auto currentTime = transportSource.getCurrentPosition();
         auto chops = processor.getChopList();
-        chops->add (Chop { currentTime, transportSource.getLengthInSeconds(), "" });
+        auto chop = Chop { chops->size(), currentTime, transportSource.getLengthInSeconds(), "" , true };
+        chops->add (chop);
         chopList->reloadData();
-
-        //for (auto i = 0; i < chops->size(); i++)
-        //{
-        //    Logger::getCurrentLogger()->writeToLog((String) chops->operator[](i).start);
-        //}
+        thumbnail->addChopMarker(chop);
     }
 
     void updateFollowTransportState()
@@ -398,7 +395,8 @@ private:
             if (thumbnail.get()->newFileDropped)
                 showAudioResource (File (thumbnail->getLastDroppedFile()));
             else 
-                currentPositionLabel.setText (String::formatted("Position: " + (String) thumbnail->getCurrentPosition()), NotificationType::dontSendNotification);
+                currentPositionLabel.setText ("Position: " + (String) transportSource.getCurrentPosition(), 
+                    NotificationType::dontSendNotification);
         }
         if (source == &transportSource)
         {

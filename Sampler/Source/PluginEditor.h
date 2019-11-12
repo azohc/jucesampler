@@ -32,8 +32,7 @@ public:
         state (Stopped),
         transportSource (transport), 
         sourcePlayer (player),
-        deviceManager (manager),
-        chopList (chops)
+        deviceManager (manager)
     {
         colors.set("bgdark", colorBgDark);
         colors.set("bglite", colorBgLight);
@@ -129,8 +128,8 @@ public:
 
 
         // CHOPLIST
-        addAndMakeVisible (chopList);
-
+        chopList.reset(new ChopListComponent(chops, colors));
+        addAndMakeVisible (chopList.get());
 
         // audio setup
         formatManager.registerBasicFormats();
@@ -212,7 +211,7 @@ public:
         
 
         // Choplist
-        chopList.setBounds (rectChopList);
+        chopList->setBounds (rectChopList);
     
 
         // Thumbnail
@@ -252,7 +251,7 @@ private:
     std::unique_ptr<SamplerThumbnail> thumbnail;
     Slider zoomSlider { Slider::LinearVertical, Slider::NoTextBox };
 
-    ChopListComponent chopList;
+    std::unique_ptr<ChopListComponent> chopList;
     //==============================================================================
     // CONTROLS
     TextButton playButton { "Play" };
@@ -379,7 +378,7 @@ private:
         auto currentTime = transportSource.getCurrentPosition();
         auto chops = processor.getChopList();
         chops->add (Chop { currentTime, transportSource.getLengthInSeconds(), "" });
-        chopList.reloadData();
+        chopList->reloadData();
 
         //for (auto i = 0; i < chops->size(); i++)
         //{

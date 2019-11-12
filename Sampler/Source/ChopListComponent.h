@@ -18,7 +18,10 @@
 class ChopListComponent    : public Component, public TableListBoxModel
 {
 public:
-    ChopListComponent(Array<Chop>& chopList): chops (chopList)
+    ChopListComponent(Array<Chop>& chopList, 
+                      HashMap<String, Colour>& colorMap): 
+        chops (chopList), 
+        colors (colorMap)
     {
         // Load some data from an embedded XML file..
         initTableData();
@@ -26,10 +29,6 @@ public:
         // Create our table component and add it to this component..
         addAndMakeVisible (table);
         table.setModel (this);
-
-        // give it a border
-        table.setColour (ListBox::outlineColourId, Colours::grey);
-        table.setOutlineThickness (1);
 
         // Add some columns to the table header, based on the column list
         forEachXmlChildElement (*chopXml->getChildByName (COLUMNS), columnXml)
@@ -40,12 +39,13 @@ public:
                                          30, -1, TableHeaderComponent::notResizable);
         }
 
-        // we could now change some initial settings..
-        //table.getHeader().setSortColumnId (1, true); // sort forwards by the ID column
-        //table.getHeader().setColumnVisible (7, false); // hide the "length" column until the user shows it
-
-        // un-comment this line to have a go of stretch-to-fit mode
+        table.getHeader().setSortColumnId (COLID_START, true); // sort forwards by the ID column
         table.getHeader().setStretchToFitActive (true);
+        table.getHeader().setColour (TableHeaderComponent::backgroundColourId, colors["bg"]);
+        table.getHeader().setColour (TableHeaderComponent::highlightColourId, colors["bglite"]);
+        table.getHeader().setColour (TableHeaderComponent::textColourId, colors["fg"]);
+        table.getHeader().setColour (TableHeaderComponent::outlineColourId, colors["bgdark"]);
+        table.setColour(TableListBox::backgroundColourId, colors["bg"]);
 
         table.setMultipleSelectionEnabled (false);
     }
@@ -65,12 +65,12 @@ public:
     // This is overloaded from TableListBoxModel, and should fill in the background of the whole row
     void paintRowBackground (Graphics& g, int rowNumber, int /*width*/, int /*height*/, bool rowIsSelected) override
     {
-        auto alternateColour = getLookAndFeel().findColour (ListBox::backgroundColourId)
-            .interpolatedWith (getLookAndFeel().findColour (ListBox::textColourId), 0.03f);
+        auto selectedRowColour = colors["bgdark"].interpolatedWith (colors["bg"], 0.26f);
+        auto altRowColour = colors["bgdark"].interpolatedWith (colors["bg"], 0.66f);
         if (rowIsSelected)
-            g.fillAll (Colours::lightblue);
+            g.fillAll (selectedRowColour);
         else if (rowNumber % 2)
-            g.fillAll (alternateColour);
+            g.fillAll (altRowColour);
     }
 
     // This is overloaded from TableListBoxModel, and must paint any cells that aren't using custom
@@ -78,7 +78,7 @@ public:
     void paintCell (Graphics& g, int rowNumber, int columnId,
                     int width, int height, bool /*rowIsSelected*/) override
     {
-        g.setColour (getLookAndFeel().findColour (ListBox::textColourId));
+        g.setColour (colors["fg"]);
         g.setFont (font);
 
         if (auto* rowElement = chopXml->getChildByName (DATA)->getChildElement (rowNumber))
@@ -88,7 +88,7 @@ public:
             g.drawText (text, 2, 0, width - 4, height, Justification::centredLeft, true);
         }
 
-        g.setColour (getLookAndFeel().findColour (ListBox::backgroundColourId));
+        g.setColour (colors["bgdark"].interpolatedWith (colors["bg"], 0.86f));
         g.fillRect (width - 1, 0, 1, height);
     }
 
@@ -188,21 +188,29 @@ public:
     void resized() override
     {
         // position our table with a gap around its edge
-        table.setBoundsInset (BorderSize<int> (4));
+        table.setBoundsInset (BorderSize<int> (1));
     }
 
     void reloadData()
     {
         chopsToXml();
+        numRows = chopXml->getChildByName (DATA)->getNumChildElements();
+        table.updateContent();
+        if (numRows == 1)
+        {
+            table.selectRow (0);
+        }
     }
 
 private:
     TableListBox table;     
+    int numRows;
     Font font { 14.0f };
     Array<Chop>& chops;
     
     XmlElement* chopXml = nullptr;
-    int numRows;
+
+    HashMap<String, Colour>& colors;
 
     enum ColumnIds
     {
@@ -343,26 +351,30 @@ private:
 
     XmlElement* chopsToXml()
     {
-        XmlElement* xml = new XmlElement(CHOPS);
+        if (chopXml != nullptr)
+            delete chopXml;
 
-        XmlElement* columns = xml->createNewChildElement(COLUMNS);
+        chopXml = new XmlElement(CHOPS);
+        XmlElement* columns = chopXml->createNewChildElement(COLUMNS);
+
+        auto columnWidth = getBounds().getWidth() || 40;
 
         XmlElement* columnStart = columns->createNewChildElement(COLUMN);
         columnStart->setAttribute (COLATR_ID, COLID_START);
         columnStart->setAttribute (COLATR_NAME, COL_START);
-        columnStart->setAttribute (COLATR_WIDTH, 50);
+        columnStart->setAttribute (COLATR_WIDTH, columnWidth);
 
         XmlElement* columnEnd = columns->createNewChildElement(COLUMN);
         columnEnd->setAttribute (COLATR_ID, COLID_END);
         columnEnd->setAttribute (COLATR_NAME, COL_END);
-        columnEnd->setAttribute (COLATR_WIDTH, 50);
+        columnEnd->setAttribute (COLATR_WIDTH, columnWidth);
 
         XmlElement* columnMappedTo = columns->createNewChildElement(COLUMN);
         columnMappedTo->setAttribute (COLATR_ID, COLID_MAPTO);
         columnMappedTo->setAttribute (COLATR_NAME, COL_TRIGG);
-        columnMappedTo->setAttribute (COLATR_WIDTH, 50);
+        columnMappedTo->setAttribute (COLATR_WIDTH, columnWidth);
 
-        XmlElement* data = xml->createNewChildElement(DATA);
+        XmlElement* data = chopXml->createNewChildElement(DATA);
         for (int i = 0; i < chops.size(); i++)
         {
             XmlElement* chop = data->createNewChildElement(ITEM);
@@ -370,15 +382,17 @@ private:
             chop->setAttribute(COL_END, chops[i].end);
             chop->setAttribute(COL_TRIGG, chops[i].mappedTo);
         }
-        xml->writeTo(File::getCurrentWorkingDirectory().getChildFile ("chops.xml"), {});
-        return xml;
+        
+        chopXml->writeTo(File::getCurrentWorkingDirectory().getChildFile ("chops.xml"), {});
+
+        return chopXml;
     }
 
     //==============================================================================
     // load chops into memory
     void initTableData()
     {
-        chopXml = chopsToXml();        
+        chopsToXml();        
         numRows = 0;
     }
 

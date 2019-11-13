@@ -390,7 +390,7 @@ private:
             chop->setAttribute(COL_TRIGG, i.getValue().mappedTo);
         }
         
-        chopXml->writeTo(File::getCurrentWorkingDirectory().getChildFile ("chops.xml"), {});
+        //chopXml->writeTo(File::getCurrentWorkingDirectory().getChildFile ("chops.xml"), {});
 
         return chopXml;
     }

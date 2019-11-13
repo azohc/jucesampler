@@ -18,9 +18,9 @@
 class ChopListComponent    : public Component, public TableListBoxModel
 {
 public:
-    ChopListComponent(Array<Chop>& chopList, 
+    ChopListComponent(HashMap<int, Chop>& chopMap,
                       HashMap<String, Colour>& colorMap): 
-        chops (chopList), 
+        chops (chopMap), 
         colors (colorMap)
     {
         // Load some data from an embedded XML file..
@@ -109,34 +109,34 @@ public:
     Component* refreshComponentForCell (int rowNumber, int columnId, bool /*isRowSelected*/,
                                         Component* existingComponentToUpdate) override
     {
-        if (columnId == 1 || columnId == 7) // The ID and Length columns do not have a custom component
-        {
-            jassert (existingComponentToUpdate == nullptr);
-            return nullptr;
-        }
+        //if (columnId == 1 || columnId == 7) // The ID and Length columns do not have a custom component
+        //{
+        jassert (existingComponentToUpdate == nullptr);
+        return nullptr;
+        //}
 
-        if (columnId == 5) // For the ratings column, we return the custom combobox component
-        {
-            auto* ratingsBox = static_cast<RatingColumnCustomComponent*> (existingComponentToUpdate);
+        //if (columnId == 5) // For the ratings column, we return the custom combobox component
+        //{
+        //    auto* ratingsBox = static_cast<RatingColumnCustomComponent*> (existingComponentToUpdate);
 
-            // If an existing component is being passed-in for updating, we'll re-use it, but
-            // if not, we'll have to create one.
-            if (ratingsBox == nullptr)
-                ratingsBox = new RatingColumnCustomComponent (*this);
+        //    // If an existing component is being passed-in for updating, we'll re-use it, but
+        //    // if not, we'll have to create one.
+        //    if (ratingsBox == nullptr)
+        //        ratingsBox = new RatingColumnCustomComponent (*this);
 
-            ratingsBox->setRowAndColumn (rowNumber, columnId);
-            return ratingsBox;
-        }
+        //    ratingsBox->setRowAndColumn (rowNumber, columnId);
+        //    return ratingsBox;
+        //}
 
-        // The other columns are editable text columns, for which we use the custom Label component
-        auto* textLabel = static_cast<EditableTextCustomComponent*> (existingComponentToUpdate);
+        //// The other columns are editable text columns, for which we use the custom Label component
+        //auto* textLabel = static_cast<EditableTextCustomComponent*> (existingComponentToUpdate);
 
-        // same as above...
-        if (textLabel == nullptr)
-            textLabel = new EditableTextCustomComponent (*this);
+        //// same as above...
+        //if (textLabel == nullptr)
+        //    textLabel = new EditableTextCustomComponent (*this);
 
-        textLabel->setRowAndColumn (rowNumber, columnId);
-        return textLabel;
+        //textLabel->setRowAndColumn (rowNumber, columnId);
+        //return textLabel;
     }
 
     // This is overloaded from TableListBoxModel, and should choose the best width for the specified
@@ -202,11 +202,18 @@ public:
         }
     }
 
+    void clearChopXml()
+    {
+        chopXml->removeChildElement (chopXml->getChildByName (DATA), true);
+        numRows = 0;
+        table.updateContent();
+    }
+
 private:
     TableListBox table;     
     int numRows;
     Font font { 14.0f };
-    Array<Chop>& chops;
+    HashMap<int, Chop>& chops;
     
     XmlElement* chopXml = nullptr;
 
@@ -375,15 +382,15 @@ private:
         columnMappedTo->setAttribute (COLATR_WIDTH, columnWidth);
 
         XmlElement* data = chopXml->createNewChildElement(DATA);
-        for (int i = 0; i < chops.size(); i++)
+        for (auto i = chops.begin(); i != chops.end(); i.next())
         {
             XmlElement* chop = data->createNewChildElement(ITEM);
-            chop->setAttribute(COL_START, chops[i].start);
-            chop->setAttribute(COL_END, chops[i].end);
-            chop->setAttribute(COL_TRIGG, chops[i].mappedTo);
+            chop->setAttribute(COL_START, i.getValue().start);
+            chop->setAttribute(COL_END, i.getValue().end);
+            chop->setAttribute(COL_TRIGG, i.getValue().mappedTo);
         }
         
-        //chopXml->writeTo(File::getCurrentWorkingDirectory().getChildFile ("chops.xml"), {});
+        chopXml->writeTo(File::getCurrentWorkingDirectory().getChildFile ("chops.xml"), {});
 
         return chopXml;
     }

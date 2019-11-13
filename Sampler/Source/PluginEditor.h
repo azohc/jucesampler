@@ -25,14 +25,14 @@ public:
     SamplerAudioProcessorEditor (SamplerAudioProcessor& p, 
                                  AudioTransportSource& transport, 
                                  AudioSourcePlayer& player, 
-                                 AudioDeviceManager& manager,
-                                 Array<Chop>& chops) 
+                                 AudioDeviceManager& device,
+                                 HashMap<int, Chop>& chopMap) 
         : AudioProcessorEditor (&p), 
         processor (p), 
         state (Stopped),
         transportSource (transport), 
         sourcePlayer (player),
-        deviceManager (manager)
+        deviceManager (device)
     {
         colors.set("bgdark", colorBgDark);
         colors.set("bglite", colorBgLight);
@@ -48,7 +48,7 @@ public:
 
 
         // THUMBNAIL 
-        thumbnail.reset (new SamplerThumbnail (formatManager, transportSource, zoomSlider, chops, colors));
+        thumbnail.reset (new SamplerThumbnail (formatManager, transportSource, zoomSlider, chopMap, colors));
         addAndMakeVisible (thumbnail.get());
 
         // THUMBNAIL FUNCTIONS
@@ -128,7 +128,7 @@ public:
 
 
         // CHOPLIST
-        chopList.reset(new ChopListComponent(chops, colors));
+        chopList.reset(new ChopListComponent(chopMap, colors));
         addAndMakeVisible (chopList.get());
 
         // audio setup
@@ -314,6 +314,13 @@ private:
     {
         if (loadFileIntoTransport (file))
         {
+            if (processor.getChopMap()->size()) 
+            {
+                thumbnail->clearChopMarkerMap();
+                chopList->clearChopXml();
+                processor.getChopMap()->clear();
+            }
+
             zoomSlider.setEnabled (true);
             followTransportButton.setEnabled (true);
             zoomSlider.setValue (0, dontSendNotification);
@@ -376,11 +383,15 @@ private:
     void startTimeChopClicked()
     {
         auto currentTime = transportSource.getCurrentPosition();
-        auto chops = processor.getChopList();
-        auto chop = Chop { chops->size(), currentTime, transportSource.getLengthInSeconds(), "" , true };
-        chops->add (chop);
+        auto chops = processor.getChopMap();
+        auto chop = Chop { currentTime, transportSource.getLengthInSeconds(), "" , true };
+        auto newKey = chops->size();
+        while (chops->contains(newKey)) {
+            newKey++;
+        }
+        chops->set (newKey, chop);
         chopList->reloadData();
-        thumbnail->addChopMarker(chop);
+        thumbnail->addChopMarker(newKey);
     }
 
     void updateFollowTransportState()

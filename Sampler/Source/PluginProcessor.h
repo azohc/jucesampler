@@ -14,7 +14,6 @@
 
 struct Chop
 {
-    int id;
     double start;
     double end;
     String mappedTo;
@@ -65,7 +64,7 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     
     //==============================================================================
-    Array<Chop>* getChopList ();
+    HashMap<int, Chop>* getChopMap();
 
 private:
     //==============================================================================
@@ -74,7 +73,7 @@ private:
     AudioSourcePlayer sourcePlayer;
     AudioDeviceManager deviceManager;
 
-    Array<Chop> chops;
+    HashMap<int, Chop> chops;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SamplerAudioProcessor)
 };

@@ -24,7 +24,6 @@ SamplerAudioProcessor::SamplerAudioProcessor()
                        )
 #endif
 {
-    chops = Array<Chop> ();
 }
 
 SamplerAudioProcessor::~SamplerAudioProcessor()
@@ -190,7 +189,7 @@ void SamplerAudioProcessor::setStateInformation (const void* data, int sizeInByt
     // whose contents will have been created by the getStateInformation() call.
 }
 
-Array<Chop>* SamplerAudioProcessor::getChopList()
+HashMap<int, Chop>* SamplerAudioProcessor::getChopMap()
 {
     return &chops;
 }

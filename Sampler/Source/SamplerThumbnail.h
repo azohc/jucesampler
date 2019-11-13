@@ -27,12 +27,12 @@ public:
     SamplerThumbnail(AudioFormatManager& formatManager,
                      AudioTransportSource& source,
                      Slider& slider,
-                     Array<Chop>& chopList,
+                     HashMap<int, Chop>& chopMap,
                      HashMap<String, Colour>& colorMap):
         transportSource (source),
         zoomSlider (slider),
         thumbnail (512, formatManager, thumbnailCache),
-        chops (chopList),
+        chops (chopMap),
         colors (colorMap)
     {
         thumbnail.addChangeListener (this);
@@ -53,6 +53,11 @@ public:
     {
         scrollbar.removeListener (this);
         thumbnail.removeChangeListener (this);
+
+        for (auto i = chopStartMarkerMap.begin(); i != chopStartMarkerMap.end(); i.next())
+        {
+            delete i.getValue();
+        }
     }
 
     void setFile (const File& file)
@@ -169,15 +174,20 @@ public:
         }
     }
 
-    void addChopMarker (Chop& chop)
+    void addChopMarker (int key)
     {
         DrawableRectangle* rect = new DrawableRectangle();
-        rect->setFill (colors["red"]);
-        rect->setRectangle (Rectangle<float> (timeToX (chop.start) - 0.75f, 0,
-                           1.5f, (float) (getHeight() - scrollbar.getHeight())));
-        rect->setVisible (true);
+        addAndMakeVisible (rect);
+        chopStartMarkerMap.set (key, rect);
+    }
 
-        chopStartMarkerMap.set (chop.id, rect);
+    void clearChopMarkerMap()
+    {
+        for (auto i = chopStartMarkerMap.begin(); i != chopStartMarkerMap.end(); i.next())
+        {
+            delete i.getValue();
+        }
+        chopStartMarkerMap.clear();
     }
 
     bool newFileDropped = false;
@@ -194,7 +204,7 @@ private:
 
     File lastFileDropped;
 
-    Array<Chop>& chops;
+    HashMap<int, Chop>& chops;
 
     DrawableRectangle currentPositionMarker;
     HashMap<int, DrawableRectangle*> chopStartMarkerMap;
@@ -243,6 +253,12 @@ private:
         
         for (auto it = chopStartMarkerMap.begin(); it != chopStartMarkerMap.end(); it.next())
         {
+            auto chop = chops[it.getKey()];
+            it.getValue()->setFill (colors["red"]);
+            it.getValue()->setRectangle (Rectangle<float> (timeToX (chop.start) - 0.75f, 0,
+                                1.5f, (float) (getHeight() - scrollbar.getHeight())));
+            it.getValue()->setVisible (chop.visible);
+
 
         }
         sendChangeMessage();

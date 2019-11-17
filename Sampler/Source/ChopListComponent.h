@@ -48,6 +48,8 @@ public:
         table.setColour(TableListBox::backgroundColourId, colors["bg"]);
 
         table.setMultipleSelectionEnabled (false);
+
+        
     }
 
     ~ChopListComponent()
@@ -109,24 +111,33 @@ public:
     Component* refreshComponentForCell (int rowNumber, int columnId, bool /*isRowSelected*/,
                                         Component* existingComponentToUpdate) override
     {
-        //if (columnId == 1 || columnId == 7) // The ID and Length columns do not have a custom component
-        //{
-        jassert (existingComponentToUpdate == nullptr);
-        return nullptr;
-        //}
+        if (columnId != COLID_TRIGG && columnId != COLID_VISIB)    // only assert for custom columns
+        {
+            jassert (existingComponentToUpdate == nullptr);
+            return nullptr;
+        }
 
-        //if (columnId == 5) // For the ratings column, we return the custom combobox component
-        //{
-        //    auto* ratingsBox = static_cast<RatingColumnCustomComponent*> (existingComponentToUpdate);
+        if (columnId == COLID_TRIGG)
+        {
+            auto* triggerComboBox = static_cast<TriggerNoteColumnComponent*> (existingComponentToUpdate);
 
-        //    // If an existing component is being passed-in for updating, we'll re-use it, but
-        //    // if not, we'll have to create one.
-        //    if (ratingsBox == nullptr)
-        //        ratingsBox = new RatingColumnCustomComponent (*this);
+            if (triggerComboBox == nullptr)
+                triggerComboBox = new TriggerNoteColumnComponent (*this);
 
-        //    ratingsBox->setRowAndColumn (rowNumber, columnId);
-        //    return ratingsBox;
-        //}
+            triggerComboBox->   setRowAndColumn (rowNumber, columnId);
+            return triggerComboBox;
+        }
+
+        if (columnId == COLID_VISIB)
+        {
+            auto* visibleToggle = static_cast<ToggleButtonColumnComponent*> (existingComponentToUpdate);
+
+            if (visibleToggle == nullptr)
+                visibleToggle = new ToggleButtonColumnComponent (*this);
+            
+            visibleToggle->setRowAndColumn (rowNumber, columnId);
+            return visibleToggle;
+        }
 
         //// The other columns are editable text columns, for which we use the custom Label component
         //auto* textLabel = static_cast<EditableTextCustomComponent*> (existingComponentToUpdate);
@@ -163,14 +174,27 @@ public:
     }
 
     // A couple of quick methods to set and get cell values when the user changes them
-    int getRating (const int rowNumber) const
+    bool getChopVisible (const int rowNumber) const
     {
-        return chopXml->getChildByName (DATA)->getChildElement (rowNumber)->getIntAttribute ("Rating");
+        return chopXml->getChildByName (DATA)->getChildElement (rowNumber)->getBoolAttribute (COL_VISIB);
     }
 
-    void setRating (const int rowNumber, const int newRating)
+    void setChopVisible (const int rowNumber, const bool visible)
     {
-        chopXml->getChildByName (DATA)->getChildElement (rowNumber)->setAttribute ("Rating", newRating);
+        chopXml->getChildByName (DATA)->getChildElement (rowNumber)->setAttribute (COL_VISIB, visible);
+        auto chop = chops[chopXml->getChildByName (DATA)->getChildElement (rowNumber)->getIntAttribute (COL_ID)];
+        chop.visible = visible;
+        chops.set(chopXml->getChildByName (DATA)->getChildElement (rowNumber)->getIntAttribute (COL_ID), chop);
+    }
+
+    int getTriggerNote (const int rowNumber) const
+    {
+        return chopXml->getChildByName (DATA)->getChildElement (rowNumber)->getIntAttribute (COL_TRIGG);
+    }
+
+    void setTriggerNote (const int rowNumber, const int newTrigger)
+    {
+        chopXml->getChildByName (DATA)->getChildElement (rowNumber)->setAttribute (COL_TRIGG, newTrigger);
     }
 
     String getText (const int columnNumber, const int rowNumber) const
@@ -221,9 +245,11 @@ private:
 
     enum ColumnIds
     {
+        COLID_ID = 1010,
         COLID_START = 1011,
         COLID_END = 1012,
-        COLID_MAPTO = 1013
+        COLID_TRIGG = 1013,
+        COLID_VISIB = 1014
     };
 
     const String CHOPS = "CHOPS";
@@ -235,9 +261,11 @@ private:
 
     const String DATA = "DATA";
     const String ITEM = "ITEM";
+    const String COL_ID = "Number";
     const String COL_START = "Start";
     const String COL_END = "End";
     const String COL_TRIGG = "Trigger";
+    const String COL_VISIB = "Visible";
      
 
     //==============================================================================
@@ -288,24 +316,67 @@ private:
     };
 
     //==============================================================================
-    // This is a custom component containing a combo box, which we're going to put inside
-    // our table's "rating" column.
-    class RatingColumnCustomComponent : public Component
+    // custom component containing a toggle button
+    class ToggleButtonColumnComponent : public Component
     {
     public:
-        RatingColumnCustomComponent (ChopListComponent& td) : owner (td)
+        ToggleButtonColumnComponent (ChopListComponent& td) : owner (td)
         {
             // just put a combo box inside this component
-            addAndMakeVisible (comboBox);
-            comboBox.addItem ("fab", 1);
-            comboBox.addItem ("groovy", 2);
-            comboBox.addItem ("hep", 3);
-            comboBox.addItem ("mad for it", 4);
-            comboBox.addItem ("neat", 5);
-            comboBox.addItem ("swingin", 6);
-            comboBox.addItem ("wild", 7);
+            addAndMakeVisible (button);
+            button.setColour (TextButton::buttonColourId, owner.colors["bg"]);
+            button.setColour (TextButton::textColourOffId, owner.colors["fg"]);            
+            button.setEnabled (true);
+            button.onClick = [this] { owner.setChopVisible (row, button.getToggleState()); };
+            button.setWantsKeyboardFocus (false);
+        }
 
-            comboBox.onChange = [this] { owner.setRating (row, comboBox.getSelectedId()); };
+        void resized() override
+        {
+            button.setBoundsInset (BorderSize<int> (2));
+        }
+
+        // owner will call this when we may need to update our contents
+        void setRowAndColumn (int newRow, int newColumn)
+        {
+            row = newRow;
+            columnId = newColumn;
+            button.setToggleState (owner.getChopVisible (newRow), NotificationType::dontSendNotification);
+        }
+
+    private:
+        ChopListComponent& owner;
+        ToggleButton button;
+        int row, columnId;
+    };
+
+    //==============================================================================
+    // custom component containing a combo box
+    class TriggerNoteColumnComponent : public Component
+    {
+    public:
+        TriggerNoteColumnComponent (ChopListComponent& td) : owner (td)
+        {
+            comboBox.setColour (ComboBox::outlineColourId, owner.colors["bgdark"]);
+            comboBox.setColour (ComboBox::backgroundColourId, owner.colors["bg"]);
+            comboBox.setColour (ComboBox::buttonColourId, owner.colors["bgdark"]);
+            comboBox.setColour (ComboBox::arrowColourId, owner.colors["bgdark"]);
+            comboBox.setColour (ComboBox::textColourId, owner.colors["fg"]);
+            addAndMakeVisible (comboBox);
+            comboBox.addItem ("C4", 60);
+            comboBox.addItem ("C#4", 61);
+            comboBox.addItem ("D4", 62);
+            comboBox.addItem ("D#4", 63);
+            comboBox.addItem ("E4", 64);
+            comboBox.addItem ("F4", 65);
+            comboBox.addItem ("F#4", 66);
+            comboBox.addItem ("G4", 67);
+            comboBox.addItem ("G#4", 68);
+            comboBox.addItem ("A4", 69);
+            comboBox.addItem ("A#4", 70);
+            comboBox.addItem ("B4", 71);
+                             
+            comboBox.onChange = [this] { owner.setTriggerNote (row, comboBox.getSelectedId()); };
             comboBox.setWantsKeyboardFocus (false);
         }
 
@@ -319,7 +390,7 @@ private:
         {
             row = newRow;
             columnId = newColumn;
-            comboBox.setSelectedId (owner.getRating (row), dontSendNotification);
+            comboBox.setSelectedId (owner.getTriggerNote (row), dontSendNotification);
         }
 
     private:
@@ -364,7 +435,12 @@ private:
         chopXml = new XmlElement(CHOPS);
         XmlElement* columns = chopXml->createNewChildElement(COLUMNS);
 
-        auto columnWidth = getBounds().getWidth() || 40;
+        auto columnWidth = getBounds().getWidth() || 25;
+
+        XmlElement* columnId = columns->createNewChildElement(COLUMN);
+        columnId->setAttribute (COLATR_ID, COLID_ID);
+        columnId->setAttribute (COLATR_NAME, COL_ID);
+        columnId->setAttribute (COLATR_WIDTH, columnWidth);
 
         XmlElement* columnStart = columns->createNewChildElement(COLUMN);
         columnStart->setAttribute (COLATR_ID, COLID_START);
@@ -377,17 +453,24 @@ private:
         columnEnd->setAttribute (COLATR_WIDTH, columnWidth);
 
         XmlElement* columnMappedTo = columns->createNewChildElement(COLUMN);
-        columnMappedTo->setAttribute (COLATR_ID, COLID_MAPTO);
+        columnMappedTo->setAttribute (COLATR_ID, COLID_TRIGG);
         columnMappedTo->setAttribute (COLATR_NAME, COL_TRIGG);
         columnMappedTo->setAttribute (COLATR_WIDTH, columnWidth);
+
+        XmlElement* columnShowHide = columns->createNewChildElement(COLUMN);
+        columnShowHide->setAttribute (COLATR_ID, COLID_VISIB);
+        columnShowHide->setAttribute (COLATR_NAME, COL_VISIB);
+        columnShowHide->setAttribute (COLATR_WIDTH, columnWidth);
 
         XmlElement* data = chopXml->createNewChildElement(DATA);
         for (auto i = chops.begin(); i != chops.end(); i.next())
         {
             XmlElement* chop = data->createNewChildElement(ITEM);
+            chop->setAttribute(COL_ID, i.getKey());
             chop->setAttribute(COL_START, i.getValue().start);
             chop->setAttribute(COL_END, i.getValue().end);
             chop->setAttribute(COL_TRIGG, i.getValue().mappedTo);
+            chop->setAttribute(COL_VISIB, i.getValue().visible);
         }
         
         //chopXml->writeTo(File::getCurrentWorkingDirectory().getChildFile ("chops.xml"), {});

@@ -25,8 +25,6 @@ SamplerAudioProcessor::SamplerAudioProcessor()
                        )
 #endif
 {
-    chops = HashMap<int, Chop> ();
-
     aubio_tempo_t *tempo = new_aubio_tempo("default", 32, 16, 11);
 }
 

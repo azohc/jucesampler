@@ -10,7 +10,8 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
-
+#include <aubio.h>
+#include "tempo/tempo.h"
 //==============================================================================
 SamplerAudioProcessor::SamplerAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -24,6 +25,9 @@ SamplerAudioProcessor::SamplerAudioProcessor()
                        )
 #endif
 {
+    chops = HashMap<int, Chop> ();
+
+    aubio_tempo_t *tempo = new_aubio_tempo("default", 32, 16, 11);
 }
 
 SamplerAudioProcessor::~SamplerAudioProcessor()

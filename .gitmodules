@@ -1,3 +1,6 @@
 [submodule ".\\Sampler\\Plugins\\aubio\\"]
 	path = .\\Sampler\\Plugins\\aubio\\
 	url = https://git.aubio.org/aubio/aubio
+[submodule "Sampler/Plugins/.\\vamp-aubio-plugins\\"]
+	path = Sampler/Plugins/.\\vamp-aubio-plugins\\
+	url = https://github.com/aubio/vamp-aubio-plugins

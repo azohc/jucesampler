@@ -1,0 +1,13 @@
+# appveyor configuration. See http://www.appveyor.com/docs/appveyor-yml
+
+platform:
+  - x86
+  - x64
+
+build_script:
+  - sh scripts/get_waf.sh
+  - patch -p1 < scripts/aubio_waf_msvc.patch
+  - sh scripts/get_aubio.sh
+  - sh scripts/get_deps_msvc.sh
+  - python waf configure
+  - python waf build -v

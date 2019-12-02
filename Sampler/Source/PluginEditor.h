@@ -401,14 +401,6 @@ private:
 
     void changeListenerCallback (ChangeBroadcaster* source) override
     {
-        if (source == thumbnail.get())
-        {
-            if (thumbnail.get()->newFileDropped)
-                showAudioResource (File (thumbnail->getLastDroppedFile()));
-            else 
-                currentPositionLabel.setText ("Position: " + (String) transportSource.getCurrentPosition(), 
-                    NotificationType::dontSendNotification);
-        }
         if (source == &transportSource)
         {
             if (transportSource.isPlaying())
@@ -417,6 +409,27 @@ private:
                 changeState (Stopped);
             else if (state == Pausing)
                 changeState (Paused);
+        }
+        if (source == thumbnail.get())
+        {
+            if (thumbnail.get()->getNewFileDropped())
+            {
+                showAudioResource (File (thumbnail->getLastDroppedFile()));
+                thumbnail->unsetNewFileDropped();
+            }
+            else
+            {
+                currentPositionLabel.setText ("Position: " + (String) transportSource.getCurrentPosition(),
+                                              NotificationType::dontSendNotification);
+            }
+        }
+        if (source == chopList.get())
+        {
+            auto deletedChopId = chopList->getDeletedChopId();
+            if (deletedChopId != -1)
+            {
+                thumbnail->removeChopMarker(deletedChopId);
+            }
         }
     }
 

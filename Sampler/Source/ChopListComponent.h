@@ -15,7 +15,10 @@
 //==============================================================================
 /*
 */
-class ChopListComponent    : public Component, public TableListBoxModel
+class ChopListComponent: 
+    public Component, 
+    public TableListBoxModel,
+    public ChangeBroadcaster
 {
 public:
     ChopListComponent(HashMap<int, Chop>& chopMap,
@@ -36,7 +39,7 @@ public:
             table.getHeader().addColumn (columnXml->getStringAttribute (COLATR_NAME),
                                          columnXml->getIntAttribute (COLATR_ID),
                                          columnXml->getIntAttribute (COLATR_WIDTH),
-                                         30, -1, TableHeaderComponent::notResizable);
+                                         30, -1, TableHeaderComponent::defaultFlags | TableHeaderComponent::resizable);
         }
 
         table.getHeader().setSortColumnId (COLID_START, true); // sort forwards by the ID column
@@ -49,11 +52,12 @@ public:
 
         table.setMultipleSelectionEnabled (false);
 
-        
+        rowClickedMenu = new PopupMenu();
     }
 
     ~ChopListComponent()
     {
+        delete rowClickedMenu;
         delete chopXml;
         chopXml = nullptr;
     }
@@ -111,7 +115,7 @@ public:
     Component* refreshComponentForCell (int rowNumber, int columnId, bool /*isRowSelected*/,
                                         Component* existingComponentToUpdate) override
     {
-        if (columnId != COLID_TRIGG && columnId != COLID_VISIB)    // only assert for custom columns
+        if (columnId != COLID_TRIGG)    // only assert for custom columns
         {
             jassert (existingComponentToUpdate == nullptr);
             return nullptr;
@@ -128,16 +132,16 @@ public:
             return triggerComboBox;
         }
 
-        if (columnId == COLID_VISIB)
-        {
-            auto* visibleToggle = static_cast<ToggleButtonColumnComponent*> (existingComponentToUpdate);
+        //if (columnId == COLID_VISIB)
+        //{
+        //    auto* visibleToggle = static_cast<ToggleButtonColumnComponent*> (existingComponentToUpdate);
 
-            if (visibleToggle == nullptr)
-                visibleToggle = new ToggleButtonColumnComponent (*this);
-            
-            visibleToggle->setRowAndColumn (rowNumber, columnId);
-            return visibleToggle;
-        }
+        //    if (visibleToggle == nullptr)
+        //        visibleToggle = new ToggleButtonColumnComponent (*this);
+
+        //    visibleToggle->setRowAndColumn (rowNumber, columnId);
+        //    return visibleToggle;
+        //}
 
         //// The other columns are editable text columns, for which we use the custom Label component
         //auto* textLabel = static_cast<EditableTextCustomComponent*> (existingComponentToUpdate);
@@ -173,16 +177,9 @@ public:
         return widest + 8;
     }
 
-    // A couple of quick methods to set and get cell values when the user changes them
-    bool getChopVisible (const int rowNumber) const
-    {
-        return chopXml->getChildByName (DATA)->getChildElement (rowNumber)->getBoolAttribute (COL_VISIB);
-    }
-
     void setChopVisible (const int rowNumber, const bool visible)
     {
-        chopXml->getChildByName (DATA)->getChildElement (rowNumber)->setAttribute (COL_VISIB, visible);
-        auto chop = chops[chopXml->getChildByName (DATA)->getChildElement (rowNumber)->getIntAttribute (COL_ID)];
+        auto chop = getChopAtRow (rowNumber);
         chop.visible = visible;
         chops.set(chopXml->getChildByName (DATA)->getChildElement (rowNumber)->getIntAttribute (COL_ID), chop);
     }
@@ -215,6 +212,44 @@ public:
         table.setBoundsInset (BorderSize<int> (1));
     }
 
+    Chop getChopAtRow(int rowNumber)
+    {
+        return chops[chopXml->getChildByName (DATA)->getChildElement (rowNumber)->getIntAttribute (COL_ID)];
+    }
+
+    void cellClicked(int rowNumber, int columnId, const MouseEvent &e)
+    {
+        // for popup menu’s item selection use result
+        int result = 0;
+        if (e.mods.isLeftButtonDown())
+        {
+        } else if (e.mods.isRightButtonDown())
+        {
+            rowClickedMenu->clear();
+            rowClickedMenu->addItem(ROWMENUID_VISIBLE, ROW_VISIBLE, true, getChopAtRow (rowNumber).visible);
+            rowClickedMenu->addItem(ROWMENUID_DELETE, ROW_DELETE, true, false);
+            result = rowClickedMenu->show();
+        }
+
+        if (result)
+        {
+            switch (result)
+            {
+                case ROWMENUID_VISIBLE:
+                    setChopVisible (rowNumber, !getChopAtRow (rowNumber).visible);
+                break;
+
+                case ROWMENUID_DELETE:
+                    deletedChopId = chopXml->getChildByName (DATA)->getChildElement (rowNumber)->getIntAttribute (COL_ID);
+                    chopXml->getChildByName (DATA)->removeChildElement (chopXml->getChildByName (DATA)->getChildElement (rowNumber), true);
+                    chops.remove(deletedChopId);
+                    reloadData();
+                    sendChangeMessage();
+                break;
+            }
+        }
+    }
+
     void reloadData()
     {
         chopsToXml();
@@ -233,25 +268,48 @@ public:
         table.updateContent();
     }
 
+    int getDeletedChopId()
+    {
+        return deletedChopId;
+    }
+
+    void unsetDeletedChopId()
+    {
+        deletedChopId = NONE;
+    }
+
 private:
     TableListBox table;     
     int numRows;
     Font font { 14.0f };
-    HashMap<int, Chop>& chops;
     
+    HashMap<int, Chop>& chops;
     XmlElement* chopXml = nullptr;
+    
+    PopupMenu* rowClickedMenu = nullptr;
+    int deletedChopId = NONE;
 
     HashMap<String, Colour>& colors;
 
+    const int NONE = -1;
+
+    // Row popup menu constants
+    enum RowMenuIds
+    {
+        ROWMENUID_VISIBLE = 1100,
+        ROWMENUID_DELETE = 1101
+    };
+    const String ROW_DELETE = "Delete chop";
+    const String ROW_VISIBLE = "Show markers";
+
+    // Chop XML constants
     enum ColumnIds
     {
         COLID_ID = 1010,
         COLID_START = 1011,
         COLID_END = 1012,
-        COLID_TRIGG = 1013,
-        COLID_VISIB = 1014
+        COLID_TRIGG = 1013
     };
-
     const String CHOPS = "CHOPS";
     const String COLUMNS = "COLUMNS";
     const String COLUMN = "COLUMN";
@@ -265,7 +323,6 @@ private:
     const String COL_START = "Start";
     const String COL_END = "End";
     const String COL_TRIGG = "Trigger";
-    const String COL_VISIB = "Visible";
      
 
     //==============================================================================
@@ -341,7 +398,7 @@ private:
         {
             row = newRow;
             columnId = newColumn;
-            button.setToggleState (owner.getChopVisible (newRow), NotificationType::dontSendNotification);
+            button.setToggleState (owner.getChopAtRow (newRow).visible, NotificationType::dontSendNotification);
         }
 
     private:
@@ -440,7 +497,7 @@ private:
         XmlElement* columnId = columns->createNewChildElement(COLUMN);
         columnId->setAttribute (COLATR_ID, COLID_ID);
         columnId->setAttribute (COLATR_NAME, COL_ID);
-        columnId->setAttribute (COLATR_WIDTH, columnWidth);
+        columnId->setAttribute (COLATR_WIDTH, 10);
 
         XmlElement* columnStart = columns->createNewChildElement(COLUMN);
         columnStart->setAttribute (COLATR_ID, COLID_START);
@@ -457,10 +514,6 @@ private:
         columnMappedTo->setAttribute (COLATR_NAME, COL_TRIGG);
         columnMappedTo->setAttribute (COLATR_WIDTH, columnWidth);
 
-        XmlElement* columnShowHide = columns->createNewChildElement(COLUMN);
-        columnShowHide->setAttribute (COLATR_ID, COLID_VISIB);
-        columnShowHide->setAttribute (COLATR_NAME, COL_VISIB);
-        columnShowHide->setAttribute (COLATR_WIDTH, columnWidth);
 
         XmlElement* data = chopXml->createNewChildElement(DATA);
         for (auto i = chops.begin(); i != chops.end(); i.next())
@@ -470,7 +523,6 @@ private:
             chop->setAttribute(COL_START, i.getValue().start);
             chop->setAttribute(COL_END, i.getValue().end);
             chop->setAttribute(COL_TRIGG, i.getValue().mappedTo);
-            chop->setAttribute(COL_VISIB, i.getValue().visible);
         }
         
         //chopXml->writeTo(File::getCurrentWorkingDirectory().getChildFile ("chops.xml"), {});

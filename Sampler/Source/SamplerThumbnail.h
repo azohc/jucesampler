@@ -181,6 +181,11 @@ public:
         chopStartMarkerMap.set (key, rect);
     }
 
+    void removeChopMarker (int key)
+    {
+        chopStartMarkerMap.remove (key);
+    }
+
     void clearChopMarkerMap()
     {
         for (auto i = chopStartMarkerMap.begin(); i != chopStartMarkerMap.end(); i.next())
@@ -190,7 +195,15 @@ public:
         chopStartMarkerMap.clear();
     }
 
-    bool newFileDropped = false;
+    bool getNewFileDropped()
+    {
+        return newFileDropped;
+    }
+
+    void unsetNewFileDropped()
+    {
+        newFileDropped = false;
+    }
 
 private:
     AudioTransportSource& transportSource;
@@ -203,6 +216,7 @@ private:
     bool isFollowingTransport = false;
 
     File lastFileDropped;
+    bool newFileDropped = false;
 
     HashMap<int, Chop>& chops;
 

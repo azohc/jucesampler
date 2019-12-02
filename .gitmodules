@@ -1,0 +1,3 @@
+[submodule ".\\Sampler\\Plugins\\aubio\\"]
+	path = .\\Sampler\\Plugins\\aubio\\
+	url = https://git.aubio.org/aubio/aubio

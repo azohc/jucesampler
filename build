@@ -1,4 +1,4 @@
 #! /bin/bash
 
 cd Sampler/Builds/LinuxMakefile
-make -j 4
+make -j 4 && build/Sampler

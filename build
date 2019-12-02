@@ -1,0 +1,4 @@
+#! /bin/bash
+
+cd Sampler/Builds/LinuxMakefile
+make -j 4

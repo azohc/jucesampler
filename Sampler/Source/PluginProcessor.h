@@ -1,16 +1,20 @@
 /*
   ==============================================================================
 
-    This file was auto-generated!
-
-    It contains the basic framework code for a JUCE plugin processor.
+    PluginProcessor.h
+    Created: 4 Nov 2019
+    Author:  Juan Chozas Sumbera
 
   ==============================================================================
 */
 
+
 #pragma once
 
+#define JUCE_USE_MP3AUDIOFORMAT 1
+
 #include "../JuceLibraryCode/JuceHeader.h"
+#include "aubio.h"
 
 struct Chop
 {

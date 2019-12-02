@@ -2,8 +2,8 @@
   ==============================================================================
 
     SamplerThumbnail.h
-    Created: 4 Nov 2019 7:03:25pm
-    Author:  wozas
+    Created: 4 Nov 2019
+    Author:  Juan Chozas Sumbera
 
   ==============================================================================
 */
@@ -47,6 +47,7 @@ public:
         currentPositionMarker.setFill (colors["graylite"]);
         addAndMakeVisible (currentPositionMarker);
 
+        addAndMakeVisible(selectedChopRect);
     }
 
     ~SamplerThumbnail()
@@ -195,6 +196,16 @@ public:
         chopStartMarkerMap.clear();
     }
 
+    void highlightSelectedChop(int id)
+    {
+        auto chop = chops[id];
+        selectedChopRect.setRectangle(Rectangle<float> (timeToX (chop.start) - 0.75f, 0,
+                                      timeToX (chop.end) - timeToX (chop.start),
+                                      (float) (getHeight() - scrollbar.getHeight())));
+        selectedChopRect.setFill(colors["bluedark"].brighter(0.11f));
+        selectedChopRect.setAlpha(0.5f);
+    }
+
     bool getNewFileDropped()
     {
         return newFileDropped;
@@ -221,6 +232,7 @@ private:
     HashMap<int, Chop>& chops;
 
     DrawableRectangle currentPositionMarker;
+    DrawableRectangle selectedChopRect;
     HashMap<int, DrawableRectangle*> chopStartMarkerMap;
 
     HashMap<String, Colour>& colors;
@@ -275,6 +287,8 @@ private:
 
 
         }
+
+        selectedChopRect.setVisible(true);
         sendChangeMessage();
     }
 

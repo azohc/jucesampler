@@ -2,8 +2,8 @@
   ==============================================================================
 
     ChopListComponent.h
-    Created: 10 Nov 2019 7:57:01pm
-    Author:  wozas
+    Created: 10 Nov 2019
+    Author:  Juan Chozas Sumbera
 
   ==============================================================================
 */
@@ -53,6 +53,9 @@ public:
         table.setMultipleSelectionEnabled (false);
 
         rowClickedMenu = new PopupMenu();
+
+        deletedChopId = NONE;
+        selectedChopId = NONE;
     }
 
     ~ChopListComponent()
@@ -250,6 +253,15 @@ public:
         }
     }
 
+    void selectedRowsChanged (int lastRowChanged) override
+    {
+        if (lastRowChanged != -1)
+        {
+            selectedChopId = chopXml->getChildByName (DATA)->getChildElement (lastRowChanged)->getIntAttribute (COL_ID);
+            sendChangeMessage();
+        }
+    }
+
     void reloadData()
     {
         chopsToXml();
@@ -278,6 +290,11 @@ public:
         deletedChopId = NONE;
     }
 
+    int getSelectedChopId()
+    {
+        return selectedChopId;
+    }
+
 private:
     TableListBox table;     
     int numRows;
@@ -287,7 +304,8 @@ private:
     XmlElement* chopXml = nullptr;
     
     PopupMenu* rowClickedMenu = nullptr;
-    int deletedChopId = NONE;
+    int selectedChopId;
+    int deletedChopId;
 
     HashMap<String, Colour>& colors;
 

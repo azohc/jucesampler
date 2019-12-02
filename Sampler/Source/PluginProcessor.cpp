@@ -1,16 +1,17 @@
 /*
   ==============================================================================
 
-    This file was auto-generated!
-
-    It contains the basic framework code for a JUCE plugin processor.
+    PluginProcessor.cpp
+    Created: 4 Nov 2019
+    Author:  Juan Chozas Sumbera
 
   ==============================================================================
 */
 
+
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
-#include "aubio.h"
+
 //==============================================================================
 SamplerAudioProcessor::SamplerAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations

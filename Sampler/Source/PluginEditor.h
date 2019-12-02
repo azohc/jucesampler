@@ -1,12 +1,13 @@
 /*
   ==============================================================================
 
-    This file was auto-generated!
-
-    It contains the basic framework code for a JUCE plugin editor.
+    PluginEditor.h
+    Created: 4 Nov 2019
+    Author:  Juan Chozas Sumbera
 
   ==============================================================================
 */
+
 
 #pragma once
 
@@ -135,6 +136,7 @@ public:
         formatManager.registerBasicFormats();
         thumbnail->addChangeListener (this);
         transportSource.addChangeListener (this);
+        chopList.get()->addChangeListener(this);
         thread.startThread (3);     
 
         setOpaque (true);
@@ -205,7 +207,7 @@ public:
         fullLoopToggle.setBounds (loopFns.removeFromLeft (loopFns.getWidth() / 2));
         selectionLoopToggle.setBounds (loopFns.removeFromLeft (loopFns.getWidth()));
 
-        startTimeChopButton.setBounds (rectThumbnailFunctsAux.removeFromLeft (functionWidth));  // flex3
+        startTimeChopButton.setBounds (rectThumbnailFunctsAux.removeFromLeft (functionWidth).reduced(3));  // flex3
 
         //followTransportButton.setBounds (rectThumbnailFunctsAux.removeFromLeft (small (small (rectThumbnailFunctsAux.getWidth()))));
         
@@ -301,7 +303,7 @@ private:
 
     void loadFile()
     {
-        FileChooser fc ("Choose a Wave file...", {}, "*wav", true);
+        FileChooser fc ("Choose a Wave or MP3 file...", {}, "*wav;*mp3", true);
 
         if (fc.browseForFileToOpen())
         {
@@ -385,6 +387,11 @@ private:
         auto currentTime = transportSource.getCurrentPosition();
         auto chops = processor.getChopMap();
         auto chop = Chop { currentTime, transportSource.getLengthInSeconds(), "" , true };
+        if (chops->size()) 
+        {
+            // TODO insert to chops (sorted start times)
+        } 
+
         auto newKey = chops->size();
         while (chops->contains(newKey)) {
             newKey++;
@@ -410,6 +417,20 @@ private:
             else if (state == Pausing)
                 changeState (Paused);
         }
+        if (source == chopList.get())
+        {
+            auto deletedChopId = chopList->getDeletedChopId();
+            if (deletedChopId != -1)    // TODO IMPORT GLOBAL CONSTANTS
+            {
+                thumbnail->removeChopMarker(deletedChopId);
+            }
+
+            auto selectedChopid = chopList->getSelectedChopId();
+            if (selectedChopid != -1)   // TODO IMPORT GLOBAL CONSTANTS FOR NONE (-1)
+            {
+                thumbnail->highlightSelectedChop(chopList->getSelectedChopId());
+            }
+        }
         if (source == thumbnail.get())
         {
             if (thumbnail.get()->getNewFileDropped())
@@ -421,14 +442,6 @@ private:
             {
                 currentPositionLabel.setText ("Position: " + (String) transportSource.getCurrentPosition(),
                                               NotificationType::dontSendNotification);
-            }
-        }
-        if (source == chopList.get())
-        {
-            auto deletedChopId = chopList->getDeletedChopId();
-            if (deletedChopId != -1)
-            {
-                thumbnail->removeChopMarker(deletedChopId);
             }
         }
     }

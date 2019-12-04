@@ -40,9 +40,10 @@
         <MODULEPATH id="juce_opengl" path="../JUCE/modules"/>
       </MODULEPATHS>
     </VS2017>
-    <LINUX_MAKE targetFolder="Builds/LinuxMakefile">
+    <LINUX_MAKE targetFolder="Builds/LinuxMakefile" externalLibraries="aubio">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" headerPath="../../Plugins/aubio-0.4.7/include/aubio"/>
+        <CONFIGURATION isDebug="1" name="Debug" headerPath="../../Plugins/aubio/include/aubio"
+                       linkTimeOptimisation="0" libraryPath="../../Plugins/aubio/lib"/>
         <CONFIGURATION isDebug="0" name="Release"/>
       </CONFIGURATIONS>
       <MODULEPATHS>

@@ -1,4 +1,22 @@
 #! /bin/bash
 
+REBUILD=false
+
+# goto dir with Makefile
 cd Sampler/Builds/LinuxMakefile
-make -j 4 && build/Sampler
+
+# make
+$REBUILD && make clean
+if make -j 4; then 
+
+    if $REBUILD; then
+        # copy plugin 
+        cp ../../Plugins/aubio/lib/libaubio.so.5.4.8  build/
+        cp ../../Plugins/aubio/lib/libaubio.a  build/
+        
+        ln -s libaubio.so.5.4.8 libaubio.so
+        ln -s libaubio.so.5.4.8 libaubio.so.5
+    fi
+    # run Sampler
+    LD_LIBRARY_PATH=build build/Sampler
+fi

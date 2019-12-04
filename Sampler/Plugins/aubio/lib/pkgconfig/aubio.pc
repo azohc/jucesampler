@@ -1,10 +1,10 @@
-prefix=C:\Users\juan\AppData\Local\Temp
-exec_prefix=C:\Users\juan\AppData\Local\Temp
-libdir=C:\Users\juan\AppData\Local\Temp\lib
-includedir=C:\Users\juan\AppData\Local\Temp\include
+prefix=/home/chosa/git/jucesampler/Sampler/Plugins/aubio
+exec_prefix=/home/chosa/git/jucesampler/Sampler/Plugins/aubio
+libdir=/home/chosa/git/jucesampler/Sampler/Plugins/aubio/lib
+includedir=/home/chosa/git/jucesampler/Sampler/Plugins/aubio/include
 
 Name: aubio
 Description: a library for audio labelling
-Version: 0.5.0~git+63fc1dfb+mods
+Version: 0.5.0~git+eadb7f61
 Libs: -L${libdir} -laubio
 Cflags: -I${includedir}

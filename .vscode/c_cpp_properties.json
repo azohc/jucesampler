@@ -5,7 +5,7 @@
             "includePath": [
                 "${workspaceFolder}/Sampler/JuceLibraryCode",
                 "${workspaceFolder}/Sampler/Source",
-                "${workspaceFolder}/Sampler/Plugins/aubio-0.4.7/include/aubio",
+                "${workspaceFolder}/Sampler/Plugins/aubio/include/aubio",
                 "${workspaceFolder}/JUCE/modules/*"
             ],
             "defines": [],

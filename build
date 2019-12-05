@@ -17,6 +17,4 @@ if make -j 4; then
         ln -s libaubio.so.5.4.8 libaubio.so
         ln -s libaubio.so.5.4.8 libaubio.so.5
     fi
-    # run Sampler
-    LD_LIBRARY_PATH=build build/Sampler
 fi

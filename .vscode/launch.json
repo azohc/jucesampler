@@ -5,11 +5,21 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(gdb) Attach",
+            "name": "(gdb) Launch",
             "type": "cppdbg",
-            "request": "attach",
+            "request": "launch",
             "program": "${workspaceFolder}/Sampler/Builds/LinuxMakefile/build/Sampler",
-            "processId": "${command:pickProcess}",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/Sampler/Builds/LinuxMakefile/build/",
+            "additionalSOLibSearchPath": "${workspaceFolder}/Sampler/Builds/LinuxMakefile/build",
+            "environment": [
+                {
+                    "name": "LD_LIBRARY_PATH",
+                    "value": "."
+                }
+            ],
+            "externalConsole": false,
             "MIMode": "gdb",
             "setupCommands": [
                 {
@@ -19,5 +29,6 @@
                 }
             ]
         }
+        
     ]
 }

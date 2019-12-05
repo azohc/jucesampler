@@ -309,10 +309,6 @@ private:
         {
             auto file = fc.getResult();
             showAudioResource(file);
-
-            auto a = new_aubio_source(file.getFullPathName().getCharPointer(), 0, 2048);
-            auto dur = aubio_source_get_duration(a);
-            Logger::getCurrentLogger()->writeToLog((String)dur);
         }
     }
 

@@ -27,15 +27,13 @@ static const Colour COLOR_TAN = Colour::fromString("FFEDB183");
 static const Colour COLOR_SEA = Colour::fromString("FF1E555C");
 
 
-static const Identifier ID_CHOPS = "Chops";
+static const Identifier ID_CHOPS = "ChopData";
 static const Identifier ID_CHOP = "Chop";
-static const Identifier PROPERTY_ID = "id";
-static const Identifier PROP_START_TIME = "StartTime";
-static const Identifier PROP_END_TIME = "EndTime";
-static const Identifier PROP_TRIGGER = "TriggerNote";
+static const Identifier PROP_ID = "ID";
+static const Identifier PROP_START_TIME = "Start";
+static const Identifier PROP_END_TIME = "End";
+static const Identifier PROP_TRIGGER = "Trigger";
 static const Identifier PROP_HIDDEN = "Hidden";
-static const Identifier PROP_RECT_START = "StartMarker";
-static const Identifier PROP_RECT_END = "EndMarker";
 
 
 static const int NONE = -110;

@@ -18,14 +18,13 @@
 */
 class ChopListComponent: 
     public Component, 
-    public TableListBoxModel,
-    public ChangeBroadcaster
+    public TableListBoxModel
 {
 public:
-    ChopListComponent(ValueTree chops): 
-        chopTree (chops)
+    ChopListComponent(ValueTree chops, Value selected) :
+        chopTree (chops), selectedChopId (selected)
     {
-        chopsToXml();
+        initChopListColumns();
         numRows = 0;
 
         // Create our table component and add it to this component..
@@ -33,15 +32,14 @@ public:
         table.setModel (this);
 
         // Add some columns to the table header, based on the column list
-        forEachXmlChildElement (*chopXml->getChildByName (COLUMNS), columnXml)
+        forEachXmlChildElement (*columnXml, column)
         {
-            table.getHeader().addColumn (columnXml->getStringAttribute (COLATR_NAME),
-                                         columnXml->getIntAttribute (COLATR_ID),
-                                         columnXml->getIntAttribute (COLATR_WIDTH),
+            table.getHeader().addColumn (column->getStringAttribute (COLUMN_NAME),
+                                         column->getIntAttribute (COLUMN_ID),
+                                         column->getIntAttribute (COLATR_WIDTH),
                                          30, -1, TableHeaderComponent::defaultFlags | TableHeaderComponent::resizable);
         }
 
-        table.getHeader().setSortColumnId (COLID_START, true); // sort forwards by the ID column
         table.getHeader().setStretchToFitActive (true);
         table.getHeader().setColour (TableHeaderComponent::backgroundColourId, COLOR_BG);
         table.getHeader().setColour (TableHeaderComponent::highlightColourId, COLOR_BGLIGHT);
@@ -54,13 +52,13 @@ public:
         rowClickedMenu = new PopupMenu();
 
         deletedChopId = NONE;
-        selectedChopId = NONE;
     }
 
     ~ChopListComponent()
     {
         delete rowClickedMenu;
         delete chopXml;
+        delete columnXml;
     }
 
     // This is overloaded from TableListBoxModel, and must return the total number of rows in our table
@@ -72,12 +70,15 @@ public:
     // This is overloaded from TableListBoxModel, and should fill in the background of the whole row
     void paintRowBackground (Graphics& g, int rowNumber, int /*width*/, int /*height*/, bool rowIsSelected) override
     {
-        auto selectedRowColour = COLOR_BGDARK.interpolatedWith (COLOR_BG, 0.26f);
-        auto altRowColour = COLOR_BGDARK.interpolatedWith (COLOR_BG, 0.66f);
+        auto selectedRowColour = COLOR_BGDARK.interpolatedWith (COLOR_BG, 0.16f);
+        auto rowColour = COLOR_BGDARK.interpolatedWith (COLOR_BG, 0.56f);
+        auto altRowColour = COLOR_BGDARK.interpolatedWith (COLOR_BG, 0.86f);
         if (rowIsSelected)
             g.fillAll (selectedRowColour);
         else if (rowNumber % 2)
             g.fillAll (altRowColour);
+        else
+            g.fillAll (rowColour);
     }
 
     // This is overloaded from TableListBoxModel, and must paint any cells that aren't using custom
@@ -88,7 +89,7 @@ public:
         g.setColour (COLOR_FG);
         g.setFont (font);
 
-        if (auto* rowElement = chopXml->getChildByName (DATA)->getChildElement (rowNumber))
+        if (auto* rowElement = chopXml->getChildElement (rowNumber))
         {
             auto text = rowElement->getStringAttribute (getAttributeNameForColumnId (columnId));
 
@@ -106,7 +107,7 @@ public:
         if (newSortColumnId != 0)
         {
             DemoDataSorter sorter (getAttributeNameForColumnId (newSortColumnId), isForwards);
-            chopXml->getChildByName (DATA)->sortChildElements (sorter);
+            chopXml->sortChildElements (sorter);
 
             table.updateContent();
         }
@@ -167,7 +168,7 @@ public:
         // find the widest bit of text in this column..
         for (int i = getNumRows(); --i >= 0;)
         {
-            if (auto* rowElement = chopXml->getChildByName (DATA)->getChildElement (i))
+            if (auto* rowElement = chopXml->getChildElement (i))
             {
                 auto text = rowElement->getStringAttribute (getAttributeNameForColumnId (columnId));
 
@@ -180,29 +181,29 @@ public:
 
     void setChopVisible (const int rowNumber, const bool hidden)
     {
-        auto chop = chopTree.getChildWithProperty(PROPERTY_ID, getChopIdAtRow(rowNumber));
+        auto chop = chopTree.getChildWithProperty(PROP_ID, getChopIdAtRow(rowNumber));
         chop.setProperty(PROP_HIDDEN, hidden, nullptr);
     }
 
     int getTriggerNote (const int rowNumber) const
     {
-        return chopXml->getChildByName (DATA)->getChildElement (rowNumber)->getIntAttribute (COL_TRIGG);
+        return chopXml->getChildElement (rowNumber)->getIntAttribute (COL_TRIGG);
     }
 
     void setTriggerNote (const int rowNumber, const int newTrigger)
     {
-        chopXml->getChildByName (DATA)->getChildElement (rowNumber)->setAttribute (COL_TRIGG, newTrigger);
+        chopXml->getChildElement (rowNumber)->setAttribute (COL_TRIGG, newTrigger);
     }
 
     String getText (const int columnNumber, const int rowNumber) const
     {
-        return chopXml->getChildByName (DATA)->getChildElement (rowNumber)->getStringAttribute (getAttributeNameForColumnId(columnNumber));
+        return chopXml->getChildElement (rowNumber)->getStringAttribute (getAttributeNameForColumnId(columnNumber));
     }
 
     void setText (const int columnNumber, const int rowNumber, const String& newText)
     {
         auto columnName = table.getHeader().getColumnName (columnNumber);
-        chopXml->getChildByName (DATA)->getChildElement (rowNumber)->setAttribute (columnName, newText);
+        chopXml->getChildElement (rowNumber)->setAttribute (columnName, newText);
     }
 
     //==============================================================================
@@ -213,11 +214,11 @@ public:
     }
 
     int getChopIdAtRow (int rowNumber) {
-        return chopXml->getChildByName (DATA)->getChildElement (rowNumber)->getIntAttribute (COL_ID);
+        return chopXml->getChildElement (rowNumber)->getIntAttribute (COLNAME_ID);
     }
 
     ValueTree getChopAtRow (int rowNumber) {
-        return chopTree.getChildWithProperty(PROPERTY_ID, getChopIdAtRow(rowNumber));
+        return chopTree.getChildWithProperty(PROP_ID, getChopIdAtRow(rowNumber));
     }
 
     void cellClicked(int rowNumber, int columnId, const MouseEvent &e)
@@ -243,8 +244,12 @@ public:
                 break;
 
                 case ROWMENUID_DELETE:
-                    deletedChopId = chopXml->getChildByName (DATA)->getChildElement (rowNumber)->getIntAttribute (COL_ID);
-                    chopTree.removeChild(chopTree.getChildWithProperty(PROPERTY_ID, deletedChopId), nullptr);
+                    deletedChopId = chopXml->getChildElement (rowNumber)->getIntAttribute (COLNAME_ID);
+                    if (deletedChopId == int (selectedChopId.getValue()))
+                    {
+                        selectedChopId = NONE;
+                    }
+                    chopTree.removeChild(chopTree.getChildWithProperty(PROP_ID, deletedChopId), nullptr);
                     reloadData();
                 break;
             }
@@ -255,20 +260,15 @@ public:
     {
         if (lastRowChanged != -1)
         {
-            selectedChopId = chopXml->getChildByName (DATA)->getChildElement (lastRowChanged)->getIntAttribute (COL_ID);
-            sendChangeMessage();
+            selectedChopId = chopXml->getChildElement (lastRowChanged)->getIntAttribute (COLNAME_ID);
         }
     }
 
     void reloadData()
     {
         chopsToXml();
-        numRows = chopXml->getChildByName (DATA)->getNumChildElements();
+        numRows = chopXml->getNumChildElements();
         table.updateContent();
-        if (numRows == 1)
-        {
-            table.selectRow (0);
-        }
     }
 
     int getDeletedChopId()
@@ -283,7 +283,18 @@ public:
 
     int getSelectedChopId()
     {
-        return selectedChopId;
+        return int(selectedChopId.getValue());
+    }
+
+    void selectRow(int row)
+    {
+        if (row == NONE)
+        {
+            table.deselectAllRows();
+        } else
+        {
+            table.selectRow(row);
+        }
     }
 
 private:
@@ -293,11 +304,13 @@ private:
     
     ValueTree chopTree;
     XmlElement* chopXml = nullptr;
+    XmlElement* columnXml = nullptr;
     
     PopupMenu* rowClickedMenu = nullptr;
-    int selectedChopId;
-    int deletedChopId;
 
+    Value selectedChopId;
+    int deletedChopId;
+    
     // Row popup menu constants
     enum RowMenuIds
     {
@@ -305,7 +318,7 @@ private:
         ROWMENUID_DELETE = 1101
     };
     const String ROW_DELETE = "Delete chop";
-    const String ROW_HIDDEN = "Show markers";
+    const String ROW_HIDDEN = "Hide markers";
 
     // Chop XML constants
     enum ColumnIds
@@ -315,18 +328,16 @@ private:
         COLID_END = 1012,
         COLID_TRIGG = 1013
     };
-    const String CHOPS = "CHOPS";
-    const String COLUMNS = "COLUMNS";
-    const String COLUMN = "COLUMN";
-    const String COLATR_ID = "columnId";
-    const String COLATR_NAME = "name";
+
+    const String COLUMNS = "ChopListColumns";
+    const String COLUMN = "Column";
+    const String COLUMN_ID = "columnId";
+    const String COLUMN_NAME = "name";
     const String COLATR_WIDTH = "width";
 
-    const String DATA = "DATA";
-    const String ITEM = "ITEM";
-    const String COL_ID = "Number";
-    const String COL_START = "Start";
-    const String COL_END = "End";
+    const String COLNAME_ID = "ID";
+    const String COLNAME_START = "Start";
+    const String COLNAME_END = "End";
     const String COL_TRIGG = "Trigger";
      
 
@@ -488,50 +499,43 @@ private:
         int direction;
     };
 
-    XmlElement* chopsToXml()
+    void initChopListColumns()
     {
-        if (chopXml != nullptr)
-            delete chopXml;
-
-        chopXml = new XmlElement(CHOPS);
-        XmlElement* columns = chopXml->createNewChildElement(COLUMNS);
+        columnXml = new XmlElement(COLUMNS);
 
         auto columnWidth = getBounds().getWidth() || 25;
 
-        XmlElement* columnId = columns->createNewChildElement(COLUMN);
-        columnId->setAttribute (COLATR_ID, COLID_ID);
-        columnId->setAttribute (COLATR_NAME, COL_ID);
+        XmlElement* columnId = columnXml->createNewChildElement(COLUMN);
+        columnId->setAttribute (COLUMN_ID, COLID_ID);
+        columnId->setAttribute (COLUMN_NAME, COLNAME_ID);
         columnId->setAttribute (COLATR_WIDTH, 10);
 
-        XmlElement* columnStart = columns->createNewChildElement(COLUMN);
-        columnStart->setAttribute (COLATR_ID, COLID_START);
-        columnStart->setAttribute (COLATR_NAME, COL_START);
+        XmlElement* columnStart = columnXml->createNewChildElement(COLUMN);
+        columnStart->setAttribute (COLUMN_ID, COLID_START);
+        columnStart->setAttribute (COLUMN_NAME, COLNAME_START);
         columnStart->setAttribute (COLATR_WIDTH, columnWidth);
 
-        XmlElement* columnEnd = columns->createNewChildElement(COLUMN);
-        columnEnd->setAttribute (COLATR_ID, COLID_END);
-        columnEnd->setAttribute (COLATR_NAME, COL_END);
+        XmlElement* columnEnd = columnXml->createNewChildElement(COLUMN);
+        columnEnd->setAttribute (COLUMN_ID, COLID_END);
+        columnEnd->setAttribute (COLUMN_NAME, COLNAME_END);
         columnEnd->setAttribute (COLATR_WIDTH, columnWidth);
 
-        XmlElement* columnMappedTo = columns->createNewChildElement(COLUMN);
-        columnMappedTo->setAttribute (COLATR_ID, COLID_TRIGG);
-        columnMappedTo->setAttribute (COLATR_NAME, COL_TRIGG);
+        XmlElement* columnMappedTo = columnXml->createNewChildElement(COLUMN);
+        columnMappedTo->setAttribute (COLUMN_ID, COLID_TRIGG);
+        columnMappedTo->setAttribute (COLUMN_NAME, COL_TRIGG);
         columnMappedTo->setAttribute (COLATR_WIDTH, columnWidth);
 
+        //columnXml->writeTo(File::getCurrentWorkingDirectory().getChildFile ("columns.xml"), {});
+    }
 
-        XmlElement* data = chopXml->createNewChildElement(DATA);
-        for (auto i = chopTree.begin(); i != chopTree.end(); ++i)
-        {
-            XmlElement* chop = data->createNewChildElement(ITEM);
-            chop->setAttribute(COL_ID, (int) (*i)[PROPERTY_ID]);
-            chop->setAttribute(COL_START, (double) (*i)[PROP_START_TIME]);
-            chop->setAttribute(COL_END, (double) (*i)[PROP_END_TIME]);
-            chop->setAttribute(COL_TRIGG, (*i)[PROP_TRIGGER].toString());
-        }
+    void chopsToXml()
+    {
+        if (chopXml != nullptr)     
+            delete chopXml;
         
-        chopXml->writeTo(File::getCurrentWorkingDirectory().getChildFile ("chopManual.xml"), {});
-        chopTree.createXml()->writeTo(File::getCurrentWorkingDirectory().getChildFile ("chopTree.xml"), {});
-        return chopXml;
+        chopXml = chopTree.createXml().release();
+
+        //chopTree.createXml()->writeTo(File::getCurrentWorkingDirectory().getChildFile ("chops.xml"), {});
     }
 
     //==============================================================================
@@ -539,10 +543,10 @@ private:
     // (a utility method to search our XML for the attribute that matches a column ID)
     String getAttributeNameForColumnId (const int columnId) const
     {
-        forEachXmlChildElement (*chopXml->getChildByName (COLUMNS), columnXml)
+        forEachXmlChildElement (*columnXml, column)
         {
-            if (columnXml->getIntAttribute (COLATR_ID) == columnId)
-                return columnXml->getStringAttribute (COLATR_NAME);
+            if (column->getIntAttribute (COLUMN_ID) == columnId)
+                return column->getStringAttribute (COLUMN_NAME);
         }
 
         return {};

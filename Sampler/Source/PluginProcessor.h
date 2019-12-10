@@ -15,7 +15,7 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "Constants.h"
-#include "aubio.h"
+//#include "aubio.h"
 
 struct Chop
 {
@@ -69,7 +69,9 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     
     //==============================================================================
+    HashMap<int, ValueTree>* getChopMap();
     ValueTree getChopTree() const;
+    void clearChopTree();
     int addChop(const Chop& chop);
 
 private:

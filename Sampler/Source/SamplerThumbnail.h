@@ -28,11 +28,15 @@ public:
     SamplerThumbnail(AudioFormatManager& formatManager,
                      AudioTransportSource& source,
                      Slider& slider,
-                     ValueTree chops):
+                     ValueTree chops,
+                     Value& selectedChop,
+                     Value& selectionActive):
         transportSource (source),
         zoomSlider (slider),
         thumbnail (512, formatManager, thumbnailCache),
-        chopTree (chops)
+        chopTree (chops),
+        selectedChopId (selectedChop),
+        userSelectionActive (selectionActive)
     {
         thumbnail.addChangeListener (this);
 
@@ -46,7 +50,7 @@ public:
         currentPositionMarker.setFill (COLOR_GRAYLIGHT);
         addAndMakeVisible (currentPositionMarker);
 
-        addAndMakeVisible(selectedChopRect);
+        addAndMakeVisible(selectionRect);
     }
 
     ~SamplerThumbnail()
@@ -56,7 +60,8 @@ public:
 
         for (auto i = chopStartMarkerMap.begin(); i != chopStartMarkerMap.end(); i.next())
         {
-            delete i.getValue();
+            delete i.getValue().first;
+            delete i.getValue().second;
         }
     }
 
@@ -141,11 +146,19 @@ public:
 
     void mouseDown (const MouseEvent& e) override
     {
+        userSelectionActive = false;
+        selectedChopId = NONE;
         mouseDrag (e);
     }
 
     void mouseDrag (const MouseEvent& e) override
     {
+        if (e.mouseWasDraggedSinceMouseDown())
+        {
+            selectionStartTime = jmin (jmax (0.0, xToTime ((float) e.getMouseDownX())), transportSource.getLengthInSeconds());
+            selectionEndTime = jmin (jmax (0.0, xToTime ((float) e.getMouseDownX() + e.getOffsetFromDragStart().x)), transportSource.getLengthInSeconds());
+            userSelectionActive = true;
+        }
         if (canMoveTransport())
         {
             auto newPos = jmin (jmax (0.0, xToTime ((float) e.x)), transportSource.getLengthInSeconds());
@@ -176,13 +189,16 @@ public:
 
     void addChopMarker (int key)
     {
-        DrawableRectangle* rect = new DrawableRectangle();
-        addAndMakeVisible (rect);
-        chopStartMarkerMap.set (key, rect);
+        DrawableRectangle* st = new DrawableRectangle();
+        DrawableRectangle* en = new DrawableRectangle();
+        addAndMakeVisible (st); addAndMakeVisible(en);
+        chopStartMarkerMap.set (key, std::make_pair(st,en));
     }
 
     void removeChopMarker (int key)
     {
+        delete chopStartMarkerMap[key].first;
+        delete chopStartMarkerMap[key].second;
         chopStartMarkerMap.remove (key);
     }
 
@@ -190,22 +206,18 @@ public:
     {
         for (auto i = chopStartMarkerMap.begin(); i != chopStartMarkerMap.end(); i.next())
         {
-            delete i.getValue();
+            delete i.getValue().first;
+            delete i.getValue().second;
         }
         chopStartMarkerMap.clear();
     }
 
-    void highlightSelectedChop(int id)
+    void setSelectedChopId(int id)
     {
-        auto chop = chopTree.getChildWithProperty(PROPERTY_ID, id);
-        double start = chop.getProperty(PROP_START_TIME);
-        double end = chop.getProperty(PROP_END_TIME);
-
-        selectedChopRect.setRectangle(Rectangle<float> (timeToX (start) - 0.75f, 0,
-                                      timeToX (end) - timeToX (start),
-                                      (float) (getHeight() - scrollbar.getHeight())));
-        selectedChopRect.setFill(COLOR_BLUEDARK.brighter(0.11f));
-        selectedChopRect.setAlpha(0.5f);
+        userSelectionActive = true;
+        selectedChopId = id;
+        selectionStartTime = chopTree.getChildWithProperty(PROP_ID, id)[PROP_START_TIME];
+        selectionEndTime = chopTree.getChildWithProperty(PROP_ID, id)[PROP_END_TIME];
     }
 
     bool getNewFileDropped()
@@ -216,6 +228,11 @@ public:
     void unsetNewFileDropped()
     {
         newFileDropped = false;
+    }
+
+    std::pair<double, double> getSelectionBounds()
+    {
+        return std::make_pair(selectionStartTime, selectionEndTime);
     }
 
 private:
@@ -232,10 +249,17 @@ private:
     bool newFileDropped = false;
 
     ValueTree chopTree;
+     
+    double selectionStartTime;
+    double selectionEndTime;
+
+    Value selectedChopId;
+    Value userSelectionActive;
 
     DrawableRectangle currentPositionMarker;
-    DrawableRectangle selectedChopRect;
-    HashMap<int, DrawableRectangle*> chopStartMarkerMap;
+
+    DrawableRectangle selectionRect;
+    HashMap<int, std::pair<DrawableRectangle*, DrawableRectangle*>> chopStartMarkerMap;
    
     float timeToX (const double time) const
     {
@@ -272,6 +296,8 @@ private:
 
     void updateCursorPosition()
     {
+        auto selectionActive = bool (userSelectionActive.getValue());
+        auto selectedChop = int (selectedChopId.getValue());
         currentPositionMarker.setVisible (thumbnail.getTotalLength() > 0);
 
         currentPositionMarker.setRectangle (Rectangle<float> (timeToX (transportSource.getCurrentPosition()) - 0.75f, 0,
@@ -282,19 +308,43 @@ private:
                                 1.5f, (float) (getHeight() - scrollbar.getHeight()));
         };
 
+        auto selection = [this] (double start, double end)
+        {
+            return Rectangle<float> (timeToX (start), 0,
+                                     timeToX (end) - timeToX (start),
+                                     (float) (getHeight() - scrollbar.getHeight()));
+        };
+
         for (auto it = chopStartMarkerMap.begin(); it != chopStartMarkerMap.end(); it.next())
         {
-            auto chop = chopTree.getChildWithProperty(PROPERTY_ID, it.getKey());
+            auto chop = chopTree.getChildWithProperty(PROP_ID, it.getKey());
             double start = chop.getProperty(PROP_START_TIME);
             double end = chop.getProperty(PROP_END_TIME);
             bool hidden = chop.getProperty(PROP_HIDDEN);
 
-            it.getValue()->setFill (COLOR_RED);
-            it.getValue()->setRectangle (marker(start));
-            it.getValue()->setVisible (!hidden);
-        }
+            it.getValue().first->setFill (COLOR_RED);
+            it.getValue().first->setRectangle (marker(start));
+            it.getValue().first->setVisible (!hidden);
 
-        selectedChopRect.setVisible(true);
+            it.getValue().second->setFill (COLOR_RED.darker(0.8f));
+            it.getValue().second->setRectangle (marker(end));
+            it.getValue().second->setVisible (!hidden);
+
+            if (it.getKey() == selectedChopId)
+            {
+                selectionRect.setRectangle (selection (start, end));
+                selectionRect.setFill (COLOR_BLUEDARK.brighter(0.11f));
+                selectionRect.setAlpha (0.5f);
+            }
+        }
+        if (selectionActive && selectedChop == NONE)
+        {
+            selectionRect.setRectangle (selection (selectionStartTime, selectionEndTime));
+            selectionRect.setFill (COLOR_BLUEDARK.brighter(0.11f));
+            selectionRect.setAlpha (0.5f);
+        }
+        selectionRect.setVisible (selectionActive);
+
         sendChangeMessage();
     }
 

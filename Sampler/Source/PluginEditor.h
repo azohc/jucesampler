@@ -20,7 +20,9 @@
 */
 class SamplerAudioProcessorEditor :
     public AudioProcessorEditor,
-    public ChangeListener
+    public ChangeListener,
+    public ValueTree::Listener,
+    public Value::Listener
 {
 public:
     SamplerAudioProcessorEditor (SamplerAudioProcessor& p, 
@@ -35,7 +37,7 @@ public:
         deviceManager (device)
     {
         // THUMBNAIL 
-        thumbnail.reset (new SamplerThumbnail (formatManager, transportSource, zoomSlider, processor.getChopTree()));
+        thumbnail.reset (new SamplerThumbnail (formatManager, transportSource, zoomSlider, processor.getChopTree(), selectedChopId, userSelectionActive));
         addAndMakeVisible (thumbnail.get());
 
         // THUMBNAIL FUNCTIONS
@@ -50,8 +52,7 @@ public:
         addAndMakeVisible (loopLabel);
         loopLabel.setFont (Font (15.00f, Font::plain));
         loopLabel.setJustificationType (Justification::left);
-        loopLabel.setEditable (false, false, false); // TODO make editable
-        //loopLabel.setColour (Label::backgroundWhenEditingColourId)
+        loopLabel.setEditable (false, false, false);
         loopLabel.setColour (Label::backgroundColourId, COLOR_BG);
         loopLabel.setColour (Label::textColourId, COLOR_FG);
 
@@ -70,14 +71,24 @@ public:
         selectionLoopToggle.setRadioGroupId(LoopMode);
         selectionLoopToggle.setColour (TextButton::buttonColourId, COLOR_BG);
         selectionLoopToggle.setColour (TextButton::textColourOffId, COLOR_FG);
-        selectionLoopToggle.setEnabled (false); // TODO enable when selection exists
-        selectionLoopToggle.setClickingTogglesState (true);
+        selectionLoopToggle.setEnabled (false);
+        selectionLoopToggle.setClickingTogglesState(true);
+        selectionLoopToggle.onClick = [this] () { 
+            currentAudioFileSource.get()->setLooping(selectionLoopToggle.getToggleState());
+        };
 
         addAndMakeVisible (startTimeChopButton);
         startTimeChopButton.setColour (TextButton::buttonColourId, COLOR_BG);
         startTimeChopButton.setColour (TextButton::textColourOffId, COLOR_FG);
         startTimeChopButton.onClick = [this] { startTimeChopClicked(); };
         startTimeChopButton.setEnabled (false);
+
+        addAndMakeVisible (selectionChopButton);
+        selectionChopButton.setColour (TextButton::buttonColourId, COLOR_BG);
+        selectionChopButton.setColour (TextButton::textColourOffId, COLOR_FG);
+        selectionChopButton.onClick = [this] { selectionChopClicked(); };
+        selectionChopButton.setEnabled (false);
+
 
         addAndMakeVisible (followTransportButton);
         followTransportButton.onClick = [this] { updateFollowTransportState(); };
@@ -115,14 +126,22 @@ public:
 
 
         // CHOPLIST
-        chopList.reset(new ChopListComponent(processor.getChopTree()));
+        chopList.reset(new ChopListComponent(processor.getChopTree(), selectedChopId));
         addAndMakeVisible (chopList.get());
 
-        // audio setup
+        // formats
         formatManager.registerBasicFormats();
+
+        // listeners
         thumbnail->addChangeListener (this);
         transportSource.addChangeListener (this);
-        chopList.get()->addChangeListener(this);
+
+        selectedChopId = NONE;
+        selectedChopId.addListener (this);
+
+        userSelectionActive = false;
+        userSelectionActive.addListener (this);
+
         thread.startThread (3);     
 
         setOpaque (true);
@@ -194,6 +213,7 @@ public:
         selectionLoopToggle.setBounds (loopFns.removeFromLeft (loopFns.getWidth()));
 
         startTimeChopButton.setBounds (rectThumbnailFunctsAux.removeFromLeft (functionWidth).reduced(3));  // flex3
+        selectionChopButton.setBounds (rectThumbnailFunctsAux.removeFromLeft (functionWidth).reduced(3));  // flex3
 
         //followTransportButton.setBounds (rectThumbnailFunctsAux.removeFromLeft (small (small (rectThumbnailFunctsAux.getWidth()))));
         
@@ -208,8 +228,7 @@ public:
         zoomSlider.setBounds (rectThumbnailAux.removeFromRight (small (small (rectThumbnailAux.getHeight()))));
         thumbnail->setBounds (rectThumbnailAux.reduced(1));
     }
-
-
+    
 private:
     enum TransportState
     {
@@ -240,6 +259,9 @@ private:
     Slider zoomSlider { Slider::LinearVertical, Slider::NoTextBox };
 
     std::unique_ptr<ChopListComponent> chopList;
+
+
+
     //==============================================================================
     // CONTROLS
     TextButton playButton { "Play" };
@@ -250,11 +272,16 @@ private:
     // THUMBNAIL FUNCTIONS
     Label currentPositionLabel { "currentPositionLabel", "Position: " };
     TextButton startTimeChopButton { "Chop from here", "Creates a new chop with a start time equal to the current position" };
+    TextButton selectionChopButton { "Chop selection", "Creates a new chop out of the current selection" };
+
     ToggleButton followTransportButton { "Follow Transport" };
 
     Label loopLabel { "loopLabel", "Loop" };
     ToggleButton fullLoopToggle { "F" };
     ToggleButton selectionLoopToggle { "S" };
+
+    Value selectedChopId;
+    Value userSelectionActive;
     
     // TODO MOVE&ZOOM on chop selection
 
@@ -290,7 +317,8 @@ private:
         {
             if (processor.getChopTree().getNumChildren()) 
             {
-                processor.getChopTree().removeAllChildren(nullptr);
+                processor.clearChopTree();
+                chopList->reloadData();
             }
 
             zoomSlider.setEnabled (true);
@@ -355,11 +383,36 @@ private:
     void startTimeChopClicked()
     {
         auto currentTime = transportSource.getCurrentPosition();
-        auto choptTree = processor.getChopTree();
-        auto chop = Chop { currentTime, transportSource.getLengthInSeconds(), "" , true };
-        int chopKey = processor.addChop(chop);
-        thumbnail->addChopMarker(chopKey);
-        chopList->reloadData();
+        auto chop = Chop { currentTime, transportSource.getLengthInSeconds(), "" , false };
+        int chopKey = processor.addChop (chop);
+    }
+
+    void selectionChopClicked()
+    {
+        auto bounds = thumbnail->getSelectionBounds();
+        auto chop = Chop { bounds.first, bounds.second, "", false };
+        int chopKey = processor.addChop (chop);
+    }
+
+    void valueChanged (Value& value)
+    {
+        if (value.refersToSameSourceAs(selectedChopId))
+        {
+            int selectedChopIdValue = int(value.getValue());
+            thumbnail->setSelectedChopId(selectedChopIdValue);
+            chopList->selectRow(selectedChopIdValue);
+        }
+
+        if (value.refersToSameSourceAs(userSelectionActive))
+        {
+            selectionChopButton.setEnabled (bool (userSelectionActive.getValue()));
+            selectionLoopToggle.setEnabled (bool (userSelectionActive.getValue()));
+            if (!bool (userSelectionActive.getValue()) && selectionLoopToggle.getToggleState())
+            {
+                selectionLoopToggle.setToggleState (false, dontSendNotification);
+                currentAudioFileSource.get()->setLooping(false);
+            }
+        }
     }
 
     void updateFollowTransportState()
@@ -378,14 +431,6 @@ private:
             else if (state == Pausing)
                 changeState (Paused);
         }
-        if (source == chopList.get())
-        {
-            auto selectedChopid = chopList->getSelectedChopId();
-            if (selectedChopid != NONE)   // TODO IMPORT GLOBAL CONSTANTS FOR NONE (-1)
-            {
-                thumbnail->highlightSelectedChop(chopList->getSelectedChopId());
-            }
-        }
         if (source == thumbnail.get())
         {
             if (thumbnail.get()->getNewFileDropped())
@@ -395,9 +440,43 @@ private:
             }
             else
             {
+                if (selectionLoopToggle.getToggleState())
+                {
+                    auto bounds = thumbnail->getSelectionBounds();
+                    if (transportSource.getCurrentPosition() >= bounds.second)
+                    {
+                        transportSource.setPosition (bounds.first);
+                    }
+                }
                 currentPositionLabel.setText ("Position: " + (String) transportSource.getCurrentPosition(),
                                               NotificationType::dontSendNotification);
             }
+        }
+    }
+    
+    void valueTreeChildAdded (ValueTree& parentTree,
+                              ValueTree& childWhichHasBeenAdded)
+    {
+        thumbnail->addChopMarker(childWhichHasBeenAdded[PROP_ID]);
+        chopList->reloadData();
+    }
+   
+    void valueTreePropertyChanged (ValueTree& treeWhosePropertyHasChanged,
+                                   const Identifier& property)
+    {
+
+    }
+
+    void valueTreeChildRemoved (ValueTree& parentTree,
+                                ValueTree& childWhichHasBeenRemoved,
+                                int indexFromWhichChildWasRemoved)
+    {
+        thumbnail->removeChopMarker(childWhichHasBeenRemoved[PROP_ID]);
+        processor.getChopMap()->remove(childWhichHasBeenRemoved[PROP_ID]);
+
+        if (!processor.getChopTree().getNumChildren())
+        {
+            thumbnail->setSelectedChopId(NONE);
         }
     }
 

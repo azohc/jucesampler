@@ -15,7 +15,7 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "Constants.h"
-//#include "aubio.h"
+#include "aubio.h"
 
 struct Chop
 {

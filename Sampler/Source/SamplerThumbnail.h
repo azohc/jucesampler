@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
+#include "Constants.h"
 
 //==============================================================================
 /*
@@ -27,13 +28,11 @@ public:
     SamplerThumbnail(AudioFormatManager& formatManager,
                      AudioTransportSource& source,
                      Slider& slider,
-                     HashMap<int, Chop>& chopMap,
-                     HashMap<String, Colour>& colorMap):
+                     ValueTree chops):
         transportSource (source),
         zoomSlider (slider),
         thumbnail (512, formatManager, thumbnailCache),
-        chops (chopMap),
-        colors (colorMap)
+        chopTree (chops)
     {
         thumbnail.addChangeListener (this);
 
@@ -41,10 +40,10 @@ public:
         scrollbar.setRangeLimits (visibleRange);
         scrollbar.setAutoHide (false);
         scrollbar.addListener (this);
-        scrollbar.setColour (ScrollBar::backgroundColourId, colors["bluedark"]);
-        scrollbar.setColour (ScrollBar::thumbColourId, colors["blue"]);
+        scrollbar.setColour (ScrollBar::backgroundColourId, COLOR_BLUEDARK);
+        scrollbar.setColour (ScrollBar::thumbColourId, COLOR_BLUE);
 
-        currentPositionMarker.setFill (colors["graylite"]);
+        currentPositionMarker.setFill (COLOR_GRAYLIGHT);
         addAndMakeVisible (currentPositionMarker);
 
         addAndMakeVisible(selectedChopRect);
@@ -100,8 +99,8 @@ public:
 
     void paint (Graphics& g) override
     {
-        g.fillAll (colors["bluedark"]);
-        g.setColour (colors["fg"]);
+        g.fillAll (COLOR_BLUEDARK);
+        g.setColour (COLOR_FG);
 
         if (thumbnail.getTotalLength() > 0.0)
         {
@@ -198,11 +197,14 @@ public:
 
     void highlightSelectedChop(int id)
     {
-        auto chop = chops[id];
-        selectedChopRect.setRectangle(Rectangle<float> (timeToX (chop.start) - 0.75f, 0,
-                                      timeToX (chop.end) - timeToX (chop.start),
+        auto chop = chopTree.getChildWithProperty(PROPERTY_ID, id);
+        double start = chop.getProperty(PROP_START_TIME);
+        double end = chop.getProperty(PROP_END_TIME);
+
+        selectedChopRect.setRectangle(Rectangle<float> (timeToX (start) - 0.75f, 0,
+                                      timeToX (end) - timeToX (start),
                                       (float) (getHeight() - scrollbar.getHeight())));
-        selectedChopRect.setFill(colors["bluedark"].brighter(0.11f));
+        selectedChopRect.setFill(COLOR_BLUEDARK.brighter(0.11f));
         selectedChopRect.setAlpha(0.5f);
     }
 
@@ -229,13 +231,11 @@ private:
     File lastFileDropped;
     bool newFileDropped = false;
 
-    HashMap<int, Chop>& chops;
+    ValueTree chopTree;
 
     DrawableRectangle currentPositionMarker;
     DrawableRectangle selectedChopRect;
     HashMap<int, DrawableRectangle*> chopStartMarkerMap;
-
-    HashMap<String, Colour>& colors;
    
     float timeToX (const double time) const
     {
@@ -276,16 +276,22 @@ private:
 
         currentPositionMarker.setRectangle (Rectangle<float> (timeToX (transportSource.getCurrentPosition()) - 0.75f, 0,
                                             1.5f, (float) (getHeight() - scrollbar.getHeight())));
-        
+
+        auto marker = [this] (double start) {
+            return Rectangle<float> (timeToX (start) - 0.75f, 0,
+                                1.5f, (float) (getHeight() - scrollbar.getHeight()));
+        };
+
         for (auto it = chopStartMarkerMap.begin(); it != chopStartMarkerMap.end(); it.next())
         {
-            auto chop = chops[it.getKey()];
-            it.getValue()->setFill (colors["red"]);
-            it.getValue()->setRectangle (Rectangle<float> (timeToX (chop.start) - 0.75f, 0,
-                                1.5f, (float) (getHeight() - scrollbar.getHeight())));
-            it.getValue()->setVisible (chop.visible);
+            auto chop = chopTree.getChildWithProperty(PROPERTY_ID, it.getKey());
+            double start = chop.getProperty(PROP_START_TIME);
+            double end = chop.getProperty(PROP_END_TIME);
+            bool hidden = chop.getProperty(PROP_HIDDEN);
 
-
+            it.getValue()->setFill (COLOR_RED);
+            it.getValue()->setRectangle (marker(start));
+            it.getValue()->setVisible (!hidden);
         }
 
         selectedChopRect.setVisible(true);

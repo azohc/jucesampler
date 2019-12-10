@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
+#include "Constants.h"
 
 //==============================================================================
 /*
@@ -21,13 +22,11 @@ class ChopListComponent:
     public ChangeBroadcaster
 {
 public:
-    ChopListComponent(HashMap<int, Chop>& chopMap,
-                      HashMap<String, Colour>& colorMap): 
-        chops (chopMap), 
-        colors (colorMap)
+    ChopListComponent(ValueTree chops): 
+        chopTree (chops)
     {
-        // Load some data from an embedded XML file..
-        initTableData();
+        chopsToXml();
+        numRows = 0;
 
         // Create our table component and add it to this component..
         addAndMakeVisible (table);
@@ -44,11 +43,11 @@ public:
 
         table.getHeader().setSortColumnId (COLID_START, true); // sort forwards by the ID column
         table.getHeader().setStretchToFitActive (true);
-        table.getHeader().setColour (TableHeaderComponent::backgroundColourId, colors["bg"]);
-        table.getHeader().setColour (TableHeaderComponent::highlightColourId, colors["bglite"]);
-        table.getHeader().setColour (TableHeaderComponent::textColourId, colors["fg"]);
-        table.getHeader().setColour (TableHeaderComponent::outlineColourId, colors["bgdark"]);
-        table.setColour(TableListBox::backgroundColourId, colors["bg"]);
+        table.getHeader().setColour (TableHeaderComponent::backgroundColourId, COLOR_BG);
+        table.getHeader().setColour (TableHeaderComponent::highlightColourId, COLOR_BGLIGHT);
+        table.getHeader().setColour (TableHeaderComponent::textColourId, COLOR_FG);
+        table.getHeader().setColour (TableHeaderComponent::outlineColourId, COLOR_BGDARK);
+        table.setColour(TableListBox::backgroundColourId, COLOR_BG);
 
         table.setMultipleSelectionEnabled (false);
 
@@ -62,7 +61,6 @@ public:
     {
         delete rowClickedMenu;
         delete chopXml;
-        chopXml = nullptr;
     }
 
     // This is overloaded from TableListBoxModel, and must return the total number of rows in our table
@@ -74,8 +72,8 @@ public:
     // This is overloaded from TableListBoxModel, and should fill in the background of the whole row
     void paintRowBackground (Graphics& g, int rowNumber, int /*width*/, int /*height*/, bool rowIsSelected) override
     {
-        auto selectedRowColour = colors["bgdark"].interpolatedWith (colors["bg"], 0.26f);
-        auto altRowColour = colors["bgdark"].interpolatedWith (colors["bg"], 0.66f);
+        auto selectedRowColour = COLOR_BGDARK.interpolatedWith (COLOR_BG, 0.26f);
+        auto altRowColour = COLOR_BGDARK.interpolatedWith (COLOR_BG, 0.66f);
         if (rowIsSelected)
             g.fillAll (selectedRowColour);
         else if (rowNumber % 2)
@@ -87,7 +85,7 @@ public:
     void paintCell (Graphics& g, int rowNumber, int columnId,
                     int width, int height, bool /*rowIsSelected*/) override
     {
-        g.setColour (colors["fg"]);
+        g.setColour (COLOR_FG);
         g.setFont (font);
 
         if (auto* rowElement = chopXml->getChildByName (DATA)->getChildElement (rowNumber))
@@ -97,7 +95,7 @@ public:
             g.drawText (text, 2, 0, width - 4, height, Justification::centredLeft, true);
         }
 
-        g.setColour (colors["bgdark"].interpolatedWith (colors["bg"], 0.86f));
+        g.setColour (COLOR_BGDARK.interpolatedWith (COLOR_BG, 0.86f));
         g.fillRect (width - 1, 0, 1, height);
     }
 
@@ -137,13 +135,13 @@ public:
 
         //if (columnId == COLID_VISIB)
         //{
-        //    auto* visibleToggle = static_cast<ToggleButtonColumnComponent*> (existingComponentToUpdate);
+        //    auto* hiddenToggle = static_cast<ToggleButtonColumnComponent*> (existingComponentToUpdate);
 
-        //    if (visibleToggle == nullptr)
-        //        visibleToggle = new ToggleButtonColumnComponent (*this);
+        //    if (hiddenToggle == nullptr)
+        //        hiddenToggle = new ToggleButtonColumnComponent (*this);
 
-        //    visibleToggle->setRowAndColumn (rowNumber, columnId);
-        //    return visibleToggle;
+        //    hiddenToggle->setRowAndColumn (rowNumber, columnId);
+        //    return hiddenToggle;
         //}
 
         //// The other columns are editable text columns, for which we use the custom Label component
@@ -180,11 +178,10 @@ public:
         return widest + 8;
     }
 
-    void setChopVisible (const int rowNumber, const bool visible)
+    void setChopVisible (const int rowNumber, const bool hidden)
     {
-        auto chop = getChopAtRow (rowNumber);
-        chop.visible = visible;
-        chops.set(chopXml->getChildByName (DATA)->getChildElement (rowNumber)->getIntAttribute (COL_ID), chop);
+        auto chop = chopTree.getChildWithProperty(PROPERTY_ID, getChopIdAtRow(rowNumber));
+        chop.setProperty(PROP_HIDDEN, hidden, nullptr);
     }
 
     int getTriggerNote (const int rowNumber) const
@@ -215,22 +212,25 @@ public:
         table.setBoundsInset (BorderSize<int> (1));
     }
 
-    Chop getChopAtRow(int rowNumber)
-    {
-        return chops[chopXml->getChildByName (DATA)->getChildElement (rowNumber)->getIntAttribute (COL_ID)];
+    int getChopIdAtRow (int rowNumber) {
+        return chopXml->getChildByName (DATA)->getChildElement (rowNumber)->getIntAttribute (COL_ID);
+    }
+
+    ValueTree getChopAtRow (int rowNumber) {
+        return chopTree.getChildWithProperty(PROPERTY_ID, getChopIdAtRow(rowNumber));
     }
 
     void cellClicked(int rowNumber, int columnId, const MouseEvent &e)
     {
-        // for popup menu’s item selection use result
+        // for popup menuâ€™s item selection use result
         int result = 0;
         if (e.mods.isLeftButtonDown())
         {
         } else if (e.mods.isRightButtonDown())
         {
             rowClickedMenu->clear();
-            rowClickedMenu->addItem(ROWMENUID_VISIBLE, ROW_VISIBLE, true, getChopAtRow (rowNumber).visible);
-            rowClickedMenu->addItem(ROWMENUID_DELETE, ROW_DELETE, true, false);
+            rowClickedMenu->addItem (ROWMENUID_HIDDEN, ROW_HIDDEN, true, getChopAtRow (rowNumber).getProperty(PROP_HIDDEN));
+            rowClickedMenu->addItem (ROWMENUID_DELETE, ROW_DELETE, true, false);
             result = rowClickedMenu->show();
         }
 
@@ -238,16 +238,14 @@ public:
         {
             switch (result)
             {
-                case ROWMENUID_VISIBLE:
-                    setChopVisible (rowNumber, !getChopAtRow (rowNumber).visible);
+                case ROWMENUID_HIDDEN:
+                    setChopVisible (rowNumber, !getChopAtRow (rowNumber).getProperty(PROP_HIDDEN));
                 break;
 
                 case ROWMENUID_DELETE:
                     deletedChopId = chopXml->getChildByName (DATA)->getChildElement (rowNumber)->getIntAttribute (COL_ID);
-                    chopXml->getChildByName (DATA)->removeChildElement (chopXml->getChildByName (DATA)->getChildElement (rowNumber), true);
-                    chops.remove(deletedChopId);
+                    chopTree.removeChild(chopTree.getChildWithProperty(PROPERTY_ID, deletedChopId), nullptr);
                     reloadData();
-                    sendChangeMessage();
                 break;
             }
         }
@@ -273,13 +271,6 @@ public:
         }
     }
 
-    void clearChopXml()
-    {
-        chopXml->removeChildElement (chopXml->getChildByName (DATA), true);
-        numRows = 0;
-        table.updateContent();
-    }
-
     int getDeletedChopId()
     {
         return deletedChopId;
@@ -300,25 +291,21 @@ private:
     int numRows;
     Font font { 14.0f };
     
-    HashMap<int, Chop>& chops;
+    ValueTree chopTree;
     XmlElement* chopXml = nullptr;
     
     PopupMenu* rowClickedMenu = nullptr;
     int selectedChopId;
     int deletedChopId;
 
-    HashMap<String, Colour>& colors;
-
-    const int NONE = -1;
-
     // Row popup menu constants
     enum RowMenuIds
     {
-        ROWMENUID_VISIBLE = 1100,
+        ROWMENUID_HIDDEN = 1100,
         ROWMENUID_DELETE = 1101
     };
     const String ROW_DELETE = "Delete chop";
-    const String ROW_VISIBLE = "Show markers";
+    const String ROW_HIDDEN = "Show markers";
 
     // Chop XML constants
     enum ColumnIds
@@ -399,8 +386,8 @@ private:
         {
             // just put a combo box inside this component
             addAndMakeVisible (button);
-            button.setColour (TextButton::buttonColourId, owner.colors["bg"]);
-            button.setColour (TextButton::textColourOffId, owner.colors["fg"]);            
+            button.setColour (TextButton::buttonColourId, COLOR_BG);
+            button.setColour (TextButton::textColourOffId, COLOR_FG);            
             button.setEnabled (true);
             button.onClick = [this] { owner.setChopVisible (row, button.getToggleState()); };
             button.setWantsKeyboardFocus (false);
@@ -416,7 +403,7 @@ private:
         {
             row = newRow;
             columnId = newColumn;
-            button.setToggleState (owner.getChopAtRow (newRow).visible, NotificationType::dontSendNotification);
+            button.setToggleState (owner.getChopAtRow (newRow)[PROP_HIDDEN], NotificationType::dontSendNotification);
         }
 
     private:
@@ -432,11 +419,11 @@ private:
     public:
         TriggerNoteColumnComponent (ChopListComponent& td) : owner (td)
         {
-            comboBox.setColour (ComboBox::outlineColourId, owner.colors["bgdark"]);
-            comboBox.setColour (ComboBox::backgroundColourId, owner.colors["bg"]);
-            comboBox.setColour (ComboBox::buttonColourId, owner.colors["bgdark"]);
-            comboBox.setColour (ComboBox::arrowColourId, owner.colors["bgdark"]);
-            comboBox.setColour (ComboBox::textColourId, owner.colors["fg"]);
+            comboBox.setColour (ComboBox::outlineColourId, COLOR_BGDARK);
+            comboBox.setColour (ComboBox::backgroundColourId, COLOR_BG);
+            comboBox.setColour (ComboBox::buttonColourId, COLOR_BGDARK);
+            comboBox.setColour (ComboBox::arrowColourId, COLOR_BGDARK);
+            comboBox.setColour (ComboBox::textColourId, COLOR_FG);
             addAndMakeVisible (comboBox);
             comboBox.addItem ("C4", 60);
             comboBox.addItem ("C#4", 61);
@@ -460,7 +447,6 @@ private:
             comboBox.setBoundsInset (BorderSize<int> (2));
         }
 
-        // Our demo code will call this when we may need to update our contents
         void setRowAndColumn (int newRow, int newColumn)
         {
             row = newRow;
@@ -534,27 +520,21 @@ private:
 
 
         XmlElement* data = chopXml->createNewChildElement(DATA);
-        for (auto i = chops.begin(); i != chops.end(); i.next())
+        for (auto i = chopTree.begin(); i != chopTree.end(); ++i)
         {
             XmlElement* chop = data->createNewChildElement(ITEM);
-            chop->setAttribute(COL_ID, i.getKey());
-            chop->setAttribute(COL_START, i.getValue().start);
-            chop->setAttribute(COL_END, i.getValue().end);
-            chop->setAttribute(COL_TRIGG, i.getValue().mappedTo);
+            chop->setAttribute(COL_ID, (int) (*i)[PROPERTY_ID]);
+            chop->setAttribute(COL_START, (double) (*i)[PROP_START_TIME]);
+            chop->setAttribute(COL_END, (double) (*i)[PROP_END_TIME]);
+            chop->setAttribute(COL_TRIGG, (*i)[PROP_TRIGGER].toString());
         }
         
-        //chopXml->writeTo(File::getCurrentWorkingDirectory().getChildFile ("chops.xml"), {});
-
+        chopXml->writeTo(File::getCurrentWorkingDirectory().getChildFile ("chopManual.xml"), {});
+        chopTree.createXml()->writeTo(File::getCurrentWorkingDirectory().getChildFile ("chopTree.xml"), {});
         return chopXml;
     }
 
     //==============================================================================
-    // load chops into memory
-    void initTableData()
-    {
-        chopsToXml();        
-        numRows = 0;
-    }
 
     // (a utility method to search our XML for the attribute that matches a column ID)
     String getAttributeNameForColumnId (const int columnId) const

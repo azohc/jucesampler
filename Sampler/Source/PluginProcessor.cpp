@@ -25,10 +25,12 @@ SamplerAudioProcessor::SamplerAudioProcessor()
                        )
 #endif
 {
+    chopTree = ValueTree { ID_CHOPS, {} };
 }
 
 SamplerAudioProcessor::~SamplerAudioProcessor()
 {
+    chopTree.removeAllChildren(nullptr);
 }
 
 //==============================================================================
@@ -173,7 +175,7 @@ bool SamplerAudioProcessor::hasEditor() const
 
 AudioProcessorEditor* SamplerAudioProcessor::createEditor()
 {
-    return new SamplerAudioProcessorEditor (*this, transportSource, sourcePlayer, deviceManager, chops);
+    return new SamplerAudioProcessorEditor (*this, transportSource, sourcePlayer, deviceManager);
 }
 
 //==============================================================================
@@ -190,9 +192,29 @@ void SamplerAudioProcessor::setStateInformation (const void* data, int sizeInByt
     // whose contents will have been created by the getStateInformation() call.
 }
 
-HashMap<int, Chop>* SamplerAudioProcessor::getChopMap()
+ValueTree SamplerAudioProcessor::getChopTree() const
 {
-    return &chops;
+    return chopTree;
+}
+
+int SamplerAudioProcessor::addChop(const Chop& chop) 
+{
+    auto newKey = chopTree.getNumChildren();
+    while (chopMap.contains(newKey)) {
+        newKey++;
+    }
+    
+    ValueTree chopNode = ValueTree (ID_CHOP);
+    chopNode.setProperty(PROPERTY_ID, newKey, nullptr);
+    chopNode.setProperty(PROP_START_TIME, chop.start, nullptr);
+    chopNode.setProperty(PROP_END_TIME, chop.end, nullptr);
+    chopNode.setProperty(PROP_TRIGGER, chop.mappedTo, nullptr);
+    chopNode.setProperty(PROP_HIDDEN, chop.hidden, nullptr);
+
+    chopMap.set(newKey, chopNode);
+    chopTree.appendChild(chopNode, nullptr);
+    
+    return newKey;
 }
 
 //==============================================================================

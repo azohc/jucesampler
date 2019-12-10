@@ -26,8 +26,7 @@ public:
     SamplerAudioProcessorEditor (SamplerAudioProcessor& p, 
                                  AudioTransportSource& transport, 
                                  AudioSourcePlayer& player, 
-                                 AudioDeviceManager& device,
-                                 HashMap<int, Chop>& chopMap) 
+                                 AudioDeviceManager& device) 
         : AudioProcessorEditor (&p), 
         processor (p), 
         state (Stopped),
@@ -35,21 +34,8 @@ public:
         sourcePlayer (player),
         deviceManager (device)
     {
-        colors.set("bgdark", colorBgDark);
-        colors.set("bglite", colorBgLight);
-        colors.set("bg", colorBg);
-        colors.set("fg", colorFg);
-        colors.set("red", colorRed);
-        colors.set("bluedark", colorBlueDark);
-        colors.set("blue", colorBlue);
-        colors.set("tan", colorTan);
-        colors.set("sea", colorSea);
-        colors.set("gray", colorGray);
-        colors.set("graylite", colorGrayLight);
-
-
         // THUMBNAIL 
-        thumbnail.reset (new SamplerThumbnail (formatManager, transportSource, zoomSlider, chopMap, colors));
+        thumbnail.reset (new SamplerThumbnail (formatManager, transportSource, zoomSlider, processor.getChopTree()));
         addAndMakeVisible (thumbnail.get());
 
         // THUMBNAIL FUNCTIONS
@@ -58,21 +44,21 @@ public:
         currentPositionLabel.setJustificationType (Justification::left);
         currentPositionLabel.setEditable (false, false, false); // TODO make editable
         //currentPositionLabel.setColour (Label::backgroundWhenEditingColourId)
-        currentPositionLabel.setColour (Label::backgroundColourId, colorBg);
-        currentPositionLabel.setColour (Label::textColourId, colorFg);
+        currentPositionLabel.setColour (Label::backgroundColourId, COLOR_BG);
+        currentPositionLabel.setColour (Label::textColourId, COLOR_FG);
         
         addAndMakeVisible (loopLabel);
         loopLabel.setFont (Font (15.00f, Font::plain));
         loopLabel.setJustificationType (Justification::left);
         loopLabel.setEditable (false, false, false); // TODO make editable
         //loopLabel.setColour (Label::backgroundWhenEditingColourId)
-        loopLabel.setColour (Label::backgroundColourId, colorBg);
-        loopLabel.setColour (Label::textColourId, colorFg);
+        loopLabel.setColour (Label::backgroundColourId, COLOR_BG);
+        loopLabel.setColour (Label::textColourId, COLOR_FG);
 
         addAndMakeVisible (fullLoopToggle);
         fullLoopToggle.setRadioGroupId(LoopMode);
-        fullLoopToggle.setColour (TextButton::buttonColourId, colorBg);
-        fullLoopToggle.setColour (TextButton::textColourOffId, colorFg);
+        fullLoopToggle.setColour (TextButton::buttonColourId, COLOR_BG);
+        fullLoopToggle.setColour (TextButton::textColourOffId, COLOR_FG);
         fullLoopToggle.setEnabled (false);
         fullLoopToggle.onClick = [this] () { 
             auto l = !currentAudioFileSource.get()->isLooping();
@@ -82,14 +68,14 @@ public:
 
         addAndMakeVisible (selectionLoopToggle);
         selectionLoopToggle.setRadioGroupId(LoopMode);
-        selectionLoopToggle.setColour (TextButton::buttonColourId, colorBg);
-        selectionLoopToggle.setColour (TextButton::textColourOffId, colorFg);
+        selectionLoopToggle.setColour (TextButton::buttonColourId, COLOR_BG);
+        selectionLoopToggle.setColour (TextButton::textColourOffId, COLOR_FG);
         selectionLoopToggle.setEnabled (false); // TODO enable when selection exists
         selectionLoopToggle.setClickingTogglesState (true);
 
         addAndMakeVisible (startTimeChopButton);
-        startTimeChopButton.setColour (TextButton::buttonColourId, colorBg);
-        startTimeChopButton.setColour (TextButton::textColourOffId, colorFg);
+        startTimeChopButton.setColour (TextButton::buttonColourId, COLOR_BG);
+        startTimeChopButton.setColour (TextButton::textColourOffId, COLOR_FG);
         startTimeChopButton.onClick = [this] { startTimeChopClicked(); };
         startTimeChopButton.setEnabled (false);
 
@@ -103,33 +89,33 @@ public:
         zoomSlider.onValueChange = [this] { thumbnail->setZoomFactor (zoomSlider.getValue()); };
         zoomSlider.setEnabled (false);
         zoomSlider.setSkewFactor (2);
-        zoomSlider.setColour (Slider::backgroundColourId, colorBlue.darker(0.6));
-        zoomSlider.setColour (Slider::trackColourId, colorBlue.darker(0.3));
-        zoomSlider.setColour (Slider::thumbColourId, colorBlue);
+        zoomSlider.setColour (Slider::backgroundColourId, COLOR_BLUE.darker(0.6));
+        zoomSlider.setColour (Slider::trackColourId, COLOR_BLUE.darker(0.3));
+        zoomSlider.setColour (Slider::thumbColourId, COLOR_BLUE);
 
 
         // BUTTONS
         addAndMakeVisible (playButton);
-        playButton.setColour (TextButton::buttonColourId, colorBg);
-        playButton.setColour (TextButton::textColourOffId, colorFg);
+        playButton.setColour (TextButton::buttonColourId, COLOR_BG);
+        playButton.setColour (TextButton::textColourOffId, COLOR_FG);
         playButton.onClick = [this] { playButtonClicked(); };
         playButton.setEnabled (false);
 
         addAndMakeVisible (loadButton);
-        loadButton.setColour (TextButton::buttonColourId, colorBg);
-        loadButton.setColour (TextButton::textColourOffId, colorFg);
+        loadButton.setColour (TextButton::buttonColourId, COLOR_BG);
+        loadButton.setColour (TextButton::textColourOffId, COLOR_FG);
         loadButton.onClick = [this] { loadFile(); };
         loadButton.setEnabled (true);
 
         addAndMakeVisible (stopButton);
-        stopButton.setColour (TextButton::buttonColourId, colorBg);
-        stopButton.setColour (TextButton::textColourOffId, colorFg);
+        stopButton.setColour (TextButton::buttonColourId, COLOR_BG);
+        stopButton.setColour (TextButton::textColourOffId, COLOR_FG);
         stopButton.onClick = [this] { stopButtonClicked(); };
         stopButton.setEnabled (false);
 
 
         // CHOPLIST
-        chopList.reset(new ChopListComponent(chopMap, colors));
+        chopList.reset(new ChopListComponent(processor.getChopTree()));
         addAndMakeVisible (chopList.get());
 
         // audio setup
@@ -149,12 +135,12 @@ public:
 
     void paint (Graphics& g) override
     {
-        g.fillAll (colorBgDark);
+        g.fillAll (COLOR_BGDARK);
 
-        g.setColour (colorBg);
+        g.setColour (COLOR_BG);
         g.fillRect (getLocalBounds().reduced(4));
         
-        g.setColour (colorBlueDark);
+        g.setColour (COLOR_BLUEDARK);
         g.fillRect (rectThumbnail);
 
         auto strokeRect = [&g] (Rectangle<int> r, int s)
@@ -165,7 +151,7 @@ public:
         };
 
 
-        g.setColour (colorBgDark);
+        g.setColour (COLOR_BGDARK);
         strokeRect (rectControls, 2);
         strokeRect (rectThumbnail, 2);
         strokeRect (rectThumbnailFuncts, 2);
@@ -282,20 +268,6 @@ private:
     Rectangle<int> rectLoopFunctions;
 
     //==============================================================================
-    // COLORS
-    Colour colorBgDark = Colour::fromString("FF252420");
-    Colour colorBg =  Colour::fromString("FF544F4C");
-    Colour colorBgLight = Colour::fromString("FFA1988F");
-    Colour colorFg =  Colour::fromString("FFEADED2");
-    Colour colorGray = Colour::fromString("FF605B58");
-    Colour colorGrayLight = Colour::fromString("FFD3D4D9");
-    Colour colorRed = Colour::fromString("FFD62734");
-    Colour colorBlueDark = Colour::fromString("FF252D39");
-    Colour colorBlue = Colour::fromString("FF525C65");
-    Colour colorTan = Colour::fromString("FFEDB183");
-    Colour colorSea = Colour::fromString("FF1E555C");
-
-    HashMap<String, Colour> colors;
 
     TransportState state;
 
@@ -316,11 +288,9 @@ private:
     {
         if (loadFileIntoTransport (file))
         {
-            if (processor.getChopMap()->size()) 
+            if (processor.getChopTree().getNumChildren()) 
             {
-                thumbnail->clearChopMarkerMap();
-                chopList->clearChopXml();
-                processor.getChopMap()->clear();
+                processor.getChopTree().removeAllChildren(nullptr);
             }
 
             zoomSlider.setEnabled (true);
@@ -385,20 +355,11 @@ private:
     void startTimeChopClicked()
     {
         auto currentTime = transportSource.getCurrentPosition();
-        auto chops = processor.getChopMap();
+        auto choptTree = processor.getChopTree();
         auto chop = Chop { currentTime, transportSource.getLengthInSeconds(), "" , true };
-        if (chops->size()) 
-        {
-            // TODO insert to chops (sorted start times)
-        } 
-
-        auto newKey = chops->size();
-        while (chops->contains(newKey)) {
-            newKey++;
-        }
-        chops->set (newKey, chop);
+        int chopKey = processor.addChop(chop);
+        thumbnail->addChopMarker(chopKey);
         chopList->reloadData();
-        thumbnail->addChopMarker(newKey);
     }
 
     void updateFollowTransportState()
@@ -419,14 +380,8 @@ private:
         }
         if (source == chopList.get())
         {
-            auto deletedChopId = chopList->getDeletedChopId();
-            if (deletedChopId != -1)    // TODO IMPORT GLOBAL CONSTANTS
-            {
-                thumbnail->removeChopMarker(deletedChopId);
-            }
-
             auto selectedChopid = chopList->getSelectedChopId();
-            if (selectedChopid != -1)   // TODO IMPORT GLOBAL CONSTANTS FOR NONE (-1)
+            if (selectedChopid != NONE)   // TODO IMPORT GLOBAL CONSTANTS FOR NONE (-1)
             {
                 thumbnail->highlightSelectedChop(chopList->getSelectedChopId());
             }

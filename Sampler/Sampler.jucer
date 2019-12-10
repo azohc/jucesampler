@@ -5,6 +5,7 @@
               pluginCharacteristicsValue="pluginEditorRequiresKeys,pluginIsSynth,pluginProducesMidiOut,pluginWantsMidiIn">
   <MAINGROUP id="BkkyvB" name="Sampler">
     <GROUP id="{33229E8B-F3CD-6BB0-771B-06E291FA31DC}" name="Source">
+      <FILE id="zFpFk3" name="Constants.h" compile="0" resource="0" file="Source/Constants.h"/>
       <FILE id="TJHU4c" name="ChopListComponent.h" compile="0" resource="0"
             file="Source/ChopListComponent.h"/>
       <FILE id="dSLBxc" name="SamplerThumbnail.h" compile="0" resource="0"

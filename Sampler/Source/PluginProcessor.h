@@ -14,6 +14,7 @@
 #define JUCE_USE_MP3AUDIOFORMAT 1
 
 #include "../JuceLibraryCode/JuceHeader.h"
+#include "Constants.h"
 #include "aubio.h"
 
 struct Chop
@@ -21,7 +22,7 @@ struct Chop
     double start;
     double end;
     String mappedTo;
-    bool visible;
+    bool hidden;
 };
 
 //==============================================================================
@@ -68,7 +69,8 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     
     //==============================================================================
-    HashMap<int, Chop>* getChopMap();
+    ValueTree getChopTree() const;
+    int addChop(const Chop& chop);
 
 private:
     //==============================================================================
@@ -77,7 +79,8 @@ private:
     AudioSourcePlayer sourcePlayer;
     AudioDeviceManager deviceManager;
 
-    HashMap<int, Chop> chops;
-    
+    ValueTree chopTree;
+    HashMap<int, ValueTree> chopMap;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SamplerAudioProcessor)
 };

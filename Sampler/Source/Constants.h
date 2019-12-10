@@ -27,6 +27,7 @@ static const Colour COLOR_TAN = Colour::fromString("FFEDB183");
 static const Colour COLOR_SEA = Colour::fromString("FF1E555C");
 
 
+// VALUETREE IDENTIFIERS
 static const Identifier ID_CHOPS = "ChopData";
 static const Identifier ID_CHOP = "Chop";
 static const Identifier PROP_ID = "ID";

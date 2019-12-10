@@ -13,6 +13,7 @@
 #include "PluginEditor.h"
 
 //==============================================================================
+
 SamplerAudioProcessor::SamplerAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
      : AudioProcessor (BusesProperties()

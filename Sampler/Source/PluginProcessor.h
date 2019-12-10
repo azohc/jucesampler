@@ -17,6 +17,8 @@
 #include "Constants.h"
 #include "aubio.h"
 
+//==============================================================================
+
 struct Chop
 {
     double start;
@@ -25,9 +27,6 @@ struct Chop
     bool hidden;
 };
 
-//==============================================================================
-/**
-*/
 class SamplerAudioProcessor  : public AudioProcessor
 {
 public:

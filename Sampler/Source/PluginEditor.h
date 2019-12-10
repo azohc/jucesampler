@@ -11,13 +11,12 @@
 
 #pragma once
 
-#include "../JuceLibraryCode/JuceHeader.h"
 #include "PluginProcessor.h"
 #include "SamplerThumbnail.h"
 #include "ChopListComponent.h"
+
 //==============================================================================
-/**
-*/
+
 class SamplerAudioProcessorEditor :
     public AudioProcessorEditor,
     public ChangeListener,

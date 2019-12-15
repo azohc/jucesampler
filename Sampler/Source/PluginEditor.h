@@ -124,6 +124,19 @@ public:
         stopButton.onClick = [this] { stopButtonClicked(); };
         stopButton.setEnabled (false);
 
+        addAndMakeVisible (chopButton);
+        chopButton.setColour (TextButton::buttonColourId, COLOR_BG);
+        chopButton.setColour (TextButton::textColourOffId, COLOR_FG);
+        chopButton.onClick = [this] { chopButtonClicked(); };
+        chopButton.setEnabled (false);
+
+        addAndMakeVisible (chopThresholdSlider);
+        chopThresholdSlider.setSliderStyle(Slider::LinearHorizontal);
+        chopThresholdSlider.setColour (Slider::trackColourId, COLOR_BG);
+        chopThresholdSlider.setColour (Slider::backgroundColourId, COLOR_BG_DARK);
+        chopThresholdSlider.setColour (Slider::thumbColourId, COLOR_FG);
+        chopThresholdSlider.setRange (0, 3.6, 0.01);
+        chopThresholdSlider.setEnabled (false);
 
         // CHOPLIST
         chopList.reset(new ChopListComponent(processor.getChopTree(), selectedChopId));
@@ -154,12 +167,12 @@ public:
 
     void paint (Graphics& g) override
     {
-        g.fillAll (COLOR_BGDARK);
+        g.fillAll (COLOR_BG_DARK);
 
         g.setColour (COLOR_BG);
         g.fillRect (getLocalBounds().reduced(4));
         
-        g.setColour (COLOR_BLUEDARK);
+        g.setColour (COLOR_BLUE_DARK);
         g.fillRect (rectThumbnail);
 
         auto strokeRect = [&g] (Rectangle<int> r, int s)
@@ -170,7 +183,7 @@ public:
         };
 
 
-        g.setColour (COLOR_BGDARK);
+        g.setColour (COLOR_BG_DARK);
         strokeRect (rectControls, 2);
         strokeRect (rectThumbnail, 2);
         strokeRect (rectThumbnailFuncts, 2);
@@ -198,7 +211,8 @@ public:
         loadButton.setBounds (rectControlsAux.removeFromTop (buttonHeight).reduced (4));
         playButton.setBounds (rectControlsAux.removeFromTop (buttonHeight).reduced (4));
         stopButton.setBounds (rectControlsAux.removeFromTop (buttonHeight).reduced (4));
-
+        chopButton.setBounds (rectControlsAux.removeFromTop (buttonHeight).reduced (4));
+        chopThresholdSlider.setBounds (rectControlsAux.removeFromTop (buttonHeight).reduced (4));
 
         // Thumbnail functions      TODO use flex to distribute evenly
         auto rectThumbnailFunctsAux = rectThumbnailFuncts.reduced(1);
@@ -239,10 +253,6 @@ private:
         Pausing,
         Paused
     };
-    enum RadioButtonIds
-    {
-        LoopMode = 1001
-    };
 
     SamplerAudioProcessor& processor;
 
@@ -267,6 +277,8 @@ private:
     TextButton playButton { "Play" };
     TextButton stopButton { "Stop" };   
     TextButton loadButton { "Load" };
+    TextButton chopButton { "Chop" };
+    Slider chopThresholdSlider { "Chop threshold" };
 
     //==============================================================================
     // THUMBNAIL FUNCTIONS
@@ -306,8 +318,8 @@ private:
 
         if (fc.browseForFileToOpen())
         {
-            auto file = fc.getResult();
-            showAudioResource(file);
+            currentAudioFile = fc.getResult();
+            showAudioResource(currentAudioFile);
         }
     }
 
@@ -328,6 +340,8 @@ private:
             playButton.setEnabled (true);
             fullLoopToggle.setEnabled (true);
             startTimeChopButton.setEnabled (true);
+            chopButton.setEnabled (true);
+            chopThresholdSlider.setEnabled (true);
         }
     }
 
@@ -384,14 +398,55 @@ private:
     {
         auto currentTime = transportSource.getCurrentPosition();
         auto chop = Chop { currentTime, transportSource.getLengthInSeconds(), "" , false };
-        int chopKey = processor.addChop (chop);
+        processor.addChop (chop);
     }
 
     void selectionChopClicked()
     {
         auto bounds = thumbnail->getSelectionBounds();
-        auto chop = Chop { bounds.first, bounds.second, "", false };
-        int chopKey = processor.addChop (chop);
+        auto chop = bounds.first < bounds.second ? Chop { bounds.first, bounds.second, "", false } : Chop { bounds.second, bounds.first, "", false };
+        processor.addChop (chop);
+    }
+
+    void chopButtonClicked() 
+    {
+        auto file = currentAudioFile.getFullPathName().getCharPointer();
+        uint_t samplerate = 0;
+        uint_t buf_size = 1024;
+        uint_t hop_size = 256;
+        uint_t n_frames = 0, read = 0;
+        auto source = new_aubio_source(file, samplerate, hop_size);
+        auto o = new_aubio_onset("energy", buf_size, hop_size, aubio_source_get_samplerate(source));
+        auto threshset = aubio_onset_set_threshold(o, chopThresholdSlider.getValue());
+        fvec_t * in = new_fvec (hop_size); // input audio buffer
+        fvec_t * out = new_fvec (2); // output position
+
+        auto detections = Array<smpl_t>();
+        do {
+            // put some fresh data in input vector
+            aubio_source_do(source, in, &read);
+            // execute onset
+            aubio_onset_do(o, in, out);
+            // do something with the onsets
+            if (out->data[0] != 0) {
+                // Logger::getCurrentLogger()->writeToLog(String::formatted("onset at %.3fms, %.3fs, frame %d\n", aubio_onset_get_last_ms(o), aubio_onset_get_last_s(o), aubio_onset_get_last(o)));
+                detections.addIfNotAlreadyThere(aubio_onset_get_last_s(o));
+            }
+            n_frames += read;
+        } while ( read == hop_size );
+
+        if (!detections.size()) return;
+        if (detections.size() == 1) 
+        {
+            processor.addChop(Chop { detections[0], transportSource.getLengthInSeconds(), "" , false });
+            return;
+        }
+        for (auto i = 0; i < detections.size(); i++) 
+        {
+            auto chop = Chop { detections[i], 0, "" , false };
+            chop.end = (i == detections.size() - 1) ? chop.end = transportSource.getLengthInSeconds() : chop.end = detections[i + 1];
+            processor.addChop(chop);
+        }
     }
 
     void valueChanged (Value& value)
@@ -443,7 +498,8 @@ private:
                 if (selectionLoopToggle.getToggleState())
                 {
                     auto bounds = thumbnail->getSelectionBounds();
-                    if (transportSource.getCurrentPosition() >= bounds.second)
+                    bounds = bounds.first < bounds.second ? std::make_pair(bounds.first, bounds.second) : std::make_pair(bounds.second, bounds.first);
+                    if (transportSource.getCurrentPosition() >= bounds.second || transportSource.getCurrentPosition() < bounds.first)
                     {
                         transportSource.setPosition (bounds.first);
                     }
@@ -464,7 +520,7 @@ private:
     void valueTreePropertyChanged (ValueTree& treeWhosePropertyHasChanged,
                                    const Identifier& property)
     {
-
+        chopList->reloadData();
     }
 
     void valueTreeChildRemoved (ValueTree& parentTree,
@@ -478,6 +534,7 @@ private:
         {
             thumbnail->setSelectedChopId(NONE);
         }
+        chopList->reloadData();
     }
 
     void changeState (TransportState newState)

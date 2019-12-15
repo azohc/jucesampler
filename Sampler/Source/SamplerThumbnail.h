@@ -44,10 +44,10 @@ public:
         scrollbar.setRangeLimits (visibleRange);
         scrollbar.setAutoHide (false);
         scrollbar.addListener (this);
-        scrollbar.setColour (ScrollBar::backgroundColourId, COLOR_BLUEDARK);
+        scrollbar.setColour (ScrollBar::backgroundColourId, COLOR_BLUE_DARK);
         scrollbar.setColour (ScrollBar::thumbColourId, COLOR_BLUE);
 
-        currentPositionMarker.setFill (COLOR_GRAYLIGHT);
+        currentPositionMarker.setFill (COLOR_GRAY_LIGHT);
         addAndMakeVisible (currentPositionMarker);
 
         addAndMakeVisible(selectionRect);
@@ -104,7 +104,7 @@ public:
 
     void paint (Graphics& g) override
     {
-        g.fillAll (COLOR_BLUEDARK);
+        g.fillAll (COLOR_BLUE_DARK);
         g.setColour (COLOR_FG);
 
         if (thumbnail.getTotalLength() > 0.0)
@@ -333,14 +333,14 @@ private:
             if (it.getKey() == selectedChopId)
             {
                 selectionRect.setRectangle (selection (start, end));
-                selectionRect.setFill (COLOR_BLUEDARK.brighter(0.11f));
+                selectionRect.setFill (COLOR_BLUE_DARK.brighter(0.11f));
                 selectionRect.setAlpha (0.5f);
             }
         }
         if (selectionActive && selectedChop == NONE)
         {
             selectionRect.setRectangle (selection (selectionStartTime, selectionEndTime));
-            selectionRect.setFill (COLOR_BLUEDARK.brighter(0.11f));
+            selectionRect.setFill (COLOR_BLUE_DARK.brighter(0.11f));
             selectionRect.setAlpha (0.5f);
         }
         selectionRect.setVisible (selectionActive);

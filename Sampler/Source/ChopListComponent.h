@@ -37,18 +37,16 @@ public:
             table.getHeader().addColumn (column->getStringAttribute (COLUMN_NAME),
                                          column->getIntAttribute (COLUMN_ID),
                                          column->getIntAttribute (COLATR_WIDTH),
-                                         30, -1, TableHeaderComponent::defaultFlags | TableHeaderComponent::resizable);
+                                         30, -1, TableHeaderComponent::notResizableOrSortable);
         }
 
         table.getHeader().setStretchToFitActive (true);
         table.getHeader().setColour (TableHeaderComponent::backgroundColourId, COLOR_BG);
-        table.getHeader().setColour (TableHeaderComponent::highlightColourId, COLOR_BGLIGHT);
+        table.getHeader().setColour (TableHeaderComponent::highlightColourId, COLOR_BG_LIGHT);
         table.getHeader().setColour (TableHeaderComponent::textColourId, COLOR_FG);
-        table.getHeader().setColour (TableHeaderComponent::outlineColourId, COLOR_BGDARK);
+        table.getHeader().setColour (TableHeaderComponent::outlineColourId, COLOR_BG_DARK);
         table.setColour(TableListBox::backgroundColourId, COLOR_BG);
-
         table.setMultipleSelectionEnabled (false);
-
         rowClickedMenu = new PopupMenu();
 
         deletedChopId = NONE;
@@ -70,9 +68,9 @@ public:
     // This is overloaded from TableListBoxModel, and should fill in the background of the whole row
     void paintRowBackground (Graphics& g, int rowNumber, int /*width*/, int /*height*/, bool rowIsSelected) override
     {
-        auto selectedRowColour = COLOR_BGDARK.interpolatedWith (COLOR_BG, 0.16f);
-        auto rowColour = COLOR_BGDARK.interpolatedWith (COLOR_BG, 0.56f);
-        auto altRowColour = COLOR_BGDARK.interpolatedWith (COLOR_BG, 0.86f);
+        auto selectedRowColour = COLOR_BG_DARK.interpolatedWith (COLOR_BG, 0.16f);
+        auto rowColour = COLOR_BG_DARK.interpolatedWith (COLOR_BG, 0.56f);
+        auto altRowColour = COLOR_BG_DARK.interpolatedWith (COLOR_BG, 0.86f);
         if (rowIsSelected)
             g.fillAll (selectedRowColour);
         else if (rowNumber % 2)
@@ -96,7 +94,7 @@ public:
             g.drawText (text, 2, 0, width - 4, height, Justification::centredLeft, true);
         }
 
-        g.setColour (COLOR_BGDARK.interpolatedWith (COLOR_BG, 0.86f));
+        g.setColour (COLOR_BG_DARK.interpolatedWith (COLOR_BG, 0.86f));
         g.fillRect (width - 1, 0, 1, height);
     }
 
@@ -107,7 +105,7 @@ public:
         if (newSortColumnId != 0)
         {
             DemoDataSorter sorter (getAttributeNameForColumnId (newSortColumnId), isForwards);
-            chopXml->sortChildElements (sorter);
+            if (numRows) chopXml->sortChildElements (sorter);
 
             table.updateContent();
         }
@@ -232,6 +230,7 @@ public:
             rowClickedMenu->clear();
             rowClickedMenu->addItem (ROWMENUID_HIDDEN, ROW_HIDDEN, true, getChopAtRow (rowNumber).getProperty(PROP_HIDDEN));
             rowClickedMenu->addItem (ROWMENUID_DELETE, ROW_DELETE, true, false);
+            rowClickedMenu->addItem (ROWMENUID_DEL_ALL, ROW_DEL_ALL, true, false);  // TODO add confirmation popup to del_all
             result = rowClickedMenu->show();
         }
 
@@ -250,8 +249,10 @@ public:
                         selectedChopId = NONE;
                     }
                     chopTree.removeChild(chopTree.getChildWithProperty(PROP_ID, deletedChopId), nullptr);
-                    reloadData();
                 break;
+
+                case ROWMENUID_DEL_ALL:
+                    chopTree.removeAllChildren(nullptr);
             }
         }
     }
@@ -310,36 +311,6 @@ private:
 
     Value selectedChopId;
     int deletedChopId;
-    
-    // Row popup menu constants
-    enum RowMenuIds
-    {
-        ROWMENUID_HIDDEN = 1100,
-        ROWMENUID_DELETE = 1101
-    };
-    const String ROW_DELETE = "Delete chop";
-    const String ROW_HIDDEN = "Hide markers";
-
-    // Chop XML constants
-    enum ColumnIds
-    {
-        COLID_ID = 1010,
-        COLID_START = 1011,
-        COLID_END = 1012,
-        COLID_TRIGG = 1013
-    };
-
-    const String COLUMNS = "ChopListColumns";
-    const String COLUMN = "Column";
-    const String COLUMN_ID = "columnId";
-    const String COLUMN_NAME = "name";
-    const String COLATR_WIDTH = "width";
-
-    const String COLNAME_ID = "ID";
-    const String COLNAME_START = "Start";
-    const String COLNAME_END = "End";
-    const String COL_TRIGG = "Trigger";
-     
 
     //==============================================================================
     // This is a custom Label component, which we use for the table's editable text columns.
@@ -430,10 +401,10 @@ private:
     public:
         TriggerNoteColumnComponent (ChopListComponent& td) : owner (td)
         {
-            comboBox.setColour (ComboBox::outlineColourId, COLOR_BGDARK);
+            comboBox.setColour (ComboBox::outlineColourId, COLOR_BG_DARK);
             comboBox.setColour (ComboBox::backgroundColourId, COLOR_BG);
-            comboBox.setColour (ComboBox::buttonColourId, COLOR_BGDARK);
-            comboBox.setColour (ComboBox::arrowColourId, COLOR_BGDARK);
+            comboBox.setColour (ComboBox::buttonColourId, COLOR_BG_DARK);
+            comboBox.setColour (ComboBox::arrowColourId, COLOR_BG_DARK);
             comboBox.setColour (ComboBox::textColourId, COLOR_FG);
             addAndMakeVisible (comboBox);
             comboBox.addItem ("C4", 60);

@@ -1,16 +1,14 @@
 #! /bin/bash
 
-REBUILD=false
+REBUILD=true
 
 # goto dir with Makefile
 cd Sampler/Builds/LinuxMakefile
 
 # make
-$REBUILD && make clean
+$REBUILD && make clean && rm libaubio*
 if make -j 4; then 
-
     if $REBUILD; then
-        # copy plugin 
         cp ../../Plugins/aubio/lib/libaubio.so.5.4.8  build/
         cp ../../Plugins/aubio/lib/libaubio.a  build/
         

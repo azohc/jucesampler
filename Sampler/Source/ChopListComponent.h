@@ -37,7 +37,7 @@ public:
             table.getHeader().addColumn (column->getStringAttribute (COLUMN_NAME),
                                          column->getIntAttribute (COLUMN_ID),
                                          column->getIntAttribute (COLATR_WIDTH),
-                                         30, -1, TableHeaderComponent::notResizableOrSortable);
+                                         30, -1, TableHeaderComponent::visible | TableHeaderComponent::appearsOnColumnMenu);
         }
 
         table.getHeader().setStretchToFitActive (true);

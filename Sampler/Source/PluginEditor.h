@@ -99,7 +99,7 @@ public:
         zoomSlider.setRange (0, 1, 0);
         zoomSlider.onValueChange = [this] { thumbnail->setZoomFactor (zoomSlider.getValue()); };
         zoomSlider.setEnabled (false);
-        zoomSlider.setSkewFactor (2);
+        // zoomSlider.setSkewFactor (2);
         zoomSlider.setColour (Slider::backgroundColourId, COLOR_BLUE.darker(0.6));
         zoomSlider.setColour (Slider::trackColourId, COLOR_BLUE.darker(0.3));
         zoomSlider.setColour (Slider::thumbColourId, COLOR_BLUE);
@@ -138,6 +138,19 @@ public:
         chopThresholdSlider.setRange (0, 3.6, 0.01);
         chopThresholdSlider.setEnabled (false);
 
+        addAndMakeVisible (onsetMethodButton);
+        onsetMethodButton.setEnabled (false);
+        onsetMethodButton.setColour (TextButton::buttonColourId, COLOR_BG);
+        onsetMethodButton.setColour (TextButton::textColourOffId, COLOR_FG);
+        onsetMethodButton.setButtonText (ONSET_ENERGY);
+        onsetMethodButton.onClick = [this] () {
+            onsetMethodNumber++;
+            if (onsetMethodNumber == sizeof (ONSET_METHODS) / sizeof (ONSET_METHODS[0])) {
+                onsetMethodNumber = 0;
+            }
+            onsetMethodButton.setButtonText (ONSET_METHODS[onsetMethodNumber]);
+        };
+
         // CHOPLIST
         chopList.reset(new ChopListComponent(processor.getChopTree(), selectedChopId));
         addAndMakeVisible (chopList.get());
@@ -154,6 +167,8 @@ public:
 
         userSelectionActive = false;
         userSelectionActive.addListener (this);
+
+        onsetMethodNumber = 0; // ONSET_ENERGY as default
 
         thread.startThread (3);     
 
@@ -212,6 +227,7 @@ public:
         playButton.setBounds (rectControlsAux.removeFromTop (buttonHeight).reduced (4));
         stopButton.setBounds (rectControlsAux.removeFromTop (buttonHeight).reduced (4));
         chopButton.setBounds (rectControlsAux.removeFromTop (buttonHeight).reduced (4));
+        onsetMethodButton.setBounds (rectControlsAux.removeFromTop (buttonHeight * 0.7).reduced (4));
         chopThresholdSlider.setBounds (rectControlsAux.removeFromTop (buttonHeight).reduced (4));
 
         // Thumbnail functions      TODO use flex to distribute evenly
@@ -270,7 +286,7 @@ private:
 
     std::unique_ptr<ChopListComponent> chopList;
 
-
+    int onsetMethodNumber;
 
     //==============================================================================
     // CONTROLS
@@ -278,6 +294,7 @@ private:
     TextButton stopButton { "Stop" };   
     TextButton loadButton { "Load" };
     TextButton chopButton { "Chop" };
+    TextButton onsetMethodButton;
     Slider chopThresholdSlider { "Chop threshold" };
 
     //==============================================================================
@@ -342,6 +359,7 @@ private:
             startTimeChopButton.setEnabled (true);
             chopButton.setEnabled (true);
             chopThresholdSlider.setEnabled (true);
+            onsetMethodButton.setEnabled (true);
         }
     }
 
@@ -416,7 +434,7 @@ private:
         uint_t hop_size = 256;
         uint_t n_frames = 0, read = 0;
         auto source = new_aubio_source(file, samplerate, hop_size);
-        auto o = new_aubio_onset("energy", buf_size, hop_size, aubio_source_get_samplerate(source));
+        auto o = new_aubio_onset(ONSET_METHODS[onsetMethodNumber].getCharPointer(), buf_size, hop_size, aubio_source_get_samplerate(source));
         auto threshset = aubio_onset_set_threshold(o, chopThresholdSlider.getValue());
         fvec_t * in = new_fvec (hop_size); // input audio buffer
         fvec_t * out = new_fvec (2); // output position

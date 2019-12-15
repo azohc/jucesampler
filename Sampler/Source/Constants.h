@@ -37,6 +37,41 @@ static const Identifier PROP_TRIGGER = "Trigger";
 static const Identifier PROP_HIDDEN = "Hidden";
 
 static const int NONE = -110;
+
+
+// ChopList row actions
+const String ROW_DELETE = "Delete chop";
+const String ROW_DEL_ALL = "Delete all chops";
+const String ROW_HIDDEN = "Hide markers";
+
+
+// ChopList XML tags
+const String COLUMNS = "ChopListColumns";
+const String COLUMN = "Column";
+const String COLUMN_ID = "columnId";
+const String COLUMN_NAME = "name";
+const String COLATR_WIDTH = "width";
+
+
+// ChopList XML Columns
+const String COLNAME_ID = "ID";
+const String COLNAME_START = "Start";
+const String COLNAME_END = "End";
+const String COL_TRIGG = "Trigger";
+
+
+// Onset detection methods
+const String ONSET_ENERGY = "energy";
+const String ONSET_HFC = "hfc";
+const String ONSET_COMPLEX = "complex";
+const String ONSET_PHASE = "phase";
+const String ONSET_SPECDIFF = "specdiff";
+const String ONSET_KL = "kl";
+const String ONSET_MKL = "mkl";
+const String ONSET_SPECFLUX = "specflux";
+const String ONSET_METHODS[] = { ONSET_ENERGY, ONSET_HFC, ONSET_COMPLEX, ONSET_PHASE, ONSET_SPECDIFF, ONSET_KL, ONSET_MKL, ONSET_SPECFLUX };
+
+// TODO use for popup dialog on delete all chops
 const String MSG_DEL_ALL = "Are you sure you want to delete every chop?";
 const String MSG_CONFIRM = "Confirm";
 const String MSG_DECLINE = "Decline";
@@ -64,19 +99,3 @@ enum ColumnIds
     COLID_END = 1012,
     COLID_TRIGG = 1013
 };
-
-const String ROW_DELETE = "Delete chop";
-const String ROW_DEL_ALL = "Delete all chops";
-const String ROW_HIDDEN = "Hide markers";
-
-const String COLUMNS = "ChopListColumns";
-const String COLUMN = "Column";
-const String COLUMN_ID = "columnId";
-const String COLUMN_NAME = "name";
-const String COLATR_WIDTH = "width";
-
-const String COLNAME_ID = "ID";
-const String COLNAME_START = "Start";
-const String COLNAME_END = "End";
-const String COL_TRIGG = "Trigger";
-     

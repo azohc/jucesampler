@@ -57,7 +57,6 @@ public:
         loopLabel.setColour (Label::textColourId, COLOR_FG);
 
         addAndMakeVisible (fullLoopToggle);
-        fullLoopToggle.setRadioGroupId(LoopMode);
         fullLoopToggle.setColour (TextButton::buttonColourId, COLOR_BG);
         fullLoopToggle.setColour (TextButton::textColourOffId, COLOR_FG);
         fullLoopToggle.setEnabled (false);
@@ -65,16 +64,21 @@ public:
             auto l = !currentAudioFileSource.get()->isLooping();
             currentAudioFileSource.get()->setLooping(l);
             fullLoopToggle.setToggleState (l, dontSendNotification);
+            if (selectionLoopToggle.getToggleState()) {
+                selectionLoopToggle.triggerClick();
+            }
         };
 
         addAndMakeVisible (selectionLoopToggle);
-        selectionLoopToggle.setRadioGroupId(LoopMode);
         selectionLoopToggle.setColour (TextButton::buttonColourId, COLOR_BG);
         selectionLoopToggle.setColour (TextButton::textColourOffId, COLOR_FG);
         selectionLoopToggle.setEnabled (false);
         selectionLoopToggle.setClickingTogglesState(true);
         selectionLoopToggle.onClick = [this] () { 
             currentAudioFileSource.get()->setLooping(selectionLoopToggle.getToggleState());
+            if (fullLoopToggle.getToggleState()) {
+                fullLoopToggle.triggerClick();
+            }
         };
 
         addAndMakeVisible (startTimeChopButton);
@@ -258,7 +262,7 @@ public:
         zoomSlider.setBounds (rectThumbnailAux.removeFromRight (small (small (rectThumbnailAux.getHeight()))));
         thumbnail->setBounds (rectThumbnailAux.reduced(1));
     }
-    
+
 private:
     enum TransportState
     {
@@ -416,14 +420,14 @@ private:
     {
         auto currentTime = transportSource.getCurrentPosition();
         auto chop = Chop { currentTime, transportSource.getLengthInSeconds(), "" , false };
-        processor.addChop (chop);
+        processor.addChop (chop, currentAudioFileSource.get());
     }
 
     void selectionChopClicked()
     {
         auto bounds = thumbnail->getSelectionBounds();
         auto chop = bounds.first < bounds.second ? Chop { bounds.first, bounds.second, "", false } : Chop { bounds.second, bounds.first, "", false };
-        processor.addChop (chop);
+        processor.addChop (chop, currentAudioFileSource.get());
     }
 
     void chopButtonClicked() 
@@ -456,14 +460,14 @@ private:
         if (!detections.size()) return;
         if (detections.size() == 1) 
         {
-            processor.addChop(Chop { detections[0], transportSource.getLengthInSeconds(), "" , false });
+            processor.addChop(Chop { detections[0], transportSource.getLengthInSeconds(), "" , false }, currentAudioFileSource.get());
             return;
         }
         for (auto i = 0; i < detections.size(); i++) 
         {
             auto chop = Chop { detections[i], 0, "" , false };
             chop.end = (i == detections.size() - 1) ? chop.end = transportSource.getLengthInSeconds() : chop.end = detections[i + 1];
-            processor.addChop(chop);
+            processor.addChop(chop, currentAudioFileSource.get());
         }
     }
 

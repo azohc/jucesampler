@@ -35,6 +35,7 @@ static const Identifier PROP_START_TIME = "Start";
 static const Identifier PROP_END_TIME = "End";
 static const Identifier PROP_TRIGGER = "Trigger";
 static const Identifier PROP_HIDDEN = "Hidden";
+static const Identifier PROP_SAMPLER_SOUND = "SamplerSound";
 
 static const int NONE = -110;
 

@@ -71,7 +71,7 @@ public:
     HashMap<int, ValueTree>* getChopMap();
     ValueTree getChopTree() const;
     void clearChopTree();
-    int addChop(const Chop& chop);
+    int addChop(const Chop& chop, AudioFormatReaderSource* source);
 
 private:
     //==============================================================================
@@ -79,6 +79,8 @@ private:
     AudioTransportSource transportSource;
     AudioSourcePlayer sourcePlayer;
     AudioDeviceManager deviceManager;
+
+    Synthesiser synth;
 
     ValueTree chopTree;
     HashMap<int, ValueTree> chopMap;

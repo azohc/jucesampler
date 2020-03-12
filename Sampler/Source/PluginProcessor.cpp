@@ -224,10 +224,6 @@ int SamplerAudioProcessor::addChop(const Chop& chop, AudioFormatReaderSource* so
     chopNode.setProperty(PROP_TRIGGER, chop.mappedTo, nullptr);
     chopNode.setProperty(PROP_HIDDEN, chop.hidden, nullptr);
 
-    // auto asr = AudioSubsectionReader (source, chop.start, 1, false); // TODO Fix: requires Samples, not times
-    // auto samplerSound = SamplerSound (name, asr, )   // TODO think: MIDI keys, attack, release, sampleLenght set once in constructor
-    // chopNode.setProperty(PROP_SAMPLER_SOUND, samplerSound, nullptr);
-
     chopMap.set(newKey, chopNode);
     chopTree.appendChild(chopNode, nullptr);
     

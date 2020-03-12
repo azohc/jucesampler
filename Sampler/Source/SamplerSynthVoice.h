@@ -20,42 +20,139 @@ class SamplerSynthVoice    : public SynthesiserVoice
 public:
     SamplerSynthVoice()
     {
-        // In your constructor, you should add any child components, and
-        // initialise any special settings that your component needs.
-
     }
 
     ~SamplerSynthVoice()
     {
     }
 
-    void paint (Graphics& g) override
+
+    int getCurrentlyPlayingNote	() const
     {
-        /* This demo code just fills the component's background and
-           draws some placeholder text to get you started.
-
-           You should replace everything in this method with your own
-           drawing code..
-        */
-
-        g.fillAll (getLookAndFeel().findColour (ResizableWindow::backgroundColourId));   // clear the background
-
-        g.setColour (Colours::grey);
-        g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
-
-        g.setColour (Colours::white);
-        g.setFont (14.0f);
-        g.drawText ("SamplerSynthVoice", getLocalBounds(),
-                    Justification::centred, true);   // draw some placeholder text
+        return 0;
     }
 
-    void resized() override
+    SynthesiserSound::Ptr getCurrentlyPlayingSound() const
     {
-        // This method is where you should set the bounds of any child
-        // components that your component contains..
+        return SynthesiserSound::Ptr();
+    }
+
+    virtual bool canPlaySound (SynthesiserSound *)
+    {
+        return false;
+    }
+
+
+    virtual void startNote (int	midiNoteNumber, float velocity, 
+        SynthesiserSound * sound, int currentPitchWheelPosition)
+    {
+
+    }	
+
+    virtual void stopNote (float velocity, bool allowTailOff)
+    {
 
     }
 
+    virtual bool isVoiceActive() const
+    {
+        return false;
+    }
+
+    virtual void pitchWheelMoved (int newPitchWheelValue)
+    {
+
+    }
+
+    virtual void controllerMoved (int controllerNumber, int newControllerValue)
+    {
+        
+    }
+
+    virtual void aftertouchChanged (int	newAftertouchValue)
+    {
+
+    }	
+
+    virtual void channelPressureChanged (int newChannelPressureValue)
+    {
+
+    }
+
+
+    virtual void renderNextBlock (AudioBuffer<float> & outputBuffer, int startSample, int numSamples)
+    {
+
+    }
+
+    virtual void renderNextBlock (AudioBuffer<double> & outputBuffer, int startSample, int numSamples)		
+    {
+
+    }
+
+    virtual void setCurrentPlaybackSampleRate (double newRate)
+    {
+
+    }
+
+    virtual bool isPlayingChannel (int midiChannel) const
+    {
+        return false;
+    }
+
+    double getSampleRate() const
+    {
+        double sr = 0;
+        
+        return sr;
+    }
+
+    bool isKeyDown() const
+    {
+        return false;
+    }
+    
+    void setKeyDown (bool isNowDown)
+    {
+
+    }
+    
+    bool isSustainPedalDown () const
+    {
+        return false;
+    }
+    
+    void setSustainPedalDown (bool isNowDown)
+    {
+
+    }
+    
+    bool isSostenutoPedalDown () const
+    {
+        return false;
+    }
+    
+    void setSostenutoPedalDown (bool isNowDown)
+    {
+
+    }
+    
+    bool isPlayingButReleased () const
+    {
+        return false;
+    }
+    
+    bool wasStartedBefore (const SynthesiserVoice & other) const
+    {
+        return false;
+    }
+    
+    void clearCurrentNote ()
+    {
+
+    }
+
+    
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SamplerSynthVoice)
 };

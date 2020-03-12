@@ -526,7 +526,11 @@ private:
                         transportSource.setPosition (bounds.first);
                     }
                 }
-                currentPositionLabel.setText ("Position: " + (String) transportSource.getCurrentPosition(),
+                auto getLabel = [this] (double d) {
+                    auto str = (String) d;
+                    return (str.length() > 5) ? str.substring(0, 5) : str;
+                };
+                currentPositionLabel.setText ("Position: " + getLabel(transportSource.getCurrentPosition()),
                                               NotificationType::dontSendNotification);
             }
         }

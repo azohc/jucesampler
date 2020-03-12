@@ -47,7 +47,7 @@ public:
         scrollbar.setColour (ScrollBar::backgroundColourId, COLOR_BLUE_DARK);
         scrollbar.setColour (ScrollBar::thumbColourId, COLOR_BLUE);
 
-        currentPositionMarker.setFill (COLOR_GRAY_LIGHT);
+        currentPositionMarker.setFill (COLOR_SEA);
         addAndMakeVisible (currentPositionMarker);
 
         addAndMakeVisible(selectionRect);

@@ -12,6 +12,7 @@ if make -j 4; then
         cp ../../Plugins/aubio/lib/libaubio.so.5.4.8  build/
         cp ../../Plugins/aubio/lib/libaubio.a  build/
         
+        cd build
         ln -s libaubio.so.5.4.8 libaubio.so
         ln -s libaubio.so.5.4.8 libaubio.so.5
     fi

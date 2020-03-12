@@ -1,0 +1,13 @@
+  TODOS:
+add bottom section with knobs to edit sample start, end.
+maybe another section to visualize the chop zoomed up -> make MiniThumbnail class
+
+
+  CLEANUP:
+separate autochop threshold section with "Auto Chop" label and slider. also label method toggler
+
+
+  EXTRAS:
+click close to one of the selection times (boundaries of selection) to drag selection
+chop amount preview that listens to threshold
+mini thumbnail class

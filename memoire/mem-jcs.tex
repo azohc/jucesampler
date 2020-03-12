@@ -1,0 +1,69 @@
+%1. La memoria incluirá una portada portada normalizada con la siguiente información: título en castellano, título en inglés, autores, profesor director, codirector si es el caso, curso académico e identificación de la asignatura (Trabajo de fin de grado del Grado en - nombre del grado correspondiente-, Facultad de Informática, Universidad Complutense de Madrid). Los datos referentes al título y director (y codirector en su caso) deben corresponder a los publicados en web de TFG, según lo indicado en el punto 6 de la sección III de esta normativa. 
+% 2. en cada apartado
+% 3. La memoria constará de un mínimo de 25 páginas para los proyectos realizados por unúnico estudiant
+
+\documentclass[12pt , a4paper]{article}
+\usepackage[spanish, english]{babel} 	% language
+\usepackage{tocloft}					% table of contents
+
+% for sections
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}} 
+
+% images
+\usepackage{graphicx}
+\graphicspath{ {./images/} }
+
+% text columns
+\usepackage{multicol}
+\setlength{\columnsep}{1cm}
+
+
+
+\title{Instrumento virtual basado en samples para estaciones de trabajo de audio digital\\A sampler plugin for digital audio workstations}
+\author{Juan Chozas Sumbera}
+
+
+\begin{document}
+	\maketitle
+	\begin{center}
+		Jaime Sánchez Hernández\\
+		Miguel Gómez-Zamalloa Gil
+				
+		\includegraphics[width=\textwidth]{logo_UCM.jpg}
+	\end{center}
+
+	
+	
+	% 2. La memoria debe incluir la descripción detallada de la propuesta hardware/software realizada y ha de contener: 
+	% a. un índice, 
+	\newpage
+	\tableofcontents
+	
+	% b. un resumen y una lista de no más de 10 palabras clave para su búsqueda bibliográfica, ambos en castellano e inglés, 
+	\newpage
+	\section{Description}
+
+	\begin{multicols}{2}[\subsection{Summary}]
+	Essentially, the plugin is a digital instrument that makes sounds using samples. Starting with an arbitrary audio sample, one can create sections within the sample. The, the sections can then be played back with a MIDI controller, or arranged in a pattern in the host's sequencer. 
+
+	El plugin es un instrumento digital que utiliza samples para crear sonido. Partiendo de un sample, podemos asignar secciones del sample a notas MIDI. El plugin puede reproducir estas subsecciones, y también se pueden organizar en el secuenciador del host que carga el plugin.
+	\end{multicols}
+
+	\subsection{Key words}
+		sound, audio, sample, sampler, plugin, vst, juce, daw, 
+
+	
+	% c. una introducción con los antecedentes, objetivos y plan de trabajo, 
+	\newpage
+	\section{Introduction}
+	
+	% d. resultados y discusión crítica y razonada de los mismos, con sus conclusiones,
+	\newpage
+	\section{Results}
+	\subsection{Conclusion}
+	 
+	\newpage
+	% e. bibliografía.
+	\section{Bibliography}
+	
+\end{document}

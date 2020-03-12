@@ -1,0 +1,8 @@
+\babel@toc {english}{}
+\contentsline {section}{\numberline {1}Description}{3}
+\contentsline {subsection}{\numberline {1.1}Summary}{3}
+\contentsline {subsection}{\numberline {1.2}Key words}{3}
+\contentsline {section}{\numberline {2}Introduction}{4}
+\contentsline {section}{\numberline {3}Results}{5}
+\contentsline {subsection}{\numberline {3.1}Conclusion}{5}
+\contentsline {section}{\numberline {4}Bibliography}{6}

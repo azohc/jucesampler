@@ -26,7 +26,6 @@ public:
     {
     }
 
-
     int getCurrentlyPlayingNote	() const
     {
         return 0;

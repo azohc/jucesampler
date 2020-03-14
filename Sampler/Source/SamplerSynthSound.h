@@ -26,12 +26,12 @@ public:
     {
     }
 
-    virtual bool appliesToNote (int	midiNoteNumber)
+    bool appliesToNote (int	midiNoteNumber) override
     {
-        return true; // TODO return true if midinotenumber = chop's midi note
+        return true; // TODO return true if midiNoteNumber = chop's midi note
     }
 
-    virtual bool appliesToChannel (int	midiNoteNumber)
+    bool appliesToChannel (int	midiNoteNumber) override
     {
         return true;
     }

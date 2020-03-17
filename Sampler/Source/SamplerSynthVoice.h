@@ -2,8 +2,8 @@
   ==============================================================================
 
     SamplerSynthVoice.h
-    Created: 12 Mar 2020 7:40:14pm
-    Author:  chosa
+    Created: 17 Mar 2020 11:25:19am
+    Author:  azohc
 
   ==============================================================================
 */
@@ -26,7 +26,7 @@ public:
     {
     }
 
-    int getCurrentlyPlayingNote	() const
+    int getCurrentlyPlayingNote () const
     {
         return 0;
     }
@@ -42,11 +42,11 @@ public:
     }
 
 
-    virtual void startNote (int	midiNoteNumber, float velocity, 
+    virtual void startNote (int midiNoteNumber, float velocity, 
         SynthesiserSound * sound, int currentPitchWheelPosition)
     {
 
-    }	
+    }   
 
     virtual void stopNote (float velocity, bool allowTailOff)
     {
@@ -68,10 +68,10 @@ public:
         
     }
 
-    virtual void aftertouchChanged (int	newAftertouchValue)
+    virtual void aftertouchChanged (int newAftertouchValue)
     {
 
-    }	
+    }   
 
     virtual void channelPressureChanged (int newChannelPressureValue)
     {
@@ -84,7 +84,7 @@ public:
 
     }
 
-    virtual void renderNextBlock (AudioBuffer<double> & outputBuffer, int startSample, int numSamples)		
+    virtual void renderNextBlock (AudioBuffer<double> & outputBuffer, int startSample, int numSamples)      
     {
 
     }

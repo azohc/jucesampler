@@ -2,8 +2,8 @@
   ==============================================================================
 
     SamplerSynthSound.h
-    Created: 12 Mar 2020 7:41:28pm
-    Author:  chosa
+    Created: 17 Mar 2020 11:25:01am
+    Author:  azohc
 
   ==============================================================================
 */
@@ -26,12 +26,12 @@ public:
     {
     }
 
-    bool appliesToNote (int	midiNoteNumber) override
+    bool appliesToNote (int midiNoteNumber) override
     {
         return true; // TODO return true if midiNoteNumber = chop's midi note
     }
 
-    bool appliesToChannel (int	midiNoteNumber) override
+    bool appliesToChannel (int  midiNoteNumber) override
     {
         return true;
     }

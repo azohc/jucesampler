@@ -1,5 +1,5 @@
 {
-    "editor.fontFamily": "'Meslo LG M', 'Monaco', 'Inconsolata'",
+    "editor.fontFamily": "'Bitstream Vera Sans Mono', 'Meslo LG M', 'Monaco', 'Inconsolata'",
     "files.associations": {
       "array": "cpp",
       "atomic": "cpp",

@@ -1,6 +1,6 @@
 #! /bin/bash
 
-REBUILD=false
+REBUILD=true
 
 # goto dir with Makefile
 cd Sampler/Builds/LinuxMakefile

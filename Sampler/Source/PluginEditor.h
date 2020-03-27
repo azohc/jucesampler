@@ -15,6 +15,7 @@
 #include "PluginProcessor.h"
 #include "SamplerThumbnail.h"
 #include "ChopListComponent.h"
+#include "SamplerAudioSource.h"
 
 //==============================================================================
 
@@ -159,6 +160,12 @@ public:
         chopList.reset(new ChopListComponent(processor.getChopTree(), selectedChopId));
         addAndMakeVisible (chopList.get());
 
+        // keyboard
+        addAndMakeVisible (keyboardComponent);
+        sourcePlayer.setSource (&samplerAudioSource);
+        deviceManager.addAudioCallback (&sourcePlayer);
+        deviceManager.addMidiInputDeviceCallback ({}, &(samplerAudioSource.midiCollector));
+
         // formats
         formatManager.registerBasicFormats();
 
@@ -182,6 +189,9 @@ public:
 
     ~SamplerAudioProcessorEditor()
     {
+        sourcePlayer.setSource (nullptr);
+        deviceManager.removeMidiInputDeviceCallback ({}, &(samplerAudioSource.midiCollector));
+        deviceManager.removeAudioCallback (&sourcePlayer);
     }
 
     void paint (Graphics& g) override
@@ -255,6 +265,7 @@ public:
         // Choplist
         chopList->setBounds (rectChopList);
     
+        keyboardComponent.setBounds (rectChopEdit.reduced(4));    
 
         // Thumbnail
         rectThumbnail = r;
@@ -316,8 +327,9 @@ private:
     Value selectedChopId;
     Value userSelectionActive;
     
-    // TODO MOVE&ZOOM on chop selection
-
+    MidiKeyboardState keyboardState;
+    SamplerAudioSource samplerAudioSource    { keyboardState, processor.getChopTree(), currentAudioFileSource.get() };
+    MidiKeyboardComponent keyboardComponent  { keyboardState, MidiKeyboardComponent::horizontalKeyboard};
     //==============================================================================
     // RECTANGLES
     Rectangle<int> rectChopEdit;
@@ -420,14 +432,14 @@ private:
     {
         auto currentTime = transportSource.getCurrentPosition();
         auto chop = Chop { currentTime, transportSource.getLengthInSeconds(), "" , false };
-        processor.addChop (chop, currentAudioFileSource.get());
+        processor.addChop (chop);
     }
 
     void selectionChopClicked()
     {
         auto bounds = thumbnail->getSelectionBounds();
         auto chop = bounds.first < bounds.second ? Chop { bounds.first, bounds.second, "", false } : Chop { bounds.second, bounds.first, "", false };
-        processor.addChop (chop, currentAudioFileSource.get());
+        processor.addChop (chop);
     }
 
     void chopButtonClicked() 
@@ -460,14 +472,14 @@ private:
         if (!detections.size()) return;
         if (detections.size() == 1) 
         {
-            processor.addChop(Chop { detections[0], transportSource.getLengthInSeconds(), "" , false }, currentAudioFileSource.get());
+            processor.addChop(Chop { detections[0], transportSource.getLengthInSeconds(), "" , false });
             return;
         }
         for (auto i = 0; i < detections.size(); i++) 
         {
             auto chop = Chop { detections[i], 0, "" , false };
             chop.end = (i == detections.size() - 1) ? chop.end = transportSource.getLengthInSeconds() : chop.end = detections[i + 1];
-            processor.addChop(chop, currentAudioFileSource.get());
+            processor.addChop(chop);
         }
     }
 

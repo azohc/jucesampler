@@ -18,23 +18,10 @@
 class SamplerSynthSound    : public SynthesiserSound
 {
 public:
-    SamplerSynthSound()
-    {
-    }
-
-    ~SamplerSynthSound()
-    {
-    }
-
-    bool appliesToNote (int midiNoteNumber) override
-    {
-        return true; // TODO return true if midiNoteNumber = chop's midi note
-    }
-
-    bool appliesToChannel (int  midiNoteNumber) override
-    {
-        return true;
-    }
+    SamplerSynthSound() {}
+    // TODO return true if midiNoteNumber = chop's midi note 
+    bool appliesToNote (int midiNoteNumber) override    { return true; }
+    bool appliesToChannel (int midiNoteNumber) override { return true; }
 
 
 private:

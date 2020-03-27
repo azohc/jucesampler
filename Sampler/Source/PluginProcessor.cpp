@@ -210,7 +210,7 @@ void SamplerAudioProcessor::clearChopTree()
     chopMap.clear();
 }
 
-int SamplerAudioProcessor::addChop(const Chop& chop, AudioFormatReaderSource* source) 
+int SamplerAudioProcessor::addChop(const Chop& chop) 
 {
     auto newKey = chopTree.getNumChildren();
     while (chopMap.contains(newKey)) {

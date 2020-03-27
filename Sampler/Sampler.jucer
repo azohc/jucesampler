@@ -5,6 +5,8 @@
               pluginCharacteristicsValue="pluginEditorRequiresKeys,pluginIsSynth,pluginProducesMidiOut,pluginWantsMidiIn">
   <MAINGROUP id="BkkyvB" name="Sampler">
     <GROUP id="{33229E8B-F3CD-6BB0-771B-06E291FA31DC}" name="Source">
+      <FILE id="tePPJs" name="SamplerAudioSource.h" compile="0" resource="0"
+            file="Source/SamplerAudioSource.h"/>
       <FILE id="caLTCh" name="SamplerSynthVoice.h" compile="0" resource="0"
             file="Source/SamplerSynthVoice.h"/>
       <FILE id="yTbmUP" name="SamplerSynthSound.h" compile="0" resource="0"

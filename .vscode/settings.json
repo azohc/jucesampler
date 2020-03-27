@@ -58,6 +58,17 @@
       "streambuf": "cpp",
       "thread": "cpp",
       "cinttypes": "cpp",
-      "typeinfo": "cpp"
+      "typeinfo": "cpp",
+      "bit": "cpp",
+      "list": "cpp",
+      "valarray": "cpp"
+    },
+    "search.exclude": {
+      "**/.git": true,
+      "**/*settings": true,
+      "**/Builds": true,
+      "**/JUCE": true,
+      "**/JuceLibraryCode": true,
+      "**/memoire": true
     }
 }

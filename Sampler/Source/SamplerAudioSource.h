@@ -37,8 +37,8 @@ public:
     {
         for (auto i = 0; i < chopTree.getNumChildren(); ++i) {
             auto chop = chopTree.getChild(i);
-            auto tstart = chop.getProperty(PROP_START_TIME);
-            auto tend = chop.getProperty(PROP_END_TIME);
+            double tstart = chop.getProperty(PROP_START_TIME);
+            double tend = chop.getProperty(PROP_END_TIME);
             auto triggerNote = chop.getProperty(PROP_TRIGGER);
 
             AudioSubsectionReader audioSSReader (audioFormatReader, tstart, tend - tstart, false);

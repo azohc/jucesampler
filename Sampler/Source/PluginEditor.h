@@ -27,15 +27,19 @@ class SamplerAudioProcessorEditor :
 {
 public:
     SamplerAudioProcessorEditor (SamplerAudioProcessor& p, 
-                                 AudioTransportSource& transport, 
+                                 AudioTransportSource& transport,
+                                 SamplerAudioSource& sampler,
                                  AudioSourcePlayer& player, 
-                                 AudioDeviceManager& device) 
+                                 AudioDeviceManager& device,
+                                 MidiKeyboardState& kbstate) 
         : AudioProcessorEditor (&p), 
         processor (p), 
         state (Stopped),
         transportSource (transport), 
+        samplerSource (sampler), 
         sourcePlayer (player),
-        deviceManager (device)
+        deviceManager (device),
+        keyboardState (kbstate)
     {
         // THUMBNAIL 
         thumbnail.reset (new SamplerThumbnail (formatManager, transportSource, zoomSlider, processor.getChopTree(), selectedChopId, userSelectionActive));
@@ -162,9 +166,6 @@ public:
 
         // keyboard
         addAndMakeVisible (keyboardComponent);
-        sourcePlayer.setSource (&samplerAudioSource);
-        deviceManager.addAudioCallback (&sourcePlayer);
-        deviceManager.addMidiInputDeviceCallback ({}, &(samplerAudioSource.midiCollector));
 
         // formats
         formatManager.registerBasicFormats();
@@ -190,7 +191,7 @@ public:
     ~SamplerAudioProcessorEditor()
     {
         sourcePlayer.setSource (nullptr);
-        deviceManager.removeMidiInputDeviceCallback ({}, &(samplerAudioSource.midiCollector));
+        deviceManager.removeMidiInputDeviceCallback ({}, &(samplerSource.midiCollector));
         deviceManager.removeAudioCallback (&sourcePlayer);
     }
 
@@ -293,8 +294,10 @@ private:
 
     File currentAudioFile;
     AudioSourcePlayer& sourcePlayer;
-    AudioTransportSource& transportSource;
     std::unique_ptr<AudioFormatReaderSource> currentAudioFileSource;
+
+    AudioTransportSource& transportSource;
+    SamplerAudioSource& samplerSource;
 
     std::unique_ptr<SamplerThumbnail> thumbnail;
     Slider zoomSlider { Slider::LinearVertical, Slider::NoTextBox };
@@ -327,8 +330,7 @@ private:
     Value selectedChopId;
     Value userSelectionActive;
     
-    MidiKeyboardState keyboardState;
-    SamplerAudioSource samplerAudioSource    { keyboardState, processor.getChopTree(), currentAudioFileSource.get() };
+    MidiKeyboardState& keyboardState;
     MidiKeyboardComponent keyboardComponent  { keyboardState, MidiKeyboardComponent::horizontalKeyboard};
     //==============================================================================
     // RECTANGLES
@@ -438,7 +440,8 @@ private:
     void selectionChopClicked()
     {
         auto bounds = thumbnail->getSelectionBounds();
-        auto chop = bounds.first < bounds.second ? Chop { bounds.first, bounds.second, "", false } : Chop { bounds.second, bounds.first, "", false };
+        auto chop = bounds.first < bounds.second ? 
+            Chop { bounds.first, bounds.second, "", false } : Chop { bounds.second, bounds.first, "", false };
         processor.addChop (chop);
     }
 
@@ -553,12 +556,15 @@ private:
     {
         thumbnail->addChopMarker(childWhichHasBeenAdded[PROP_ID]);
         chopList->reloadData();
+        samplerSource.makeSoundsFromChops(currentAudioFileSource.get()->getAudioFormatReader());
     }
    
     void valueTreePropertyChanged (ValueTree& treeWhosePropertyHasChanged,
                                    const Identifier& property)
     {
         chopList->reloadData();
+        samplerSource.makeSoundsFromChops(currentAudioFileSource.get()->getAudioFormatReader());
+        processor.getChopTree().createXml()->writeTo(File::getCurrentWorkingDirectory().getChildFile ("chops.xml"), {});
     }
 
     void valueTreeChildRemoved (ValueTree& parentTree,
@@ -573,6 +579,7 @@ private:
             thumbnail->setSelectedChopId(NONE);
         }
         chopList->reloadData();
+        samplerSource.makeSoundsFromChops(currentAudioFileSource.get()->getAudioFormatReader());
     }
 
     void changeState (TransportState newState)

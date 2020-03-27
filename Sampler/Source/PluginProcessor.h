@@ -16,6 +16,7 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "Constants.h"
 #include "aubio.h"
+#include "SamplerAudioSource.h"
 
 //==============================================================================
 
@@ -75,10 +76,14 @@ public:
 
 private:
     //==============================================================================
-
+    
+    SamplerAudioSource samplerSource { keyboardState, chopTree };
     AudioTransportSource transportSource;
+    MixerAudioSource mixerSource;    // combines sampler & transport
     AudioSourcePlayer sourcePlayer;
     AudioDeviceManager deviceManager;
+
+    MidiKeyboardState keyboardState;
 
     Synthesiser synth;
 

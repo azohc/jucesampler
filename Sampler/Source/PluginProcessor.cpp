@@ -99,18 +99,24 @@ void SamplerAudioProcessor::changeProgramName (int index, const String& newName)
 void SamplerAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     transportSource.prepareToPlay(samplesPerBlock, sampleRate);
+    samplerSource.prepareToPlay(samplesPerBlock, sampleRate);
+
+    mixerSource.addInputSource(&transportSource, false);
+    mixerSource.addInputSource(&samplerSource, false);
+
     sourcePlayer.prepareToPlay(sampleRate, samplesPerBlock);
-    sourcePlayer.setSource (&transportSource);
+    sourcePlayer.setSource (&mixerSource);   
     
     deviceManager.initialiseWithDefaultDevices(getTotalNumInputChannels(), getTotalNumOutputChannels());
     deviceManager.addAudioCallback (&sourcePlayer);
+    deviceManager.addMidiInputDeviceCallback ({}, &(samplerSource.midiCollector));
 }
 
 void SamplerAudioProcessor::releaseResources()
 {
     deviceManager.removeAudioCallback (&sourcePlayer);
-    transportSource.releaseResources();
     transportSource.setSource (nullptr);
+    mixerSource.releaseResources();
     sourcePlayer.setSource (nullptr);
 }
 
@@ -175,7 +181,7 @@ bool SamplerAudioProcessor::hasEditor() const
 
 AudioProcessorEditor* SamplerAudioProcessor::createEditor()
 {
-    auto editor = new SamplerAudioProcessorEditor (*this, transportSource, sourcePlayer, deviceManager);
+    auto editor = new SamplerAudioProcessorEditor (*this, transportSource, samplerSource, sourcePlayer, deviceManager, keyboardState);
     chopTree.addListener(editor);
     return editor;
 }

@@ -36,11 +36,13 @@ public:
     void makeSoundsFromChops(AudioFormatReader * audioFormatReader)
     {
         for (auto i = 0; i < chopTree.getNumChildren(); ++i) {
-            AudioSubsectionReader audioSSReader (audioFormatReader, 2, 2, false);
-
             auto chop = chopTree.getChild(i);
-            BigInteger noteRange; /* substitute for triggerNote */
+            auto tstart = chop.getProperty(PROP_START_TIME);
+            auto tend = chop.getProperty(PROP_END_TIME);
             auto triggerNote = chop.getProperty(PROP_TRIGGER);
+
+            AudioSubsectionReader audioSSReader (audioFormatReader, tstart, tend - tstart, false);
+            BigInteger noteRange; /* substitute for triggerNote */
             noteRange.setRange (triggerNote, triggerNote, true);
 
             synth.clearSounds();

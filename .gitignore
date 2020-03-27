@@ -1,4 +1,4 @@
 JUCE/examples/DemoRunner/Builds/*
-Sampler/Builds/
+Sampler/Builds/*
 Sampler/JuceLibraryCode/
 Sampler/Plugins/aubio/*

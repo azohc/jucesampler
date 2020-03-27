@@ -20,39 +20,32 @@
 */
 class SamplerAudioSource    : public AudioSource
 {
-public:
-    SamplerAudioSource (MidiKeyboardState& keyState, ValueTree chops, 
-                        AudioFormatReaderSource * audioReaderSource) : keyboardState (keyState), chopTree (chops)
+public:    
+    SamplerAudioSource (MidiKeyboardState& keyState, ValueTree chops) : keyboardState (keyState), chopTree (chops)
     {
-        // Add some voices to our synth, to play the sounds..
-        for (auto i = 0; i < 4; ++i)
-        {
-            // synth.addVoice (new SamplerSynthVoice()); // TODO make SamplerSynthVoice toPlay SamplerSynthSounds
-            synth.addVoice (new SamplerVoice());    // and these ones play the sampled sounds
-        }
-        makeSoundsFromChops(audioReaderSource->getAudioFormatReader());
+        synth.addVoice (new SamplerVoice());    // and these ones play the sampled sounds
     }
 
     void makeSoundsFromChops(AudioFormatReader * audioFormatReader)
     {
         for (auto i = 0; i < chopTree.getNumChildren(); ++i) {
             auto chop = chopTree.getChild(i);
-            double tstart = chop.getProperty(PROP_START_TIME);
-            double tend = chop.getProperty(PROP_END_TIME);
-            auto triggerNote = chop.getProperty(PROP_TRIGGER);
+            double tstart = chop[PROP_START_TIME];
+            double tend = chop[PROP_END_TIME];
+            auto triggerNote = chop[PROP_TRIGGER];
 
             AudioSubsectionReader audioSSReader (audioFormatReader, tstart, tend - tstart, false);
             BigInteger noteRange; /* substitute for triggerNote */
             noteRange.setRange (triggerNote, triggerNote, true);
 
             synth.clearSounds();
-            synth.addSound (new SamplerSound (chop.getProperty(PROP_ID),
+            synth.addSound (new SamplerSound (chop[PROP_ID],
                                             audioSSReader,
-                                            noteRange,
-                                            74,   // root midi note
-                                            0.1,  // attack time
-                                            0.1,  // release time
-                                            10.0  // maximum sample length
+                                            noteRange,      // note range TODO expand
+                                            triggerNote,    // root note
+                                            0.1,            // attack time
+                                            0.1,            // release time
+                                            tend - tstart   // maximum sample length
                                             ));
         }
     }

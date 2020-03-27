@@ -190,6 +190,8 @@ public:
 
     void setTriggerNote (const int rowNumber, const int newTrigger)
     {
+        auto chop = chopTree.getChildWithProperty(PROP_ID, getChopIdAtRow(rowNumber));
+        chop.setProperty (PROP_TRIGGER, newTrigger, nullptr);
         chopXml->getChildElement (rowNumber)->setAttribute (COL_TRIGG, newTrigger);
     }
 
@@ -407,19 +409,16 @@ private:
             comboBox.setColour (ComboBox::arrowColourId, COLOR_BG_DARK);
             comboBox.setColour (ComboBox::textColourId, COLOR_FG);
             addAndMakeVisible (comboBox);
-            comboBox.addItem ("C4", 60);
-            comboBox.addItem ("C#4", 61);
-            comboBox.addItem ("D4", 62);
-            comboBox.addItem ("D#4", 63);
-            comboBox.addItem ("E4", 64);
-            comboBox.addItem ("F4", 65);
-            comboBox.addItem ("F#4", 66);
-            comboBox.addItem ("G4", 67);
-            comboBox.addItem ("G#4", 68);
-            comboBox.addItem ("A4", 69);
-            comboBox.addItem ("A#4", 70);
-            comboBox.addItem ("B4", 71);
-                             
+            int startNote = 60; // C4
+            for (auto i = startNote; i < startNote + (7*1); ++i) {
+                for (String n: { "C", "D", "E", "F", "G", "A", "B"}) {
+                    comboBox.addItem (n, startNote++);
+                    if (n != "E" && n != "B") {
+                        comboBox.addItem(n + "#", startNote++) ;   
+                    }
+                }
+            }
+                            
             comboBox.onChange = [this] { owner.setTriggerNote (row, comboBox.getSelectedId()); };
             comboBox.setWantsKeyboardFocus (false);
         }

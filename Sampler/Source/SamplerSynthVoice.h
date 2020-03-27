@@ -29,7 +29,6 @@ public:
     virtual void startNote (int midiNoteNumber, float velocity, 
                             SynthesiserSound * sound, int currentPitchWheelPosition) override
     {
-        DBG("STARTNOTE: " + midiNoteNumber + " VELOCITY: " + velocity);
     }   
 
     virtual void stopNote (float velocity, bool allowTailOff)

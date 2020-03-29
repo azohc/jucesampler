@@ -77,7 +77,7 @@ public:
 private:
     //==============================================================================
     
-    SamplerAudioSource samplerSource { keyboardState, chopTree };
+    SamplerAudioSource samplerSource { keyboardState };
     AudioTransportSource transportSource;
     MixerAudioSource mixerSource;    // combines sampler & transport
     AudioSourcePlayer sourcePlayer;

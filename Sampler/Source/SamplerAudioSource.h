@@ -21,13 +21,38 @@
 class SamplerAudioSource    : public AudioSource
 {
 public:    
-    SamplerAudioSource (MidiKeyboardState& keyState, ValueTree chops) : keyboardState (keyState), chopTree (chops)
+    SamplerAudioSource (MidiKeyboardState& keyState) : keyboardState (keyState)
     {
         synth.addVoice (new SamplerVoice());    // and these ones play the sampled sounds
     }
 
-    void makeSoundsFromChops(AudioFormatReader * audioFormatReader)
+    void makeSoundsFromChops(File file, ValueTree chopTree)
     {
+        AudioFormatManager formatManager;
+        formatManager.registerBasicFormats();
+        for (auto i = 0; i < chopTree.getNumChildren(); ++i) {
+            auto chop = chopTree.getChild(i);
+            double tstart = chop[PROP_START_TIME];
+            double tend = chop[PROP_END_TIME];
+            auto triggerNote = chop[PROP_TRIGGER];
+            std::unique_ptr<AudioFormatReader> formatReader = std::unique_ptr<AudioFormatReader> (formatManager.createReaderFor (file));
+            // AudioSubsectionReader audioSSReader (formatReader.get(), tstart, tend - tstart, false); //TODO subsection
+
+            BigInteger allNotes;
+            allNotes.setRange (0, 128, true);
+
+            synth.clearSounds();
+            synth.addSound (new SamplerSound (chop[PROP_ID],
+                                            *formatReader,
+                                            allNotes,      // note range TODO expand
+                                            triggerNote,    // root note
+                                            0.1,            // attack time
+                                            0.1,            // release time
+                                            tend - tstart   // maximum sample length
+                                            ));
+        
+        }
+    /* 
         for (auto i = 0; i < chopTree.getNumChildren(); ++i) {
             auto chop = chopTree.getChild(i);
             double tstart = chop[PROP_START_TIME];
@@ -35,8 +60,8 @@ public:
             auto triggerNote = chop[PROP_TRIGGER];
 
             AudioSubsectionReader audioSSReader (audioFormatReader, tstart, tend - tstart, false);
-            BigInteger noteRange; /* substitute for triggerNote */
-            noteRange.setRange (triggerNote, triggerNote, true);
+            BigInteger noteRange; // substitute for triggerNote
+            noteRange.setRange (0, 128, true);
 
             synth.clearSounds();
             synth.addSound (new SamplerSound (chop[PROP_ID],
@@ -47,7 +72,8 @@ public:
                                             0.1,            // release time
                                             tend - tstart   // maximum sample length
                                             ));
-        }
+        } 
+    */
     }
 
     void prepareToPlay (int /*samplesPerBlockExpected*/, double sampleRate) override
@@ -93,10 +119,6 @@ private:
 
     // the synth itself!
     Synthesiser synth;
-    // 
-
-    ValueTree chopTree;
-
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SamplerAudioSource)
 };

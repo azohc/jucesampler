@@ -409,12 +409,13 @@ private:
             comboBox.setColour (ComboBox::arrowColourId, COLOR_BG_DARK);
             comboBox.setColour (ComboBox::textColourId, COLOR_FG);
             addAndMakeVisible (comboBox);
-            int startNote = 60; // C4
-            for (auto i = startNote; i < startNote + (7*1); ++i) {
-                for (String n: { "C", "D", "E", "F", "G", "A", "B"}) {
-                    comboBox.addItem (n, startNote++);
-                    if (n != "E" && n != "B") {
-                        comboBox.addItem(n + "#", startNote++) ;   
+            int midiNoteNr = 60;     // start on C4
+
+            for (auto octave: { 4, 5 }) {
+                for (String note: { "C", "D", "E", "F", "G", "A", "B" }) {
+                    comboBox.addItem (note + String(octave), midiNoteNr++);
+                    if (note != "E" && note != "B") {
+                        comboBox.addItem(note + String(octave) + "#" , midiNoteNr++);
                     }
                 }
             }
@@ -505,7 +506,7 @@ private:
         
         chopXml = chopTree.createXml().release();
 
-        //chopTree.createXml()->writeTo(File::getCurrentWorkingDirectory().getChildFile ("chops.xml"), {});
+        chopTree.createXml()->writeTo(File::getCurrentWorkingDirectory().getChildFile ("chopCL.xml"), {});
     }
 
     //==============================================================================

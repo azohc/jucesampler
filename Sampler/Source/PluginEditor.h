@@ -556,15 +556,14 @@ private:
     {
         thumbnail->addChopMarker(childWhichHasBeenAdded[PROP_ID]);
         chopList->reloadData();
-        samplerSource.makeSoundsFromChops(currentAudioFileSource.get()->getAudioFormatReader());
+        samplerSource.makeSoundsFromChops(currentAudioFile, processor.getChopTree());
     }
    
     void valueTreePropertyChanged (ValueTree& treeWhosePropertyHasChanged,
                                    const Identifier& property)
     {
         chopList->reloadData();
-        samplerSource.makeSoundsFromChops(currentAudioFileSource.get()->getAudioFormatReader());
-        processor.getChopTree().createXml()->writeTo(File::getCurrentWorkingDirectory().getChildFile ("chops.xml"), {});
+        samplerSource.makeSoundsFromChops(currentAudioFile, processor.getChopTree());
     }
 
     void valueTreeChildRemoved (ValueTree& parentTree,
@@ -579,7 +578,7 @@ private:
             thumbnail->setSelectedChopId(NONE);
         }
         chopList->reloadData();
-        samplerSource.makeSoundsFromChops(currentAudioFileSource.get()->getAudioFormatReader());
+        samplerSource.makeSoundsFromChops(currentAudioFile, processor.getChopTree());
     }
 
     void changeState (TransportState newState)

@@ -7,7 +7,7 @@ cd Sampler/Builds/LinuxMakefile
 
 # make
 $REBUILD && make clean && rm libaubio* 2>/dev/null
-if make -j 2; then 
+if $REBUILD && make -j 2; then 
     if $REBUILD; then
         cp ../../Plugins/aubio/lib/libaubio.so.5.4.8  build/
         cp ../../Plugins/aubio/lib/libaubio.a  build/

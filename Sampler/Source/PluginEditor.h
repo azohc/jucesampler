@@ -442,6 +442,8 @@ private:
         c.setEndSample (transportSource.getLengthInSeconds() * sr);
         c.setHidden (false);
         processor.addChop (c);
+
+        Logger::getCurrentLogger()->writeToLog(String(currentTime) + " = currtime. StartTime = " + String(c.getStartTime()));
     }
 
     void selectionChopClicked()
@@ -463,6 +465,7 @@ private:
         }
         c.setHidden (false);
         processor.addChop (c);
+        Logger::getCurrentLogger()->writeToLog(String(bounds.first) + " " + String(bounds.second) + " = currtime. StartTime = " + String(c.getStartTime()));
     }
 
     void chopButtonClicked() 
@@ -516,6 +519,7 @@ private:
             c.setEndSample (c.getEndTime() * sr);
             c.setHidden (false);
             processor.addChop (c);
+            Logger::getCurrentLogger()->writeToLog(String(detections[i]) + " = currtime. StartTime = " + String(c.getStartTime()));
         }
     }
 
@@ -589,14 +593,14 @@ private:
     {
         thumbnail->addChopMarker(childWhichHasBeenAdded[PROP_ID]);
         chopList->reloadData();
-        samplerSource.makeSoundsFromChops(currentAudioFile, processor.getChopTree());
+        samplerSource.makeSoundsFromChops(currentAudioFileSource.get()->getAudioFormatReader(), processor.getChopTree());
     }
    
     void valueTreePropertyChanged (ValueTree& treeWhosePropertyHasChanged,
                                    const Identifier& property)
     {
         chopList->reloadData();
-        samplerSource.makeSoundsFromChops(currentAudioFile, processor.getChopTree());
+        samplerSource.makeSoundsFromChops(currentAudioFileSource.get()->getAudioFormatReader(), processor.getChopTree());
     }
 
     void valueTreeChildRemoved (ValueTree& parentTree,
@@ -611,7 +615,7 @@ private:
             thumbnail->setSelectedChopId(NONE);
         }
         chopList->reloadData();
-        samplerSource.makeSoundsFromChops(currentAudioFile, processor.getChopTree());
+        samplerSource.makeSoundsFromChops(currentAudioFileSource.get()->getAudioFormatReader(), processor.getChopTree());
     }
 
     void changeState (TransportState newState)

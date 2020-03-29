@@ -38,18 +38,18 @@ struct Chop
     state.setProperty (PROP_END_TIME, time, nullptr);
   }
 
-  int getStartSample() const { return state[PROP_START_TIME]; }
+  int getStartSample() const { return state[PROP_START_SAMPLE]; }
 
   void setStartSample (int time) {
     jassert (time >= 0.0);
-    state.setProperty (PROP_START_TIME, time, nullptr);
+    state.setProperty (PROP_START_SAMPLE, time, nullptr);
   }
 
-  int getEndSample() const { return state[PROP_END_TIME]; }
+  int getEndSample() const { return state[PROP_END_SAMPLE]; }
 
   void setEndSample (int time) {
     jassert (time >= 0.0);
-    state.setProperty (PROP_END_TIME, time, nullptr);
+    state.setProperty (PROP_END_SAMPLE, time, nullptr);
   }   
 
   int getTriggerNote() const { return state[PROP_TRIGGER]; }

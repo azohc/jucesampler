@@ -29,31 +29,29 @@ public:
         synth.addVoice (new SamplerVoice());    // and these ones play the sampled sounds
     }
 
-    void makeSoundsFromChops(File file, ValueTree chopTree)
+    void makeSoundsFromChops(AudioFormatReader* formatReader, ValueTree chopTree)
     {
-        AudioFormatManager formatManager;
-        formatManager.registerBasicFormats();
         for (auto i = 0; i < chopTree.getNumChildren(); ++i) {
             Chop chop (chopTree.getChild(i));
             int startSample = chop.getStartSample();
             int endSample = chop.getEndSample();
-            int triggerNote = chop.getTriggerNote();
-            std::unique_ptr<AudioFormatReader> formatReader = std::unique_ptr<AudioFormatReader> (formatManager.createReaderFor (file));
-            auto audioSSReader = new AudioSubsectionReader (formatReader.get(), startSample, endSample - startSample, true);
+            int rootNote = chop.getTriggerNote();
+            auto audioSSReader = new AudioSubsectionReader (formatReader, startSample, endSample - startSample, false);
 
-            BigInteger allNotes;
-            allNotes.setRange (0, 128, true);
+            BigInteger singleNote;
+            singleNote.setBit(rootNote); // TODO map midi notes (todo transpose -12) with integer keys. midi learn
+            Logger::getCurrentLogger()->writeToLog(String (chop.getId()) + " at " + singleNote.toString(10));
 
             synth.clearSounds();
-            auto samplerSound = new SamplerSound (String (chop.getId()), // ALL PARAMS IN SECONDS
-                                                  *audioSSReader,
-                                                  allNotes,      // note range TODO expand
-                                                  triggerNote,    // root note
-                                                  0.1,            // attack time
-                                                  0.1,            // release time
-                                                  chop.getEndTime() - chop.getStartTime() // maximum sample length
-                                                  );
-            synth.addSound (samplerSound);
+            synth.addSound (new SamplerSound (String (chop.getId()), // ALL PARAMS IN SECONDS
+                                              *audioSSReader,
+                                              singleNote,     // notes the sound is triggered by
+                                              rootNote,       // root note
+                                              0.1,            // attack time
+                                              0.1,            // release time
+                                              chop.getEndTime() - chop.getStartTime() // maximum sample length
+                                              ));
+            delete audioSSReader;
         }
     }
 

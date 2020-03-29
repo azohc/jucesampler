@@ -218,6 +218,9 @@ public:
         selectedChopId = id;
         selectionStartTime = chopTree.getChildWithProperty(PROP_ID, id)[PROP_START_TIME];
         selectionEndTime = chopTree.getChildWithProperty(PROP_ID, id)[PROP_END_TIME];
+        // Chop c = chopTree.getChildWithProperty(PROP_ID, id);
+        // selectionStartTime = c.getStartTime();
+        // selectionEndTime = c.getEndTime();
     }
 
     bool getNewFileDropped()

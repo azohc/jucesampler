@@ -3,9 +3,9 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/Sampler/JuceLibraryCode",
-                "${workspaceFolder}/Sampler/Source",
-                "${workspaceFolder}/Sampler/Plugins/aubio/include/aubio",
+                "${workspaceFolder}/Sampler/JuceLibraryCode/*",
+                "${workspaceFolder}/Sampler/Source/*",
+                "${workspaceFolder}/Sampler/Plugins/aubio/include/aubio/*",
                 "${workspaceFolder}/JUCE/modules/*"
             ],
             "defines": [],

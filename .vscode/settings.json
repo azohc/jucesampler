@@ -61,7 +61,9 @@
       "typeinfo": "cpp",
       "bit": "cpp",
       "list": "cpp",
-      "valarray": "cpp"
+      "valarray": "cpp",
+      "variant": "cpp",
+      "*.mm": "cpp"
     },
     "search.exclude": {
       "**/.git": true,

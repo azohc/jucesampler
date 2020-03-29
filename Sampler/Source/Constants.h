@@ -28,11 +28,13 @@ static const Colour COLOR_SEA = Colour::fromString("FF1E555C");
 
 
 // ValueTree Identifiers
-static const Identifier ID_CHOPS = "ChopData";
+static const Identifier ID_CHOPTREE = "ChopData";
 static const Identifier ID_CHOP = "Chop";
 static const Identifier PROP_ID = "ID";
 static const Identifier PROP_START_TIME = "Start";
 static const Identifier PROP_END_TIME = "End";
+static const Identifier PROP_START_SAMPLE = "StartSample";
+static const Identifier PROP_END_SAMPLE = "EndSample";
 static const Identifier PROP_TRIGGER = "Trigger";
 static const Identifier PROP_HIDDEN = "Hidden";
 static const Identifier PROP_SAMPLER_SOUND = "SamplerSound";

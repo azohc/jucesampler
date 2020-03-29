@@ -433,16 +433,36 @@ private:
     void startTimeChopClicked()
     {
         auto currentTime = transportSource.getCurrentPosition();
-        auto chop = Chop { currentTime, transportSource.getLengthInSeconds(), "" , false };
-        processor.addChop (chop);
+        auto sr = processor.getSampleRate();
+        ValueTree chopState (ID_CHOP);
+        Chop c (chopState);
+        c.setStartTime (currentTime);
+        c.setStartSample (currentTime * sr);
+        c.setEndTime (transportSource.getLengthInSeconds());
+        c.setEndSample (transportSource.getLengthInSeconds() * sr);
+        c.setHidden (false);
+        processor.addChop (c);
     }
 
     void selectionChopClicked()
     {
         auto bounds = thumbnail->getSelectionBounds();
-        auto chop = bounds.first < bounds.second ? 
-            Chop { bounds.first, bounds.second, "", false } : Chop { bounds.second, bounds.first, "", false };
-        processor.addChop (chop);
+        auto sr = processor.getSampleRate();
+        ValueTree chopState (ID_CHOP);
+        Chop c (chopState);
+        if (bounds.first < bounds.second) {
+            c.setStartTime (bounds.first);
+            c.setStartSample (bounds.first * sr);
+            c.setEndTime (bounds.second);    
+            c.setEndSample (bounds.second * sr);
+        } else {
+            c.setStartTime (bounds.second);
+            c.setStartSample (bounds.second * sr);
+            c.setEndTime (bounds.first); 
+            c.setEndSample (bounds.first * sr);
+        }
+        c.setHidden (false);
+        processor.addChop (c);
     }
 
     void chopButtonClicked() 
@@ -473,16 +493,29 @@ private:
         } while ( read == hop_size );
 
         if (!detections.size()) return;
+        auto sr = processor.getSampleRate();
         if (detections.size() == 1) 
         {
-            processor.addChop(Chop { detections[0], transportSource.getLengthInSeconds(), "" , false });
+            ValueTree chopState (ID_CHOP);
+            Chop c (chopState);
+            c.setStartTime (detections[0]);
+            c.setStartSample (detections[0] * sr);
+            c.setEndTime (transportSource.getLengthInSeconds());
+            c.setEndSample (c.getEndTime() * sr);
+            c.setHidden (false);
+            processor.addChop (c);
             return;
         }
         for (auto i = 0; i < detections.size(); i++) 
         {
-            auto chop = Chop { detections[i], 0, "" , false };
-            chop.end = (i == detections.size() - 1) ? chop.end = transportSource.getLengthInSeconds() : chop.end = detections[i + 1];
-            processor.addChop(chop);
+            ValueTree chopState (ID_CHOP);
+            Chop c (chopState);
+            c.setStartTime (detections[i]);
+            c.setStartSample (detections[i] * sr);
+            c.setEndTime (i == detections.size() - 1 ? transportSource.getLengthInSeconds() : detections[i + 1]);
+            c.setEndSample (c.getEndTime() * sr);
+            c.setHidden (false);
+            processor.addChop (c);
         }
     }
 

@@ -11,9 +11,11 @@
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
-#include "../../Sampler/Source/SamplerSynthVoice.h"
-#include "../../Sampler/Source/SamplerSynthSound.h"
-#include "../../Sampler/Source/Constants.h"
+#include "PluginProcessor.h"
+#include "Constants.h"
+#include "SamplerSynthVoice.h"
+#include "SamplerSynthSound.h"
+
 
 //==============================================================================
 /*
@@ -31,26 +33,27 @@ public:
         AudioFormatManager formatManager;
         formatManager.registerBasicFormats();
         for (auto i = 0; i < chopTree.getNumChildren(); ++i) {
-            auto chop = chopTree.getChild(i);
-            double tstart = chop[PROP_START_TIME];
-            double tend = chop[PROP_END_TIME];
-            auto triggerNote = chop[PROP_TRIGGER];
+            Chop chop (chopTree.getChild(i));
+            int startSample = chop.getStartSample();
+            int endSample = chop.getEndSample();
+            int triggerNote = chop.getTriggerNote();
             std::unique_ptr<AudioFormatReader> formatReader = std::unique_ptr<AudioFormatReader> (formatManager.createReaderFor (file));
-            // AudioSubsectionReader audioSSReader (formatReader.get(), tstart, tend - tstart, false); //TODO subsection
+            // AudioSubsectionReader audioSSReader (formatReader.get(), tstart, tend - tstart, false); //TODO s_start & s_length NOT TImE
 
             BigInteger allNotes;
             allNotes.setRange (0, 128, true);
 
             synth.clearSounds();
-            synth.addSound (new SamplerSound (chop[PROP_ID],
-                                            *formatReader,
-                                            allNotes,      // note range TODO expand
-                                            triggerNote,    // root note
-                                            0.1,            // attack time
-                                            0.1,            // release time
-                                            tend - tstart   // maximum sample length
-                                            ));
-        
+            auto samplerSound = new SamplerSound (String (chop.getId()), // ALL PARAMS IN SECONDS
+                                                  *formatReader,
+                                                  allNotes,      // note range TODO expand
+                                                  triggerNote,    // root note
+                                                  0.1,            // attack time
+                                                  0.1,            // release time
+                                                  chop.getEndTime() - chop.getStartTime() // maximum sample length
+                                                  );
+            jassert (samplerSound->getAudioData() != nullptr);
+            synth.addSound (samplerSound);
         }
     /* 
         for (auto i = 0; i < chopTree.getNumChildren(); ++i) {

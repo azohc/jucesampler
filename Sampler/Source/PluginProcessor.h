@@ -16,17 +16,54 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "Constants.h"
 #include "aubio.h"
-#include "SamplerAudioSource.h"
-
-//==============================================================================
 
 struct Chop
 {
-    double start;
-    double end;
-    String mappedTo;
-    bool hidden;
+  Chop (const ValueTree &v) : state(v) { jassert (v.hasType (ID_CHOP)); }
+
+  int getId() const { return state[PROP_ID]; }
+  void setId (int id) { state.setProperty (PROP_ID, id, nullptr); }
+
+  double getStartTime() const { return state[PROP_START_TIME]; }
+
+  void setStartTime (double time) {
+    jassert (time >= 0.0);
+    state.setProperty (PROP_START_TIME, time, nullptr);
+  }
+
+  double getEndTime() const { return state[PROP_END_TIME]; }
+
+  void setEndTime (double time) {
+    jassert (time >= 0.0);
+    state.setProperty (PROP_END_TIME, time, nullptr);
+  }
+
+  int getStartSample() const { return state[PROP_START_TIME]; }
+
+  void setStartSample (int time) {
+    jassert (time >= 0.0);
+    state.setProperty (PROP_START_TIME, time, nullptr);
+  }
+
+  int getEndSample() const { return state[PROP_END_TIME]; }
+
+  void setEndSample (int time) {
+    jassert (time >= 0.0);
+    state.setProperty (PROP_END_TIME, time, nullptr);
+  }   
+
+  int getTriggerNote() const { return state[PROP_TRIGGER]; }
+  void getTriggerNote (int note) { state.setProperty (PROP_TRIGGER, note, nullptr); }
+  
+  bool getHidden() const { return state[PROP_HIDDEN]; }
+  void setHidden (bool hidden) { state.setProperty (PROP_HIDDEN, hidden, nullptr); } 
+
+  ValueTree state;
 };
+
+#include "SamplerAudioSource.h"
+
+//==============================================================================
 
 class SamplerAudioProcessor  : public AudioProcessor
 {
@@ -72,7 +109,7 @@ public:
     HashMap<int, ValueTree>* getChopMap();
     ValueTree getChopTree() const;
     void clearChopTree();
-    int addChop(const Chop& chop);
+    int addChop(Chop& chop);
 
 private:
     //==============================================================================

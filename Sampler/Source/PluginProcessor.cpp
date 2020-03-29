@@ -26,7 +26,7 @@ SamplerAudioProcessor::SamplerAudioProcessor()
                        )
 #endif
 {
-    chopTree = ValueTree { ID_CHOPS, {} };
+    chopTree = ValueTree { ID_CHOPTREE, {} };
 }
 
 SamplerAudioProcessor::~SamplerAudioProcessor()
@@ -216,22 +216,15 @@ void SamplerAudioProcessor::clearChopTree()
     chopMap.clear();
 }
 
-int SamplerAudioProcessor::addChop(const Chop& chop) 
+int SamplerAudioProcessor::addChop(Chop& chop) 
 {
     auto newKey = chopTree.getNumChildren();
     while (chopMap.contains(newKey)) {
         newKey++;
     }
-    
-    ValueTree chopNode = ValueTree (ID_CHOP);
-    chopNode.setProperty(PROP_ID, newKey, nullptr);
-    chopNode.setProperty(PROP_START_TIME, chop.start, nullptr);
-    chopNode.setProperty(PROP_END_TIME, chop.end, nullptr);
-    chopNode.setProperty(PROP_TRIGGER, chop.mappedTo, nullptr);
-    chopNode.setProperty(PROP_HIDDEN, chop.hidden, nullptr);
-
-    chopMap.set(newKey, chopNode);
-    chopTree.appendChild(chopNode, nullptr);
+    chop.setId (newKey);
+    chopMap.set (newKey, chop.state);
+    chopTree.appendChild (chop.state, nullptr);
     
     return newKey;
 }

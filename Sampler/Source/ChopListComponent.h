@@ -50,6 +50,16 @@ public:
         rowClickedMenu = new PopupMenu();
 
         deletedChopId = NONE;
+
+        int midiNoteNr = 24;     // start on C0
+        for (auto octave: { 0, 1, 2, 3, 4, 5, 6, 7, 8 }) {
+            for (String note: { "C", "D", "E", "F", "G", "A", "B" }) {
+                midiNoteMap.set(midiNoteNr++, note + String(octave));
+                if (note != "E" && note != "B") {
+                    midiNoteMap.set(midiNoteNr++, note + String(octave) + "#");
+                }
+            }
+        }
     }
 
     ~ChopListComponent()
@@ -195,17 +205,6 @@ public:
         chopXml->getChildElement (rowNumber)->setAttribute (COL_TRIGG, newTrigger);
     }
 
-    String getText (const int columnNumber, const int rowNumber) const
-    {
-        return chopXml->getChildElement (rowNumber)->getStringAttribute (getAttributeNameForColumnId(columnNumber));
-    }
-
-    void setText (const int columnNumber, const int rowNumber, const String& newText)
-    {
-        auto columnName = table.getHeader().getColumnName (columnNumber);
-        chopXml->getChildElement (rowNumber)->setAttribute (columnName, newText);
-    }
-
     //==============================================================================
     void resized() override
     {
@@ -314,87 +313,7 @@ private:
     Value selectedChopId;
     int deletedChopId;
 
-    //==============================================================================
-    // This is a custom Label component, which we use for the table's editable text columns.
-    class EditableTextCustomComponent : public Label
-    {
-    public:
-        EditableTextCustomComponent (ChopListComponent& td) : owner (td)
-        {
-            // double click to edit the label text; single click handled below
-            setEditable (false, true, false);
-        }
-
-        void mouseDown (const MouseEvent& event) override
-        {
-            // single click on the label should simply select the row
-            owner.table.selectRowsBasedOnModifierKeys (row, event.mods, false);
-
-            Label::mouseDown (event);
-        }
-
-        void textWasEdited() override
-        {
-            owner.setText (columnId, row, getText());
-        }
-
-        // Our demo code will call this when we may need to update our contents
-        void setRowAndColumn (const int newRow, const int newColumn)
-        {
-            row = newRow;
-            columnId = newColumn;
-            setText (owner.getText(columnId, row), dontSendNotification);
-        }
-
-        void paint (Graphics& g) override
-        {
-            auto& lf = getLookAndFeel();
-            if (!dynamic_cast<LookAndFeel_V4*> (&lf))
-                lf.setColour (textColourId, Colours::black);
-
-            Label::paint (g);
-        }
-
-    private:
-        ChopListComponent& owner;
-        int row, columnId;
-        Colour textColour;
-    };
-
-    //==============================================================================
-    // custom component containing a toggle button
-    class ToggleButtonColumnComponent : public Component
-    {
-    public:
-        ToggleButtonColumnComponent (ChopListComponent& td) : owner (td)
-        {
-            // just put a combo box inside this component
-            addAndMakeVisible (button);
-            button.setColour (TextButton::buttonColourId, COLOR_BG);
-            button.setColour (TextButton::textColourOffId, COLOR_FG);            
-            button.setEnabled (true);
-            button.onClick = [this] { owner.setChopVisible (row, button.getToggleState()); };
-            button.setWantsKeyboardFocus (false);
-        }
-
-        void resized() override
-        {
-            button.setBoundsInset (BorderSize<int> (2));
-        }
-
-        // owner will call this when we may need to update our contents
-        void setRowAndColumn (int newRow, int newColumn)
-        {
-            row = newRow;
-            columnId = newColumn;
-            button.setToggleState (owner.getChopAtRow (newRow)[PROP_HIDDEN], NotificationType::dontSendNotification);
-        }
-
-    private:
-        ChopListComponent& owner;
-        ToggleButton button;
-        int row, columnId;
-    };
+    HashMap<int, String> midiNoteMap;
 
     //==============================================================================
     // custom component containing a combo box
@@ -409,7 +328,7 @@ private:
             comboBox.setColour (ComboBox::arrowColourId, COLOR_BG_DARK);
             comboBox.setColour (ComboBox::textColourId, COLOR_FG);
             addAndMakeVisible (comboBox);
-            int midiNoteNr = 60;     // start on C4
+            int midiNoteNr = 72;     // start on C4
 
             for (auto octave: { 4, 5 }) {
                 for (String note: { "C", "D", "E", "F", "G", "A", "B" }) {
@@ -495,8 +414,6 @@ private:
         columnMappedTo->setAttribute (COLUMN_ID, COLID_TRIGG);
         columnMappedTo->setAttribute (COLUMN_NAME, COL_TRIGG);
         columnMappedTo->setAttribute (COLATR_WIDTH, columnWidth);
-
-        //columnXml->writeTo(File::getCurrentWorkingDirectory().getChildFile ("columns.xml"), {});
     }
 
     void chopsToXml()
@@ -504,9 +421,7 @@ private:
         if (chopXml != nullptr)     
             delete chopXml;
         
-        chopXml = chopTree.createXml().release();
-
-        chopTree.createXml()->writeTo(File::getCurrentWorkingDirectory().getChildFile ("chopCL.xml"), {});
+        chopXml = chopTree.createXml().release();        
     }
 
     //==============================================================================

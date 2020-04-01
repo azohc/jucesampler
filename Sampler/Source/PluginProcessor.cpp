@@ -27,7 +27,7 @@ SamplerAudioProcessor::SamplerAudioProcessor()
 #endif
 {
     chopTree = ValueTree { ID_CHOPTREE, {} };
-}
+};
 
 SamplerAudioProcessor::~SamplerAudioProcessor()
 {
@@ -109,7 +109,7 @@ void SamplerAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBloc
     
     deviceManager.initialiseWithDefaultDevices(getTotalNumInputChannels(), getTotalNumOutputChannels());
     deviceManager.addAudioCallback (&sourcePlayer);
-    deviceManager.addMidiInputDeviceCallback ({}, &(samplerSource.midiCollector));
+    deviceManager.addMidiInputDeviceCallback ("20-0", &(samplerSource.midiCollector));
 }
 
 void SamplerAudioProcessor::releaseResources()

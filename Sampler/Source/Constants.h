@@ -12,6 +12,9 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 
+void print(String s) {
+  Logger::getCurrentLogger()->writeToLog(s);
+}
 
 // Colors
 static const Colour COLOR_BG_DARK = Colour::fromString("FF252420");
@@ -79,6 +82,7 @@ const String MSG_DEL_ALL = "Are you sure you want to delete every chop?";
 const String MSG_CONFIRM = "Confirm";
 const String MSG_DECLINE = "Decline";
 
+const int INIT_NOTE_AUTO_ASSIGN = 72; // C4
 
 // IDs for Radio buttons
 enum RadioButtonIds
@@ -101,4 +105,48 @@ enum ColumnIds
     COLID_START = 1011,
     COLID_END = 1012,
     COLID_TRIGG = 1013
+};
+
+struct Chop
+{
+  Chop (const ValueTree &v) : state(v) { jassert (v.hasType (ID_CHOP)); }
+
+  int getId() const { return state[PROP_ID]; }
+  void setId (int id) { state.setProperty (PROP_ID, id, nullptr); }
+
+  double getStartTime() const { return state[PROP_START_TIME]; }
+
+  void setStartTime (double time) {
+    jassert (time >= 0.0);
+    state.setProperty (PROP_START_TIME, time, nullptr);
+  }
+
+  double getEndTime() const { return state[PROP_END_TIME]; }
+
+  void setEndTime (double time) {
+    jassert (time >= 0.0);
+    state.setProperty (PROP_END_TIME, time, nullptr);
+  }
+
+  int getStartSample() const { return state[PROP_START_SAMPLE]; }
+
+  void setStartSample (int time) {
+    jassert (time >= 0.0);
+    state.setProperty (PROP_START_SAMPLE, time, nullptr);
+  }
+
+  int getEndSample() const { return state[PROP_END_SAMPLE]; }
+
+  void setEndSample (int time) {
+    jassert (time >= 0.0);
+    state.setProperty (PROP_END_SAMPLE, time, nullptr);
+  }   
+
+  int getTriggerNote() const { return state[PROP_TRIGGER]; }
+  void setTriggerNote (int note) { state.setProperty (PROP_TRIGGER, note, nullptr); }
+  
+  bool getHidden() const { return state[PROP_HIDDEN]; }
+  void setHidden (bool hidden) { state.setProperty (PROP_HIDDEN, hidden, nullptr); } 
+
+  ValueTree state;
 };

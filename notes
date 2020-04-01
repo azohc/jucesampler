@@ -15,7 +15,7 @@ mini thumbnail class
 
 installation process:
 
-on manjaro:
+manjaro:
 	# aunque uso los proyectos del repo - se encarga de instalar muchas deps
 	sudo pacman -Syu juce 
 	sudo pacman -Syu aubio
@@ -30,43 +30,3 @@ on manjaro:
 	./waf configure --prefix ~/git/jucesampler/Sampler/Plugins/aubio/
 	./waf build
 	sudo ./waf install
-
-
-
-	.
-├── dox -> mega/dox/
-├── dwn
-│   ├── '[1984] Jun Fukamachi - Starview HCT-5808 [Full Album].mp3
-│   ├── AnalizadorSintacticoImplementacionCUP.zip
-│   ├── cup.jar
-│   ├── 'El Último 10 (Videoclip) - Drisket feat. Ill Pekeño - Atlas Rider.mp3
-│   ├── Joseph Rodrigues Mind Maps-20200303T224528Z-001.zip
-│   ├── manjaro-architect-19.0-200223-linux54.iso
-│   ├── open_with
-│   ├── PL.7z
-│   ├── 'Portabo$$ - 4 DA FUNK.mp3
-│   └── sneyk_
-├── git
-│   ├── algo
-│   ├── dots
-│   └── jucesampler
-├── img -> mega/img/
-├── mega
-│   ├── bin
-│   ├── dox
-│   ├── espi
-│   ├── img
-│   └── uni
-├── music
-├── notes -> /home/azohc/mega/dox/notes
-└── vid
-    ├── 1a. Ghost in the Shell - The Movie (1995 - 1080p DUAL Audio).mkv
-    ├── Amanece que no es poco (1988) [HDrip-XviD-AC3-ESP].avi
-    ├── Gattaca (1997) [1080p]
-    ├── Mononoke hime - Princess Mononoke (1997)
-    ├── NEON
-    ├── Ninja.Scroll.1993.720p.BluRay.x264-SONiDO [PublicHD]
-    ├── Parasite.2019.1080p.HDRip.X264.AC3-EVO[TGx]
-    ├── Schindlers List (1993) [1080p]
-    ├── The.Dirty.Dozen.1967.1080p.BluRay.H264.AAC-RARBG
-    └── [TorrentCounter.to].Spirited.Away.2001.English.Dubbed.1080p.BluRay.x264.[1.8GB].mp4

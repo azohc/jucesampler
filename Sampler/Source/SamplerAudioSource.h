@@ -13,8 +13,6 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "PluginProcessor.h"
 #include "Constants.h"
-#include "SamplerSynthVoice.h"
-#include "SamplerSynthSound.h"
 
 
 //==============================================================================
@@ -25,12 +23,12 @@ class SamplerAudioSource    : public AudioSource
 public:    
     SamplerAudioSource (MidiKeyboardState& keyState) : keyboardState (keyState)
     {
-        synth.addVoice (new SamplerVoice());    // and these ones play the sampled sounds
-        synth.addVoice (new SamplerVoice());    // and these ones play the sampled sounds
+        synth.addVoice (new SamplerVoice());    // and these ones play the sampled sounds TODO voice counter modifier
     }
 
     void makeSoundsFromChops(AudioFormatReader* formatReader, ValueTree chopTree)
     {
+        synth.clearSounds();
         for (auto i = 0; i < chopTree.getNumChildren(); ++i) {
             Chop chop (chopTree.getChild(i));
             int startSample = chop.getStartSample();
@@ -39,10 +37,8 @@ public:
             auto audioSSReader = new AudioSubsectionReader (formatReader, startSample, endSample - startSample, false);
 
             BigInteger singleNote;
-            singleNote.setBit(rootNote); // TODO map midi notes (todo transpose -12) with integer keys. midi learn
-            Logger::getCurrentLogger()->writeToLog(String (chop.getId()) + " at " + singleNote.toString(10));
+            singleNote.setBit(rootNote); // TODO  midi learn, connect MIDI keyboard
 
-            synth.clearSounds();
             synth.addSound (new SamplerSound (String (chop.getId()), // ALL PARAMS IN SECONDS
                                               *audioSSReader,
                                               singleNote,     // notes the sound is triggered by
@@ -82,21 +78,11 @@ public:
         // and now get the synth to process the midi events and generate its output.
         synth.renderNextBlock (*bufferToFill.buffer, incomingMidi, 0, bufferToFill.numSamples);
     }
-
-    // TODO COPIED from Projucer Synth tutorial
-    // this collects real-time midi messages from the midi input device, and
-    // turns them into blocks that we can process in our audio callback
+    
     MidiMessageCollector midiCollector;
 
-
 private:
-
-    // this represents the state of which keys on our on-screen keyboard are held
-    // down. When the mouse is clicked on the keyboard component, this object also
-    // generates midi messages for this, which we can pass on to our synth.
     MidiKeyboardState& keyboardState;
-
-    // the synth itself!
     Synthesiser synth;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SamplerAudioSource)

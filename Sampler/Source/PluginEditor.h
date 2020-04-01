@@ -49,7 +49,7 @@ public:
         addAndMakeVisible (currentPositionLabel);
         currentPositionLabel.setFont (Font (15.00f, Font::plain));
         currentPositionLabel.setJustificationType (Justification::left);
-        currentPositionLabel.setEditable (false, false, false); // TODO make editable
+        currentPositionLabel.setEditable (false, false, false);
         //currentPositionLabel.setColour (Label::backgroundWhenEditingColourId)
         currentPositionLabel.setColour (Label::backgroundColourId, COLOR_BG);
         currentPositionLabel.setColour (Label::textColourId, COLOR_FG);
@@ -65,7 +65,7 @@ public:
         fullLoopToggle.setColour (TextButton::buttonColourId, COLOR_BG);
         fullLoopToggle.setColour (TextButton::textColourOffId, COLOR_FG);
         fullLoopToggle.setEnabled (false);
-        fullLoopToggle.onClick = [this] () { 
+        fullLoopToggle.onClick = [this] { 
             auto l = !currentAudioFileSource.get()->isLooping();
             currentAudioFileSource.get()->setLooping(l);
             fullLoopToggle.setToggleState (l, dontSendNotification);
@@ -79,7 +79,7 @@ public:
         selectionLoopToggle.setColour (TextButton::textColourOffId, COLOR_FG);
         selectionLoopToggle.setEnabled (false);
         selectionLoopToggle.setClickingTogglesState(true);
-        selectionLoopToggle.onClick = [this] () { 
+        selectionLoopToggle.onClick = [this] { 
             currentAudioFileSource.get()->setLooping(selectionLoopToggle.getToggleState());
             if (fullLoopToggle.getToggleState()) {
                 fullLoopToggle.triggerClick();
@@ -146,19 +146,29 @@ public:
         chopThresholdSlider.setColour (Slider::thumbColourId, COLOR_FG);
         chopThresholdSlider.setRange (0, 3.6, 0.01);
         chopThresholdSlider.setEnabled (false);
+        chopThresholdSlider.onDragEnd = [this] { updateDetectedChopsLabel(); };
 
         addAndMakeVisible (onsetMethodButton);
         onsetMethodButton.setEnabled (false);
         onsetMethodButton.setColour (TextButton::buttonColourId, COLOR_BG);
         onsetMethodButton.setColour (TextButton::textColourOffId, COLOR_FG);
         onsetMethodButton.setButtonText (ONSET_ENERGY);
-        onsetMethodButton.onClick = [this] () {
+        onsetMethodButton.onClick = [this] {
             onsetMethodNumber++;
             if (onsetMethodNumber == sizeof (ONSET_METHODS) / sizeof (ONSET_METHODS[0])) {
                 onsetMethodNumber = 0;
             }
             onsetMethodButton.setButtonText (ONSET_METHODS[onsetMethodNumber]);
+            updateDetectedChopsLabel();
         };
+
+        addAndMakeVisible (detectedChopNumberLabel);
+        detectedChopNumberLabel.setFont (Font (15.00f, Font::plain));
+        detectedChopNumberLabel.setJustificationType (Justification::centredTop);
+        detectedChopNumberLabel.setEditable (false, false, false);
+        //currentPositionLabel.setColour (Label::backgroundWhenEditingColourId)
+        detectedChopNumberLabel.setColour (Label::backgroundColourId, COLOR_BG);
+        detectedChopNumberLabel.setColour (Label::textColourId, COLOR_FG);
 
         // CHOPLIST
         chopList.reset(new ChopListComponent(processor.getChopTree(), selectedChopId));
@@ -244,6 +254,7 @@ public:
         chopButton.setBounds (rectControlsAux.removeFromTop (buttonHeight).reduced (4));
         onsetMethodButton.setBounds (rectControlsAux.removeFromTop (buttonHeight * 0.7).reduced (4));
         chopThresholdSlider.setBounds (rectControlsAux.removeFromTop (buttonHeight).reduced (4));
+        detectedChopNumberLabel.setBounds (rectControlsAux.removeFromTop (buttonHeight).reduced (4));
 
         // Thumbnail functions      TODO use flex to distribute evenly
         auto rectThumbnailFunctsAux = rectThumbnailFuncts.reduced(1);
@@ -305,6 +316,7 @@ private:
     std::unique_ptr<ChopListComponent> chopList;
 
     int onsetMethodNumber;
+    int lastMidiNoteAssigned = INIT_NOTE_AUTO_ASSIGN;
 
     //==============================================================================
     // CONTROLS
@@ -313,13 +325,15 @@ private:
     TextButton loadButton { "Load" };
     TextButton chopButton { "Chop" };
     TextButton onsetMethodButton;
-    Slider chopThresholdSlider { "Chop threshold" };
+    Slider chopThresholdSlider { "Chop Threshold" };
+    Label detectedChopNumberLabel { "detectedChopNumberLabel", "0\nDetected Chops" };
+
 
     //==============================================================================
     // THUMBNAIL FUNCTIONS
     Label currentPositionLabel { "currentPositionLabel", "Position: " };
-    TextButton startTimeChopButton { "Chop from here", "Creates a new chop with a start time equal to the current position" };
-    TextButton selectionChopButton { "Chop selection", "Creates a new chop out of the current selection" };
+    TextButton startTimeChopButton { "Chop From Here", "Creates a new chop with a start time equal to the current position" };
+    TextButton selectionChopButton { "Chop Selection", "Creates a new chop out of the current selection" };
 
     ToggleButton followTransportButton { "Follow Transport" };
 
@@ -377,13 +391,14 @@ private:
             startTimeChopButton.setEnabled (true);
             chopButton.setEnabled (true);
             chopThresholdSlider.setEnabled (true);
+            chopThresholdSlider.setValue (1);
+            updateDetectedChopsLabel();
             onsetMethodButton.setEnabled (true);
         }
     }
 
     bool loadFileIntoTransport (const File& file)
     {
-        // unload the previous file source and delete it..
         transportSource.stop();
         transportSource.setSource (nullptr);
         currentAudioFileSource.reset();
@@ -441,9 +456,8 @@ private:
         c.setEndTime (transportSource.getLengthInSeconds());
         c.setEndSample (transportSource.getLengthInSeconds() * sr);
         c.setHidden (false);
+        c.setTriggerNote (lastMidiNoteAssigned++);
         processor.addChop (c);
-
-        Logger::getCurrentLogger()->writeToLog(String(currentTime) + " = currtime. StartTime = " + String(c.getStartTime()));
     }
 
     void selectionChopClicked()
@@ -463,13 +477,17 @@ private:
             c.setEndTime (bounds.first); 
             c.setEndSample (bounds.first * sr);
         }
+        c.setTriggerNote (lastMidiNoteAssigned++);
         c.setHidden (false);
         processor.addChop (c);
-        Logger::getCurrentLogger()->writeToLog(String(bounds.first) + " " + String(bounds.second) + " = currtime. StartTime = " + String(c.getStartTime()));
     }
 
     void chopButtonClicked() 
     {
+        detectChopsOnset (true);
+    }
+
+    int detectChopsOnset (bool createChopsFromDetections) {
         auto file = currentAudioFile.getFullPathName().getCharPointer();
         uint_t samplerate = 0;
         uint_t buf_size = 1024;
@@ -489,26 +507,17 @@ private:
             aubio_onset_do(o, in, out);
             // do something with the onsets
             if (out->data[0] != 0) {
-                // Logger::getCurrentLogger()->writeToLog(String::formatted("onset at %.3fms, %.3fs, frame %d\n", aubio_onset_get_last_ms(o), aubio_onset_get_last_s(o), aubio_onset_get_last(o)));
+                // print(String::formatted("onset at %.3fms, %.3fs, frame %d\n", aubio_onset_get_last_ms(o), aubio_onset_get_last_s(o), aubio_onset_get_last(o)));
                 detections.addIfNotAlreadyThere(aubio_onset_get_last_s(o));
             }
             n_frames += read;
         } while ( read == hop_size );
 
-        if (!detections.size()) return;
+        auto numDetectedChops = detections.size();
+        if (numDetectedChops == 0)              return 0;
+        else if (!createChopsFromDetections)    return numDetectedChops;
+        
         auto sr = processor.getSampleRate();
-        if (detections.size() == 1) 
-        {
-            ValueTree chopState (ID_CHOP);
-            Chop c (chopState);
-            c.setStartTime (detections[0]);
-            c.setStartSample (detections[0] * sr);
-            c.setEndTime (transportSource.getLengthInSeconds());
-            c.setEndSample (c.getEndTime() * sr);
-            c.setHidden (false);
-            processor.addChop (c);
-            return;
-        }
         for (auto i = 0; i < detections.size(); i++) 
         {
             ValueTree chopState (ID_CHOP);
@@ -518,9 +527,16 @@ private:
             c.setEndTime (i == detections.size() - 1 ? transportSource.getLengthInSeconds() : detections[i + 1]);
             c.setEndSample (c.getEndTime() * sr);
             c.setHidden (false);
+            c.setTriggerNote (lastMidiNoteAssigned++);
             processor.addChop (c);
-            Logger::getCurrentLogger()->writeToLog(String(detections[i]) + " = currtime. StartTime = " + String(c.getStartTime()));
         }
+        return numDetectedChops;
+    }
+
+    void updateDetectedChopsLabel () {
+        auto v = chopThresholdSlider.getValue();
+        auto n = detectChopsOnset(false);
+        detectedChopNumberLabel.setText (String(n) + "\nDetected Chops", NotificationType::dontSendNotification);
     }
 
     void valueChanged (Value& value)
@@ -610,9 +626,10 @@ private:
         thumbnail->removeChopMarker(childWhichHasBeenRemoved[PROP_ID]);
         processor.getChopMap()->remove(childWhichHasBeenRemoved[PROP_ID]);
 
-        if (!processor.getChopTree().getNumChildren())
+        if (parentTree.getNumChildren() == 0)
         {
             thumbnail->setSelectedChopId(NONE);
+            lastMidiNoteAssigned = INIT_NOTE_AUTO_ASSIGN;
         }
         chopList->reloadData();
         samplerSource.makeSoundsFromChops(currentAudioFileSource.get()->getAudioFormatReader(), processor.getChopTree());

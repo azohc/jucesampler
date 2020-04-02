@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="oWfbQZ" name="Sampler" projectType="audioplug" jucerVersion="5.4.5"
-              pluginFormats="buildStandalone" pluginVST3Category="Instrument,Sampler"
+              pluginFormats="buildStandalone,buildVST3" pluginVST3Category="Instrument,Sampler"
               pluginCharacteristicsValue="pluginEditorRequiresKeys,pluginIsSynth,pluginProducesMidiOut,pluginWantsMidiIn">
   <MAINGROUP id="BkkyvB" name="Sampler">
     <GROUP id="{33229E8B-F3CD-6BB0-771B-06E291FA31DC}" name="Source">

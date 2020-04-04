@@ -174,9 +174,6 @@ public:
         chopList.reset(new ChopListComponent(processor.getChopTree(), selectedChopId));
         addAndMakeVisible (chopList.get());
 
-        // keyboard
-        addAndMakeVisible (keyboardComponent);
-
         // formats
         formatManager.registerBasicFormats();
 
@@ -276,8 +273,6 @@ public:
 
         // Choplist
         chopList->setBounds (rectChopList);
-    
-        keyboardComponent.setBounds (rectChopEdit.reduced(4));    
 
         // Thumbnail
         rectThumbnail = r;
@@ -345,7 +340,7 @@ private:
     Value userSelectionActive;
     
     MidiKeyboardState& keyboardState;
-    MidiKeyboardComponent keyboardComponent  { keyboardState, MidiKeyboardComponent::horizontalKeyboard};
+
     //==============================================================================
     // RECTANGLES
     Rectangle<int> rectChopEdit;
@@ -452,9 +447,9 @@ private:
         ValueTree chopState (ID_CHOP);
         Chop c (chopState);
         c.setStartTime (currentTime);
-        c.setStartSample (currentTime * sr);
+        c.setStartSample (int64(currentTime * sr));
         c.setEndTime (transportSource.getLengthInSeconds());
-        c.setEndSample (transportSource.getLengthInSeconds() * sr);
+        c.setEndSample (int64(transportSource.getLengthInSeconds() * sr));
         c.setHidden (false);
         c.setTriggerNote (lastMidiNoteAssigned++);
         processor.addChop (c);

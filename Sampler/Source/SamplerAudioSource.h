@@ -31,22 +31,26 @@ public:
         synth.clearSounds();
         for (auto i = 0; i < chopTree.getNumChildren(); ++i) {
             Chop chop (chopTree.getChild(i));
-            int startSample = chop.getStartSample();
-            int endSample = chop.getEndSample();
+            int chopId = chop.getId();
+            int64 startSample = chop.getStartSample();
+            int64 endSample = chop.getEndSample();
             int rootNote = chop.getTriggerNote();
             auto audioSSReader = new AudioSubsectionReader (formatReader, startSample, endSample - startSample, false);
+            double startTime = chop.getStartTime();
+            double endTime = chop.getEndTime();
 
             BigInteger singleNote;
             singleNote.setBit(rootNote); // TODO  midi learn, connect MIDI keyboard
-
-            synth.addSound (new SamplerSound (String (chop.getId()), // ALL PARAMS IN SECONDS
-                                              *audioSSReader,
-                                              singleNote,     // notes the sound is triggered by
-                                              rootNote,       // root note
-                                              0.1,            // attack time
-                                              0.1,            // release time
-                                              chop.getEndTime() - chop.getStartTime() // maximum sample length
-                                              ));
+            auto sound = new SamplerSound (String (chopId), // ALL PARAMS IN SECONDS
+                                           *audioSSReader,
+                                           singleNote,     // notes the sound is triggered by
+                                           rootNote,       // root note
+                                           0.0,            // attack time
+                                           0.0,            // release time
+                                           endTime - startTime // maximum sample length
+            );
+            chopSounds.set (chopId, sound);
+            synth.addSound (sound);
             delete audioSSReader;
         }
     }
@@ -78,12 +82,23 @@ public:
         // and now get the synth to process the midi events and generate its output.
         synth.renderNextBlock (*bufferToFill.buffer, incomingMidi, 0, bufferToFill.numSamples);
     }
+
+    void setChopsADSR(int chopId, juce::ADSR::Parameters params)
+    {
+        print("SETTING ADSR FOR CHOP " + String(chopId));
+        // print(String::formatted("onset at %.3fms, %.3fs, frame %d\n", aubio_onset_get_last_ms(o), aubio_onset_get_last_s(o), aubio_onset_get_last(o)));
+        print(String::formatted("PARAMS: %.3fs %.3fs %.3fs", params.attack, params.decay, params.release, params.sustain));
+        auto sound = chopSounds[chopId];
+        sound->setEnvelopeParameters(params);
+    }
     
     MidiMessageCollector midiCollector;
 
 private:
     MidiKeyboardState& keyboardState;
     Synthesiser synth;
+
+    HashMap<int, SamplerSound*> chopSounds;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SamplerAudioSource)
 };

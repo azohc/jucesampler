@@ -82,7 +82,7 @@ const String MSG_DEL_ALL = "Are you sure you want to delete every chop?";
 const String MSG_CONFIRM = "Confirm";
 const String MSG_DECLINE = "Decline";
 
-const int INIT_NOTE_AUTO_ASSIGN = 72; // C4
+const int INIT_NOTE_AUTO_ASSIGN = 48; // C2
 
 // IDs for Radio buttons
 enum RadioButtonIds
@@ -128,18 +128,18 @@ struct Chop
     state.setProperty (PROP_END_TIME, time, nullptr);
   }
 
-  int getStartSample() const { return state[PROP_START_SAMPLE]; }
+  int64 getStartSample() const { return state[PROP_START_SAMPLE]; }
 
-  void setStartSample (int time) {
-    jassert (time >= 0.0);
-    state.setProperty (PROP_START_SAMPLE, time, nullptr);
+  void setStartSample (int64 sample) {
+    jassert (sample >= 0.0);
+    state.setProperty (PROP_START_SAMPLE, sample, nullptr);
   }
 
-  int getEndSample() const { return state[PROP_END_SAMPLE]; }
+  int64 getEndSample() const { return state[PROP_END_SAMPLE]; }
 
-  void setEndSample (int time) {
-    jassert (time >= 0.0);
-    state.setProperty (PROP_END_SAMPLE, time, nullptr);
+  void setEndSample (int64 sample) {
+    jassert (sample >= 0.0);
+    state.setProperty (PROP_END_SAMPLE, sample, nullptr);
   }   
 
   int getTriggerNote() const { return state[PROP_TRIGGER]; }

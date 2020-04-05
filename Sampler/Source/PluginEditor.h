@@ -442,14 +442,16 @@ private:
 
     void startTimeChopClicked()
     {
+        auto sr = currentAudioFileSource.get()->getAudioFormatReader()->sampleRate;
         auto currentTime = transportSource.getCurrentPosition();
-        auto sr = processor.getSampleRate();
+        auto lengthTime = transportSource.getLengthInSeconds();
+
         ValueTree chopState (ID_CHOP);
         Chop c (chopState);
         c.setStartTime (currentTime);
         c.setStartSample (int64(currentTime * sr));
-        c.setEndTime (transportSource.getLengthInSeconds());
-        c.setEndSample (int64(transportSource.getLengthInSeconds() * sr));
+        c.setEndTime (lengthTime);
+        c.setEndSample (int64(lengthTime * sr));
         c.setHidden (false);
         c.setTriggerNote (lastMidiNoteAssigned++);
         processor.addChop (c);
@@ -458,7 +460,7 @@ private:
     void selectionChopClicked()
     {
         auto bounds = thumbnail->getSelectionBounds();
-        auto sr = processor.getSampleRate();
+        auto sr = currentAudioFileSource.get()->getAudioFormatReader()->sampleRate;
         ValueTree chopState (ID_CHOP);
         Chop c (chopState);
         if (bounds.first < bounds.second) {
@@ -484,7 +486,7 @@ private:
 
     int detectChopsOnset (bool createChopsFromDetections) {
         auto file = currentAudioFile.getFullPathName().getCharPointer();
-        uint_t samplerate = 0;
+        uint_t samplerate = currentAudioFileSource.get()->getAudioFormatReader()->sampleRate;
         uint_t buf_size = 1024;
         uint_t hop_size = 256;
         uint_t n_frames = 0, read = 0;
@@ -512,15 +514,14 @@ private:
         if (numDetectedChops == 0)              return 0;
         else if (!createChopsFromDetections)    return numDetectedChops;
         
-        auto sr = processor.getSampleRate();
         for (auto i = 0; i < detections.size(); i++) 
         {
             ValueTree chopState (ID_CHOP);
             Chop c (chopState);
             c.setStartTime (detections[i]);
-            c.setStartSample (detections[i] * sr);
+            c.setStartSample (detections[i] * samplerate);
             c.setEndTime (i == detections.size() - 1 ? transportSource.getLengthInSeconds() : detections[i + 1]);
-            c.setEndSample (c.getEndTime() * sr);
+            c.setEndSample (c.getEndTime() * samplerate);
             c.setHidden (false);
             c.setTriggerNote (lastMidiNoteAssigned++);
             processor.addChop (c);

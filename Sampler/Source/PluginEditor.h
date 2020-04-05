@@ -15,6 +15,7 @@
 #include "PluginProcessor.h"
 #include "SamplerThumbnail.h"
 #include "ChopListComponent.h"
+#include "ChopSettingsComponent.h"
 #include "SamplerAudioSource.h"
 
 //==============================================================================
@@ -174,6 +175,10 @@ public:
         chopList.reset(new ChopListComponent(processor.getChopTree(), selectedChopId));
         addAndMakeVisible (chopList.get());
 
+        // CHOPSETTINGS
+        chopSettings.reset(new ChopSettingsComponent(selectedChopId, samplerSource.getChopSoundsMap()));
+        addAndMakeVisible (chopSettings.get());
+
         // formats
         formatManager.registerBasicFormats();
 
@@ -224,7 +229,7 @@ public:
         strokeRect (rectControls, 2);
         strokeRect (rectThumbnail, 2);
         strokeRect (rectThumbnailFuncts, 2);
-        strokeRect (rectChopEdit, 2);
+        strokeRect (rectChopSettings, 2);
         strokeRect (rectChopList, 2);
     }
 
@@ -236,7 +241,7 @@ public:
 
         auto r = getLocalBounds().reduced (4);
 
-        rectChopEdit = r.removeFromBottom (small (r.getHeight()));
+        rectChopSettings = r.removeFromBottom (small (r.getHeight()));
         rectControls = r.removeFromLeft (small (small (r.getWidth())));
         rectChopList = r.removeFromBottom (small (r.getHeight()));
         rectThumbnailFuncts = r.removeFromTop (small (small (r.getHeight())));
@@ -279,6 +284,9 @@ public:
         auto rectThumbnailAux = rectThumbnail;
         zoomSlider.setBounds (rectThumbnailAux.removeFromRight (small (small (rectThumbnailAux.getHeight()))));
         thumbnail->setBounds (rectThumbnailAux.reduced(1));
+
+        // Chop settings
+        chopSettings.get()->setBounds (rectChopSettings);
     }
 
 private:
@@ -310,6 +318,10 @@ private:
 
     std::unique_ptr<ChopListComponent> chopList;
 
+    std::unique_ptr<ChopSettingsComponent> chopSettings;
+
+    MidiKeyboardState& keyboardState;
+
     int onsetMethodNumber;
     int lastMidiNoteAssigned = INIT_NOTE_AUTO_ASSIGN;
 
@@ -338,12 +350,10 @@ private:
 
     Value selectedChopId;
     Value userSelectionActive;
-    
-    MidiKeyboardState& keyboardState;
 
     //==============================================================================
     // RECTANGLES
-    Rectangle<int> rectChopEdit;
+    Rectangle<int> rectChopSettings;
     Rectangle<int> rectControls;
     Rectangle<int> rectChopList;
     Rectangle<int> rectThumbnailFuncts;
@@ -542,6 +552,7 @@ private:
             int selectedChopIdValue = int(value.getValue());
             thumbnail->setSelectedChopId(selectedChopIdValue);
             chopList->selectRow(selectedChopIdValue);
+            chopSettings->displayChop(selectedChopIdValue);
         }
 
         if (value.refersToSameSourceAs(userSelectionActive))

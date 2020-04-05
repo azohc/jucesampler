@@ -91,6 +91,11 @@ public:
         auto sound = chopSounds[chopId];
         sound->setEnvelopeParameters(params);
     }
+
+    HashMap<int, SamplerSound*>* getChopSoundsMap()
+    {
+        return &chopSounds;
+    }
     
     MidiMessageCollector midiCollector;
 

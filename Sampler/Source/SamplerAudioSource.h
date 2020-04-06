@@ -39,16 +39,9 @@ public:
             double startTime = chop.getStartTime();
             double endTime = chop.getEndTime();
 
-            BigInteger singleNote;
-            singleNote.setBit(rootNote); // TODO  midi learn, connect MIDI keyboard
-            auto sound = new SamplerSound (String (chopId), // ALL PARAMS IN SECONDS
-                                           *audioSSReader,
-                                           singleNote,     // notes the sound is triggered by
-                                           rootNote,       // root note
-                                           0.0,            // attack time
-                                           0.0,            // release time
-                                           endTime - startTime // maximum sample length
-            );
+            BigInteger singleNoteRange;
+            singleNoteRange.setBit(rootNote);
+            auto sound = new SamplerSound (String (chopId), *audioSSReader, singleNoteRange, rootNote, 0.0, 0.0, endTime - startTime);
             chopSounds.set (chopId, sound);
             synth.addSound (sound);
             delete audioSSReader;

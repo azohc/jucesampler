@@ -189,8 +189,8 @@ public:
 
     void setChopVisible (const int rowNumber, const bool hidden)
     {
-        auto chop = chopTree.getChildWithProperty(PROP_ID, getChopIdAtRow(rowNumber));
-        chop.setProperty(PROP_HIDDEN, hidden, nullptr);
+        auto chop = chopTree.getChildWithProperty(ID_CHOPID, getChopIdAtRow(rowNumber));
+        chop.setProperty(ID_HIDDEN, hidden, nullptr);
     }
 
     int getTriggerNote (const int rowNumber) const
@@ -200,8 +200,8 @@ public:
 
     void setTriggerNote (const int rowNumber, const int newTrigger)
     {
-        auto chop = chopTree.getChildWithProperty(PROP_ID, getChopIdAtRow(rowNumber));
-        chop.setProperty (PROP_TRIGGER, newTrigger, nullptr);
+        auto chop = chopTree.getChildWithProperty(ID_CHOPID, getChopIdAtRow(rowNumber));
+        chop.setProperty (ID_TRIGGER, newTrigger, nullptr);
         chopXml->getChildElement (rowNumber)->setAttribute (COL_TRIGG, newTrigger);
     }
 
@@ -217,7 +217,7 @@ public:
     }
 
     ValueTree getChopAtRow (int rowNumber) {
-        return chopTree.getChildWithProperty(PROP_ID, getChopIdAtRow(rowNumber));
+        return chopTree.getChildWithProperty(ID_CHOPID, getChopIdAtRow(rowNumber));
     }
 
     void cellClicked(int rowNumber, int columnId, const MouseEvent &e)
@@ -229,9 +229,9 @@ public:
         } else if (e.mods.isRightButtonDown())
         {
             rowClickedMenu->clear();
-            rowClickedMenu->addItem (ROWMENUID_HIDDEN, ROW_HIDDEN, true, getChopAtRow (rowNumber).getProperty(PROP_HIDDEN));
+            rowClickedMenu->addItem (ROWMENUID_HIDDEN, ROW_HIDDEN, true, getChopAtRow (rowNumber).getProperty(ID_HIDDEN));
             rowClickedMenu->addItem (ROWMENUID_DELETE, ROW_DELETE, true, false);
-            rowClickedMenu->addItem (ROWMENUID_DEL_ALL, ROW_DEL_ALL, true, false);  // TODO add confirmation popup to del_all
+            rowClickedMenu->addItem (ROWMENUID_DEL_ALL, ROW_DEL_ALL, true, false);
             result = rowClickedMenu->show();
         }
 
@@ -240,7 +240,7 @@ public:
             switch (result)
             {
                 case ROWMENUID_HIDDEN:
-                    setChopVisible (rowNumber, !getChopAtRow (rowNumber).getProperty(PROP_HIDDEN));
+                    setChopVisible (rowNumber, !getChopAtRow (rowNumber).getProperty(ID_HIDDEN));
                 break;
 
                 case ROWMENUID_DELETE:
@@ -249,7 +249,7 @@ public:
                     {
                         selectedChop = NONE;
                     }
-                    chopTree.removeChild(chopTree.getChildWithProperty(PROP_ID, deletedChopId), nullptr);
+                    chopTree.removeChild(chopTree.getChildWithProperty(ID_CHOPID, deletedChopId), nullptr);
                 break;
 
                 case ROWMENUID_DEL_ALL:

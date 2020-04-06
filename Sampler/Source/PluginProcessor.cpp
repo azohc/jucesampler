@@ -26,7 +26,7 @@ SamplerAudioProcessor::SamplerAudioProcessor()
                        )
 #endif
 {
-    chopTree = ValueTree { ID_CHOPTREE, {} };
+    chopTree = ValueTree { ID_CHOPDATA, {} };
 };
 
 SamplerAudioProcessor::~SamplerAudioProcessor()

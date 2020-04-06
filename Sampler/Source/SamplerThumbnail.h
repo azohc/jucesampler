@@ -216,8 +216,8 @@ public:
     {
         userSelectionActive = true;
         selectedChopId = id;
-        selectionStartTime = chopTree.getChildWithProperty(PROP_ID, id)[PROP_START_TIME];
-        selectionEndTime = chopTree.getChildWithProperty(PROP_ID, id)[PROP_END_TIME];
+        selectionStartTime = chopTree.getChildWithProperty(ID_CHOPID, id)[ID_START_TIME];
+        selectionEndTime = chopTree.getChildWithProperty(ID_CHOPID, id)[ID_END_TIME];
     }
 
     bool getNewFileDropped()
@@ -317,10 +317,10 @@ private:
 
         for (auto it = chopStartMarkerMap.begin(); it != chopStartMarkerMap.end(); it.next())
         {
-            auto chop = chopTree.getChildWithProperty(PROP_ID, it.getKey());
-            double start = chop.getProperty(PROP_START_TIME);
-            double end = chop.getProperty(PROP_END_TIME);
-            bool hidden = chop.getProperty(PROP_HIDDEN);
+            auto chop = chopTree.getChildWithProperty(ID_CHOPID, it.getKey());
+            double start = chop.getProperty(ID_START_TIME);
+            double end = chop.getProperty(ID_END_TIME);
+            bool hidden = chop.getProperty(ID_HIDDEN);
 
             it.getValue().first->setFill (COLOR_RED);
             it.getValue().first->setRectangle (marker(start));

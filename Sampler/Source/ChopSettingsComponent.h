@@ -81,8 +81,10 @@ public:
             }
         }
 
-        triggerNoteComboBox.onChange = [this] { }; // TODO Note Update
-        setWantsKeyboardFocus (true); // TODO prev/next chop buttons & keyboard binds
+        triggerNoteComboBox.onChange = [this] {
+            auto noteId = triggerNoteComboBox.getSelectedIdAsValue();
+            chopTree.getChildWithProperty (ID_CHOPID, selectedChop.getValue()).setProperty (ID_TRIGGER, noteId, nullptr);
+        };
     }
 
     ~ChopSettingsComponent()
@@ -105,7 +107,7 @@ public:
             nextChopArrow.setVisible (false);
         } else
         {
-            auto chop = Chop(chopTree.getChildWithProperty (PROP_ID, selectedChopId));
+            auto chop = Chop(chopTree.getChildWithProperty (ID_CHOPID, selectedChopId));
             auto numChops = chopTree.getNumChildren();
             triggerNoteLabel.setVisible (true);
             triggerNoteComboBox.setVisible (true);
@@ -153,7 +155,6 @@ public:
         g.fillAll (COLOR_BG);
         g.setColour (COLOR_BG_DARK);
         strokeRect (g, getLocalBounds(), 2);
-        
     }
 
     void resized() override

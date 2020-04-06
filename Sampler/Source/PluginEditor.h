@@ -250,7 +250,6 @@ public:
         chopThresholdSlider.setBounds (rectControlsAux.removeFromTop (buttonHeight).reduced (4));
         detectedChopNumberLabel.setBounds (rectControlsAux.removeFromTop (buttonHeight).reduced (4));
 
-        // Thumbnail functions      TODO use flex to distribute evenly
         auto rectThumbnailFunctsAux = rectThumbnailFuncts.reduced(1);
         auto functionWidth = small (small (rectThumbnailFunctsAux.getWidth()));
 
@@ -410,10 +409,7 @@ private:
             currentAudioFileSource.reset (new AudioFormatReaderSource (reader, true));
 
             // ..and plug it into our transport source
-            transportSource.setSource (currentAudioFileSource.get(),
-                                       32768,                   // tells it to buffer this many samples ahead TODO necessary? if not 0, nullptr
-                                       &thread,                 // this is the background thread to use for reading-ahead TODO necessary? 
-                                       reader->sampleRate);     // allows for sample rate correction
+            transportSource.setSource (currentAudioFileSource.get(), 32768, &thread, reader->sampleRate);
 
             return true;
         }
@@ -606,7 +602,7 @@ private:
     void valueTreeChildAdded (ValueTree& parentTree,
                               ValueTree& childWhichHasBeenAdded)
     {
-        thumbnail->addChopMarker(childWhichHasBeenAdded[PROP_ID]);
+        thumbnail->addChopMarker(childWhichHasBeenAdded[ID_CHOPID]);
         chopList->reloadData();
         samplerSource.makeSoundsFromChops(currentAudioFileSource.get()->getAudioFormatReader(), processor.getChopTree());
     }
@@ -622,8 +618,8 @@ private:
                                 ValueTree& childWhichHasBeenRemoved,
                                 int indexFromWhichChildWasRemoved)
     {
-        thumbnail->removeChopMarker(childWhichHasBeenRemoved[PROP_ID]);
-        processor.getChopMap()->remove(childWhichHasBeenRemoved[PROP_ID]);
+        thumbnail->removeChopMarker(childWhichHasBeenRemoved[ID_CHOPID]);
+        processor.getChopMap()->remove(childWhichHasBeenRemoved[ID_CHOPID]);
 
         if (parentTree.getNumChildren() == 0)
         {

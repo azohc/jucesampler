@@ -37,16 +37,15 @@ auto strokeRect = [] (Graphics& g, Rectangle<int> r, int s)
 };
 
 // ValueTree Identifiers
-static const Identifier ID_CHOPTREE = "ChopData";
+static const Identifier ID_CHOPDATA = "ChopData";
 static const Identifier ID_CHOP = "Chop";
-static const Identifier PROP_ID = "ID";
-static const Identifier PROP_START_TIME = "Start";
-static const Identifier PROP_END_TIME = "End";
-static const Identifier PROP_START_SAMPLE = "StartSample";
-static const Identifier PROP_END_SAMPLE = "EndSample";
-static const Identifier PROP_TRIGGER = "Trigger";
-static const Identifier PROP_HIDDEN = "Hidden";
-static const Identifier PROP_SAMPLER_SOUND = "SamplerSound";
+static const Identifier ID_CHOPID = "ID";
+static const Identifier ID_START_TIME = "Start";
+static const Identifier ID_END_TIME = "End";
+static const Identifier ID_START_SAMPLE = "StartSample";
+static const Identifier ID_END_SAMPLE = "EndSample";
+static const Identifier ID_TRIGGER = "Trigger";
+static const Identifier ID_HIDDEN = "Hidden";
 
 static const int NONE = -110;
 
@@ -83,11 +82,6 @@ const String ONSET_MKL = "mkl";
 const String ONSET_SPECFLUX = "specflux";
 const String ONSET_METHODS[] = { ONSET_ENERGY, ONSET_HFC, ONSET_COMPLEX, ONSET_PHASE, ONSET_SPECDIFF, ONSET_KL, ONSET_MKL, ONSET_SPECFLUX };
 
-// TODO use for popup dialog on delete all chops
-const String MSG_DEL_ALL = "Are you sure you want to delete every chop?";
-const String MSG_CONFIRM = "Confirm";
-const String MSG_DECLINE = "Decline";
-
 const int INIT_NOTE_AUTO_ASSIGN = 48; // C2
 const int FIRST_MIDI_NOTE = 24; // C0
 
@@ -118,42 +112,42 @@ struct Chop
 {
   Chop (const ValueTree &v) : state(v) { jassert (v.hasType (ID_CHOP)); }
 
-  int getId() const { return state[PROP_ID]; }
-  void setId (int id) { state.setProperty (PROP_ID, id, nullptr); }
+  int getId() const { return state[ID_CHOPID]; }
+  void setId (int id) { state.setProperty (ID_CHOPID, id, nullptr); }
 
-  double getStartTime() const { return state[PROP_START_TIME]; }
+  double getStartTime() const { return state[ID_START_TIME]; }
 
   void setStartTime (double time) {
     jassert (time >= 0.0);
-    state.setProperty (PROP_START_TIME, time, nullptr);
+    state.setProperty (ID_START_TIME, time, nullptr);
   }
 
-  double getEndTime() const { return state[PROP_END_TIME]; }
+  double getEndTime() const { return state[ID_END_TIME]; }
 
   void setEndTime (double time) {
     jassert (time >= 0.0);
-    state.setProperty (PROP_END_TIME, time, nullptr);
+    state.setProperty (ID_END_TIME, time, nullptr);
   }
 
-  int64 getStartSample() const { return state[PROP_START_SAMPLE]; }
+  int64 getStartSample() const { return state[ID_START_SAMPLE]; }
 
   void setStartSample (int64 sample) {
     jassert (sample >= 0.0);
-    state.setProperty (PROP_START_SAMPLE, sample, nullptr);
+    state.setProperty (ID_START_SAMPLE, sample, nullptr);
   }
 
-  int64 getEndSample() const { return state[PROP_END_SAMPLE]; }
+  int64 getEndSample() const { return state[ID_END_SAMPLE]; }
 
   void setEndSample (int64 sample) {
     jassert (sample >= 0.0);
-    state.setProperty (PROP_END_SAMPLE, sample, nullptr);
+    state.setProperty (ID_END_SAMPLE, sample, nullptr);
   }   
 
-  int getTriggerNote() const { return state[PROP_TRIGGER]; }
-  void setTriggerNote (int note) { state.setProperty (PROP_TRIGGER, note, nullptr); }
+  int getTriggerNote() const { return state[ID_TRIGGER]; }
+  void setTriggerNote (int note) { state.setProperty (ID_TRIGGER, note, nullptr); }
   
-  bool getHidden() const { return state[PROP_HIDDEN]; }
-  void setHidden (bool hidden) { state.setProperty (PROP_HIDDEN, hidden, nullptr); } 
+  bool getHidden() const { return state[ID_HIDDEN]; }
+  void setHidden (bool hidden) { state.setProperty (ID_HIDDEN, hidden, nullptr); } 
 
   ValueTree state;
 };

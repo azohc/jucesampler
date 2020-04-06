@@ -22,7 +22,7 @@ class ChopListComponent:
 {
 public:
     ChopListComponent(ValueTree chops, Value selected) :
-        chopTree (chops), selectedChopId (selected)
+        chopTree (chops), selectedChop (selected)
     {
         initChopListColumns();
         numRows = 0;
@@ -245,9 +245,9 @@ public:
 
                 case ROWMENUID_DELETE:
                     deletedChopId = chopXml->getChildElement (rowNumber)->getIntAttribute (COLNAME_ID);
-                    if (deletedChopId == int (selectedChopId.getValue()))
+                    if (deletedChopId == int (selectedChop.getValue()))
                     {
-                        selectedChopId = NONE;
+                        selectedChop = NONE;
                     }
                     chopTree.removeChild(chopTree.getChildWithProperty(PROP_ID, deletedChopId), nullptr);
                 break;
@@ -262,7 +262,7 @@ public:
     {
         if (lastRowChanged != -1)
         {
-            selectedChopId = chopXml->getChildElement (lastRowChanged)->getIntAttribute (COLNAME_ID);
+            selectedChop = chopXml->getChildElement (lastRowChanged)->getIntAttribute (COLNAME_ID);
         }
     }
 
@@ -285,7 +285,7 @@ public:
 
     int getSelectedChopId()
     {
-        return int(selectedChopId.getValue());
+        return int(selectedChop.getValue());
     }
 
     void selectRow(int row)
@@ -310,7 +310,7 @@ private:
     
     PopupMenu* rowClickedMenu = nullptr;
 
-    Value selectedChopId;
+    Value selectedChop;
     int deletedChopId;
 
     HashMap<int, String> midiNoteMap;

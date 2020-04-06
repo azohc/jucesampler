@@ -19,8 +19,8 @@
 class ChopSettingsComponent    : public Component
 {
 public:
-    ChopSettingsComponent(Value selectedChop, HashMap<int, SamplerSound*>* chopSoundsMap, ValueTree chops) :
-        selectedChopId (selectedChop), chopSounds (chopSoundsMap), chopTree(chops)
+    ChopSettingsComponent(Value selected, HashMap<int, SamplerSound*>* chopSoundsMap, ValueTree chops) :
+        selectedChop (selected), chopSounds (chopSoundsMap), chopTree(chops)
     {
         addAndMakeVisible (selectedChopLabel);
         selectedChopLabel.setFont (Font (15.00f, Font::plain));
@@ -58,18 +58,14 @@ public:
         midiLearnButton.onClick = [this] { };// TODO Note Update with MIDILEARN 
 
         addAndMakeVisible (prevChopArrow);
-        prevChopArrow.setColour (TextButton::buttonColourId, COLOR_GRAY_LIGHT);
-        prevChopArrow.setColour (TextButton::textColourOffId, COLOR_BG);
         prevChopArrow.setEnabled (false); 
         prevChopArrow.setVisible (false);
-        prevChopArrow.onClick = [this] {};// TODO Note Update with MIDILEARN 
+        prevChopArrow.onClick = [this] { selectedChop = getPrevChopId(); };
 
         addAndMakeVisible (nextChopArrow);
-        nextChopArrow.setColour (TextButton::buttonColourId, COLOR_GRAY_LIGHT);
-        nextChopArrow.setColour (TextButton::textColourOffId, COLOR_BG);
         nextChopArrow.setEnabled (false);
         nextChopArrow.setVisible (false);
-        nextChopArrow.onClick = [this] {};// TODO Note Update with MIDILEARN 
+        nextChopArrow.onClick = [this] { selectedChop = getNextChopId(); };
 
         int midiNoteNr = FIRST_MIDI_NOTE;
 
@@ -110,17 +106,46 @@ public:
         } else
         {
             auto chop = Chop(chopTree.getChildWithProperty (PROP_ID, selectedChopId));
+            auto numChops = chopTree.getNumChildren();
             triggerNoteLabel.setVisible (true);
             triggerNoteComboBox.setVisible (true);
             midiLearnButton.setVisible (true);
-            prevChopArrow.setEnabled (true);
-            nextChopArrow.setEnabled (true);    // TODO DISABLE with BOUNDS
+            prevChopArrow.setEnabled (numChops > 1);
+            nextChopArrow.setEnabled (numChops > 1);
             prevChopArrow.setVisible (true);
             nextChopArrow.setVisible (true);
-            selectedChopLabel.setText("Chop " + String(selectedChopId) + " selected", dontSendNotification);
+            selectedChopLabel.setText ("Chop " + String(selectedChopId) + " selected", dontSendNotification);
             triggerNoteLabel.setText ("Mapped To", dontSendNotification);
             triggerNoteComboBox.setSelectedId (chop.getTriggerNote(), dontSendNotification);
         }
+    }
+
+    Array<int> getChopIds()
+    {
+        Array<int> chopIds;
+        for (auto it = chopTree.begin(); it != chopTree.end(); ++it)
+        {
+            auto chop = Chop(*it);
+            chopIds.add (chop.getId());
+            print(String(chop.getId()));
+        }
+        return chopIds;
+    }
+
+    int getNextChopId()
+    {
+        auto chopIds = getChopIds();
+        auto i = chopIds.indexOf(selectedChop.getValue());
+        jassert(i != -1);
+        return i + 1 == chopIds.size() ? 0 : i + 1;
+    }
+
+    int getPrevChopId()
+    {
+        auto chopIds = getChopIds();
+        auto i = chopIds.indexOf(selectedChop.getValue());
+        jassert(i != -1);
+        return i - 1 == -1 ? chopIds.size() - 1 : i - 1;
     }
 
     void paint (Graphics& g) override
@@ -147,23 +172,18 @@ public:
         rectSettingsAndArrows = r.removeFromTop (r.getHeight() * 0.11);
         auto rectSettingsAndArrowsAux = rectSettingsAndArrows;
         auto arrowButtonWidth = rectSettingsAndArrowsAux.getWidth() * 0.02;
-        FlexBox fbPrev;
-        fbPrev.flexDirection = FlexBox::Direction::column;
-        fbPrev.alignContent = FlexBox::AlignContent::center;
-        fbPrev.items.add (prevChopArrow);
-        fbPrev.performLayout (rectSettingsAndArrowsAux.removeFromLeft (arrowButtonWidth).toFloat());
-        FlexBox fbNext;
-        fbNext.flexDirection = FlexBox::Direction::column;
-        fbNext.alignContent = FlexBox::AlignContent::center;
-        fbNext.items.add (nextChopArrow);
-        fbNext.performLayout (rectSettingsAndArrowsAux.removeFromRight (arrowButtonWidth).toFloat());
-        // todo adsr component (slider + label) in r
+        prevChopArrow.setBounds (rectSettingsAndArrowsAux.removeFromLeft(arrowButtonWidth));
+        prevChopArrow.setTopLeftPosition(prevChopArrow.getX(), r.getHeight() / 2);
+        nextChopArrow.setBounds (rectSettingsAndArrowsAux.removeFromRight(arrowButtonWidth));
+        nextChopArrow.setTopLeftPosition(nextChopArrow.getX(), r.getHeight() / 2);
+
+        //// todo adsr component (slider + label) in r
     }
 
 private:
     HashMap<int, SamplerSound*>* chopSounds;
     ValueTree chopTree;
-    Value selectedChopId;
+    Value selectedChop;
 
 
     Rectangle<int> rectChopIdAndTrigger;
@@ -172,8 +192,8 @@ private:
     Label triggerNoteLabel;
     ComboBox triggerNoteComboBox;
     TextButton midiLearnButton;
-    ArrowButton prevChopArrow { "PREV", 0.5, COLOR_GRAY };
-    ArrowButton nextChopArrow { "NEXT", 0.0, COLOR_GRAY };
+    ArrowButton prevChopArrow { "PREV", 0.5, COLOR_GRAY_LIGHT };
+    ArrowButton nextChopArrow { "NEXT", 0.0, COLOR_GRAY_LIGHT };
 
     const String SEL_CHOP_NONE = "No Chop Selected";
     const String TRIGGER_NOTE_LABEL = "Trigger Note: ";

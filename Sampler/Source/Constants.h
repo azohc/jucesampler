@@ -29,6 +29,12 @@ static const Colour COLOR_BLUE = Colour::fromString("FF525C65");
 static const Colour COLOR_TAN = Colour::fromString("FFEDB183");
 static const Colour COLOR_SEA = Colour::fromString("FF1E555C");
 
+auto strokeRect = [] (Graphics& g, Rectangle<int> r, int s)
+{
+    auto path = Path();
+    path.addRectangle (r);
+    g.strokePath (path, PathStrokeType (s), {});
+};
 
 // ValueTree Identifiers
 static const Identifier ID_CHOPTREE = "ChopData";
@@ -83,6 +89,7 @@ const String MSG_CONFIRM = "Confirm";
 const String MSG_DECLINE = "Decline";
 
 const int INIT_NOTE_AUTO_ASSIGN = 48; // C2
+const int FIRST_MIDI_NOTE = 24; // C0
 
 // IDs for Radio buttons
 enum RadioButtonIds

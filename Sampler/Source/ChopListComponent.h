@@ -328,9 +328,9 @@ private:
             comboBox.setColour (ComboBox::arrowColourId, COLOR_BG_DARK);
             comboBox.setColour (ComboBox::textColourId, COLOR_FG);
             addAndMakeVisible (comboBox);
-            int midiNoteNr = 48;     // start on C2
+            int midiNoteNr = FIRST_MIDI_NOTE;
 
-            for (auto octave: { 2, 3, 4, 5 }) {
+            for (auto octave: { 0, 1, 2, 3, 4, 5 }) {
                 for (String note: { "C", "D", "E", "F", "G", "A", "B" }) {
                     comboBox.addItem (note + String(octave), midiNoteNr++);
                     if (note != "E" && note != "B") {

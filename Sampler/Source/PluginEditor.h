@@ -176,7 +176,7 @@ public:
         addAndMakeVisible (chopList.get());
 
         // CHOPSETTINGS
-        chopSettings.reset(new ChopSettingsComponent(selectedChopId, samplerSource.getChopSoundsMap()));
+        chopSettings.reset(new ChopSettingsComponent(selectedChopId, samplerSource.getChopSoundsMap(), processor.getChopTree()));
         addAndMakeVisible (chopSettings.get());
 
         // formats
@@ -217,20 +217,12 @@ public:
         g.setColour (COLOR_BLUE_DARK);
         g.fillRect (rectThumbnail);
 
-        auto strokeRect = [&g] (Rectangle<int> r, int s)
-        {
-            auto path = Path();
-            path.addRectangle (r);
-            g.strokePath (path, PathStrokeType (s), {});
-        };
-
-
         g.setColour (COLOR_BG_DARK);
-        strokeRect (rectControls, 2);
-        strokeRect (rectThumbnail, 2);
-        strokeRect (rectThumbnailFuncts, 2);
-        strokeRect (rectChopSettings, 2);
-        strokeRect (rectChopList, 2);
+        strokeRect (g, rectControls, 2);
+        strokeRect (g, rectThumbnail, 2);
+        strokeRect (g, rectThumbnailFuncts, 2);
+        strokeRect (g, rectChopSettings, 2);
+        strokeRect (g, rectChopList, 2);
     }
 
     void resized() override
@@ -542,7 +534,7 @@ private:
     void updateDetectedChopsLabel () {
         auto v = chopThresholdSlider.getValue();
         auto n = detectChopsOnset(false);
-        detectedChopNumberLabel.setText (String(n) + "\nDetected Chops", NotificationType::dontSendNotification);
+        detectedChopNumberLabel.setText (String(n) + "\nDetected Chops", dontSendNotification);
     }
 
     void valueChanged (Value& value)
@@ -606,7 +598,7 @@ private:
                     return (str.length() > 5) ? str.substring(0, 5) : str;
                 };
                 currentPositionLabel.setText ("Position: " + getLabel(transportSource.getCurrentPosition()),
-                                              NotificationType::dontSendNotification);
+                                              dontSendNotification);
             }
         }
     }

@@ -41,8 +41,9 @@ public:
 
             BigInteger singleNoteRange;
             singleNoteRange.setBit(rootNote);
-            auto sound = new SamplerSound (String (chopId), *audioSSReader, singleNoteRange, rootNote, 0.0, 0.0, endTime - startTime);
-            chopSounds.set (chopId, sound);
+            auto sound = new SamplerSound (String (chopId), *audioSSReader, singleNoteRange, rootNote, 0.1, 0.1, endTime - startTime);
+            auto params = ADSR::Parameters();
+            chopSounds.set (chopId, std::make_pair(sound, params));
             synth.addSound (sound);
             delete audioSSReader;
         }
@@ -76,27 +77,14 @@ public:
         synth.renderNextBlock (*bufferToFill.buffer, incomingMidi, 0, bufferToFill.numSamples);
     }
 
-    void setChopsADSR(int chopId, juce::ADSR::Parameters params)
-    {
-        print("SETTING ADSR FOR CHOP " + String(chopId));
-        // print(String::formatted("onset at %.3fms, %.3fs, frame %d\n", aubio_onset_get_last_ms(o), aubio_onset_get_last_s(o), aubio_onset_get_last(o)));
-        print(String::formatted("PARAMS: %.3fs %.3fs %.3fs", params.attack, params.decay, params.release, params.sustain));
-        auto sound = chopSounds[chopId];
-        sound->setEnvelopeParameters(params);
-    }
+    HashMap<int, std::pair<SamplerSound*, ADSR::Parameters>> chopSounds;
 
-    HashMap<int, SamplerSound*>* getChopSoundsMap()
-    {
-        return &chopSounds;
-    }
-    
     MidiMessageCollector midiCollector;
 
 private:
     MidiKeyboardState& keyboardState;
     Synthesiser synth;
 
-    HashMap<int, SamplerSound*> chopSounds;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SamplerAudioSource)
 };

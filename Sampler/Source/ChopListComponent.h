@@ -320,7 +320,7 @@ private:
     class TriggerNoteColumnComponent : public Component
     {
     public:
-        TriggerNoteColumnComponent (ChopListComponent& td) : owner (td)
+        TriggerNoteColumnComponent (ChopListComponent& chopListComp) : owner (chopListComp)
         {
             comboBox.setColour (ComboBox::outlineColourId, COLOR_BG_DARK);
             comboBox.setColour (ComboBox::backgroundColourId, COLOR_BG);

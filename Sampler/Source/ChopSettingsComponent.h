@@ -20,7 +20,7 @@ class ChopSettingsComponent    : public Component, public Value::Listener
 {
 public:
     ChopSettingsComponent(Value selected, 
-                          HashMap<int, SamplerSound*>* chopSoundsMap, 
+                          HashMap<int, std::pair<SamplerSound*, ADSR::Parameters>> &chopSoundsMap,
                           ValueTree chops,
                           Value lastRecordedMidiNoteValue) :
         selectedChop (selected), 
@@ -94,6 +94,19 @@ public:
         nextChopArrow.setVisible (false);
         nextChopArrow.onClick = [this] { selectedChop = getNextChopId(); };
 
+        addAndMakeVisible (attackLS);
+        attackLS.setVisible (false);
+        //attackLS.addListener (this);
+        addAndMakeVisible (decayLS);
+        decayLS.setVisible (false);
+        //decayLS.addListener (this);
+        addAndMakeVisible (sustainLS);
+        sustainLS.setVisible (false);
+        //sustainLS.addListener (this);
+        addAndMakeVisible (releaseLS);
+        releaseLS.setVisible (false);
+        //releaseLS.addListener (this);
+
         int midiNoteNr = FIRST_MIDI_NOTE;
 
         for (auto octave : { 0, 1, 2, 3, 4, 5 })
@@ -124,30 +137,33 @@ public:
 
     void displayChop(int selectedChopId)
     {
+        triggerNoteLabel.setVisible (selectedChopId != NONE);
+        triggerNoteComboBox.setVisible (selectedChopId != NONE);
+        midiLearnButton.setVisible (selectedChopId != NONE);
+        prevChopArrow.setVisible (selectedChopId != NONE);
+        nextChopArrow.setVisible (selectedChopId != NONE);
+        attackLS.setVisible (selectedChopId != NONE);
+        decayLS.setVisible (selectedChopId != NONE);
+        sustainLS.setVisible (selectedChopId != NONE);
+        releaseLS.setVisible (selectedChopId != NONE);
         if (selectedChopId == NONE)
         {
             selectedChopLabel.setText(SEL_CHOP_NONE, dontSendNotification);
-            triggerNoteLabel.setVisible (false);
-            triggerNoteComboBox.setVisible (false);
-            midiLearnButton.setVisible (false);
-            prevChopArrow.setVisible (false);
-            nextChopArrow.setVisible (false);
-            midiLearnButton.setVisible (false);
         } else
         {
             auto chop = Chop(chopTree.getChildWithProperty (ID_CHOPID, selectedChopId));
             auto numChops = chopTree.getNumChildren();
-            triggerNoteLabel.setVisible (true);
-            triggerNoteComboBox.setVisible (true);
-            midiLearnButton.setVisible (true);
             prevChopArrow.setEnabled (numChops > 1);
             nextChopArrow.setEnabled (numChops > 1);
-            prevChopArrow.setVisible (true);
-            nextChopArrow.setVisible (true);
-            midiLearnButton.setVisible (true);
             selectedChopLabel.setText ("Chop " + String(selectedChopId) + " selected", dontSendNotification);
             triggerNoteLabel.setText ("Mapped To", dontSendNotification);
             triggerNoteComboBox.setSelectedId (chop.getTriggerNote(), dontSendNotification);
+            
+            auto params = chopSounds[selectedChopId].second;
+            attackLS.setSliderValue (params.attack);
+            decayLS.setSliderValue (params.decay);
+            sustainLS.setSliderValue (params.sustain);
+            releaseLS.setSliderValue (params.release);
         }
     }
 
@@ -189,6 +205,27 @@ public:
         }
     }
 
+    void sliderDragEnded (Slider * slider)
+    {
+        auto chopPair = chopSounds[selectedChop.getValue()];
+        auto params = chopPair.second;
+        if (slider == &attackLS.slider)
+        {
+            params.attack = slider->getValue();
+        } else if (slider == &decayLS.slider)
+        {
+            params.decay = slider->getValue();
+        } else if (slider == &sustainLS.slider)
+        {
+            params.sustain = slider->getValue();
+        } else
+        {
+            params.release = slider->getValue();
+        }
+        chopPair.first->setEnvelopeParameters(params);
+        chopSounds.set(selectedChop.getValue(), std::make_pair(chopPair.first, params));
+    }
+
     void paint (Graphics& g) override
     {
         g.fillAll (COLOR_BG);
@@ -211,20 +248,87 @@ public:
         midiLearnButton.setBounds (rectChopIdAndTriggerAux.removeFromLeft (triggerLabelWidth));
         midiLearningLabel.setBounds (rectChopIdAndTriggerAux);
 
-        rectSettingsAndArrows = r.removeFromTop (r.getHeight() * 0.11);
+        rectSettingsAndArrows = r;
         auto rectSettingsAndArrowsAux = rectSettingsAndArrows;
-        auto arrowButtonWidth = rectSettingsAndArrowsAux.getWidth() * 0.02;
-        prevChopArrow.setBounds (rectSettingsAndArrowsAux.removeFromLeft(arrowButtonWidth));
-        prevChopArrow.setTopLeftPosition(prevChopArrow.getX(), r.getHeight() / 2);
-        nextChopArrow.setBounds (rectSettingsAndArrowsAux.removeFromRight(arrowButtonWidth));
-        nextChopArrow.setTopLeftPosition(nextChopArrow.getX(), r.getHeight() / 2);
+        auto arrowRectWidth = rectSettingsAndArrowsAux.getWidth() * 0.03;
+        auto arrowSize = rectSettingsAndArrows.getHeight() * 0.1;
+        prevChopArrow.setBounds (rectSettingsAndArrowsAux.removeFromLeft(arrowRectWidth));
+        prevChopArrow.setTopLeftPosition (prevChopArrow.getX() + (arrowRectWidth * 0.2), 
+                                         rectSettingsAndArrows.getCentreY());
+        prevChopArrow.setSize (arrowSize, arrowSize);
+        nextChopArrow.setBounds (rectSettingsAndArrowsAux.removeFromRight(arrowRectWidth));
+        nextChopArrow.setSize (arrowSize, arrowSize);
+        nextChopArrow.setTopLeftPosition (nextChopArrow.getX() + (arrowRectWidth * 0.36),
+                                          rectSettingsAndArrows.getCentreY());
 
-        //// todo adsr component (slider + label) in r
+        auto adsrLSWidth = rectSettingsAndArrowsAux.getWidth() / 4;
+        attackLS.setBounds (rectSettingsAndArrowsAux.removeFromLeft (adsrLSWidth));
+        decayLS.setBounds (rectSettingsAndArrowsAux.removeFromLeft (adsrLSWidth));
+        sustainLS.setBounds (rectSettingsAndArrowsAux.removeFromLeft (adsrLSWidth));
+        releaseLS.setBounds (rectSettingsAndArrowsAux.removeFromLeft (adsrLSWidth));
     }
     Value listenForMidiLearn;
 
 private:
-    HashMap<int, SamplerSound*>* chopSounds;
+    class LabelledSlider : public Component
+    {
+    public:
+        LabelledSlider (const String& labelText, ChopSettingsComponent& chopSettings) : owner(chopSettings)
+        {
+            addAndMakeVisible (slider);
+            slider.setEnabled (true);
+            slider.setSliderStyle (Slider::LinearVertical);
+            slider.setColour (Slider::trackColourId, COLOR_BG);
+            slider.setColour (Slider::backgroundColourId, COLOR_BG_DARK);
+            slider.setColour (Slider::thumbColourId, COLOR_FG);
+            slider.setRange (0.0, 1.0, 0.01);
+            slider.onDragEnd = [this]
+            {
+                owner.sliderDragEnded (&slider);
+            };
+
+            addAndMakeVisible (label);
+            label.setColour (Label::textColourId, COLOR_FG);
+            label.setJustificationType (Justification::horizontallyCentred);
+            label.setText (labelText, dontSendNotification);
+        }
+
+        void paint (Graphics& g) override
+        {
+            g.fillAll (COLOR_BG);
+            g.setColour (COLOR_BG_DARK);
+        }
+
+        void resized() override
+        {
+            auto r = getLocalBounds().reduced (4);
+            auto sliderHeight = r.getHeight() * 0.75;
+            auto labelHeight = r.getHeight() * 0.1;
+            auto width = r.getWidth();
+            slider.setTextBoxStyle (Slider::TextBoxBelow, false, width*0.4, labelHeight);
+
+            label.setBounds (r.removeFromBottom (labelHeight));
+            slider.setBounds (r);
+            slider.setCentrePosition (r.getWidth() / 2, r.getHeight() / 2);
+        }
+        void setSliderValue(double d)
+        {
+            jassert(d >= 0.0 && d <= 1.0);
+            slider.setValue(d);
+        }
+
+ /*       void addListener(juce::Slider::Listener *listener)
+        {
+            slider.addListener(listener);
+        }*/
+
+        Slider slider { Slider::LinearVertical, Slider::TextBoxBelow };
+    private:
+        ChopSettingsComponent &owner;
+        Label label;
+    };
+
+    HashMap<int, std::pair<SamplerSound*, ADSR::Parameters>> &chopSounds;
     ValueTree chopTree;
     Value selectedChop;
     Value lastRecordedMidiNote;
@@ -239,6 +343,8 @@ private:
     ToggleButton midiLearnButton;
     ArrowButton prevChopArrow { "PREV", 0.5, COLOR_GRAY_LIGHT };
     ArrowButton nextChopArrow { "NEXT", 0.0, COLOR_GRAY_LIGHT };
+    LabelledSlider attackLS { "Attack", *this }, decayLS { "Decay", *this }, sustainLS { "Sustain", *this }, releaseLS { "Release", *this };
+
 
     const String SEL_CHOP_NONE = "No Chop Selected";
     const String TRIGGER_NOTE_LABEL = "Trigger Note: ";

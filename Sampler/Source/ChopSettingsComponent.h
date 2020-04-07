@@ -16,11 +16,17 @@
 //==============================================================================
 /*
 */
-class ChopSettingsComponent    : public Component
+class ChopSettingsComponent    : public Component, public Value::Listener
 {
 public:
-    ChopSettingsComponent(Value selected, HashMap<int, SamplerSound*>* chopSoundsMap, ValueTree chops) :
-        selectedChop (selected), chopSounds (chopSoundsMap), chopTree(chops)
+    ChopSettingsComponent(Value selected, 
+                          HashMap<int, SamplerSound*>* chopSoundsMap, 
+                          ValueTree chops,
+                          Value lastRecordedMidiNoteValue) :
+        selectedChop (selected), 
+        chopSounds (chopSoundsMap), 
+        chopTree(chops),
+        lastRecordedMidiNote (lastRecordedMidiNoteValue)
     {
         addAndMakeVisible (selectedChopLabel);
         selectedChopLabel.setFont (Font (15.00f, Font::plain));
@@ -51,11 +57,32 @@ public:
         triggerNoteComboBox.setVisible (false);
 
         addAndMakeVisible (midiLearnButton);
-        midiLearnButton.setColour (TextButton::buttonColourId, COLOR_GRAY);
-        midiLearnButton.setColour (TextButton::textColourOffId, COLOR_BG);
-        midiLearnButton.setEnabled (false);
+        midiLearnButton.setButtonText (MIDI_LEARN);
+        midiLearnButton.setColour (ToggleButton::textColourId, COLOR_FG);
+        midiLearnButton.setColour (ToggleButton::tickColourId, COLOR_RED);
+        midiLearnButton.setEnabled (true);
         midiLearnButton.setVisible (false);
-        midiLearnButton.onClick = [this] { };// TODO Note Update with MIDILEARN 
+        midiLearnButton.onClick = [this] { 
+            auto toggledOn = midiLearnButton.getToggleState();
+            listenForMidiLearn = toggledOn;
+            midiLearningLabel.setVisible (toggledOn);
+            if (!toggledOn && lastRecordedMidiNoteDirty)
+            { // button toggled off
+                chopTree.getChildWithProperty (ID_CHOPID, selectedChop.getValue()).setProperty (
+                    ID_TRIGGER, lastRecordedMidiNote.getValue(), nullptr
+                );
+            } else { lastRecordedMidiNoteDirty = false; }
+        };
+
+        addAndMakeVisible (midiLearningLabel);
+        midiLearningLabel.setFont (Font (15.00f, Font::plain));
+        midiLearningLabel.setJustificationType (Justification::centredLeft);
+        midiLearningLabel.setEditable (false, false, false);
+        midiLearningLabel.setColour (Label::backgroundColourId, COLOR_BG);
+        midiLearningLabel.setColour (Label::textColourId, COLOR_FG);
+        midiLearningLabel.setColour (Label::outlineColourId, COLOR_BG);
+        midiLearningLabel.setText (LISTENING, dontSendNotification);
+        midiLearningLabel.setVisible (false);
 
         addAndMakeVisible (prevChopArrow);
         prevChopArrow.setEnabled (false); 
@@ -85,6 +112,8 @@ public:
             auto noteId = triggerNoteComboBox.getSelectedIdAsValue();
             chopTree.getChildWithProperty (ID_CHOPID, selectedChop.getValue()).setProperty (ID_TRIGGER, noteId, nullptr);
         };
+
+        lastRecordedMidiNote.addListener (this);
     }
 
     ~ChopSettingsComponent()
@@ -101,10 +130,9 @@ public:
             triggerNoteLabel.setVisible (false);
             triggerNoteComboBox.setVisible (false);
             midiLearnButton.setVisible (false);
-            prevChopArrow.setEnabled (false);
-            nextChopArrow.setEnabled (false);
             prevChopArrow.setVisible (false);
             nextChopArrow.setVisible (false);
+            midiLearnButton.setVisible (false);
         } else
         {
             auto chop = Chop(chopTree.getChildWithProperty (ID_CHOPID, selectedChopId));
@@ -116,6 +144,7 @@ public:
             nextChopArrow.setEnabled (numChops > 1);
             prevChopArrow.setVisible (true);
             nextChopArrow.setVisible (true);
+            midiLearnButton.setVisible (true);
             selectedChopLabel.setText ("Chop " + String(selectedChopId) + " selected", dontSendNotification);
             triggerNoteLabel.setText ("Mapped To", dontSendNotification);
             triggerNoteComboBox.setSelectedId (chop.getTriggerNote(), dontSendNotification);
@@ -150,6 +179,16 @@ public:
         return i - 1 == -1 ? chopIds.size() - 1 : i - 1;
     }
 
+    void valueChanged(Value &value) override
+    {
+        if (bool(listenForMidiLearn.getValue()) && value.refersToSameSourceAs(lastRecordedMidiNote))
+        {
+            lastRecordedMidiNoteDirty = true;
+            triggerNoteComboBox.setSelectedId (lastRecordedMidiNote.getValue(), false);
+            midiLearnButton.triggerClick();
+        }
+    }
+
     void paint (Graphics& g) override
     {
         g.fillAll (COLOR_BG);
@@ -169,6 +208,8 @@ public:
         selectedChopLabel.setBounds (rectChopIdAndTriggerAux.removeFromLeft (chopIdLabelWidth));
         triggerNoteLabel.setBounds (rectChopIdAndTriggerAux.removeFromLeft (triggerLabelWidth));
         triggerNoteComboBox.setBounds (rectChopIdAndTriggerAux.removeFromLeft (triggerComboBoxWidth));
+        midiLearnButton.setBounds (rectChopIdAndTriggerAux.removeFromLeft (triggerLabelWidth));
+        midiLearningLabel.setBounds (rectChopIdAndTriggerAux);
 
         rectSettingsAndArrows = r.removeFromTop (r.getHeight() * 0.11);
         auto rectSettingsAndArrowsAux = rectSettingsAndArrows;
@@ -180,24 +221,29 @@ public:
 
         //// todo adsr component (slider + label) in r
     }
+    Value listenForMidiLearn;
 
 private:
     HashMap<int, SamplerSound*>* chopSounds;
     ValueTree chopTree;
     Value selectedChop;
-
+    Value lastRecordedMidiNote;
+    bool lastRecordedMidiNoteDirty = false;
 
     Rectangle<int> rectChopIdAndTrigger;
     Rectangle<int> rectSettingsAndArrows;
     Label selectedChopLabel;
     Label triggerNoteLabel;
+    Label midiLearningLabel;
     ComboBox triggerNoteComboBox;
-    TextButton midiLearnButton;
+    ToggleButton midiLearnButton;
     ArrowButton prevChopArrow { "PREV", 0.5, COLOR_GRAY_LIGHT };
     ArrowButton nextChopArrow { "NEXT", 0.0, COLOR_GRAY_LIGHT };
 
     const String SEL_CHOP_NONE = "No Chop Selected";
     const String TRIGGER_NOTE_LABEL = "Trigger Note: ";
+    const String MIDI_LEARN = "MIDI Learn";
+    const String LISTENING = "Press New Trigger Note";
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ChopSettingsComponent)
 };

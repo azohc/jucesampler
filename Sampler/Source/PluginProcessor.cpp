@@ -163,10 +163,14 @@ void SamplerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
         } else if (m.isPitchWheel())
         {
         }
-        if (m.getTimeStamp() != 0)
+        if (updateLastRecordedMidiNote)
+        {
+            lastRecordedMidiNote = m.getNoteNumber();
+        }
+        else if (m.getTimeStamp() != 0)
         {
             samplerSource.midiCollector.addMessageToQueue (m);
-        }
+        }  
         //processedMidi.addEvent (m, time);
     }
 
@@ -230,6 +234,25 @@ int SamplerAudioProcessor::addChop(Chop& chop)
     
     return newKey;
 }
+
+void SamplerAudioProcessor::setListenerForMidiLearn(Value & value)
+{
+    //listenForMidiLearn = Value(value);
+    value.addListener(this); // TODO ? this or value.addListener(this)
+}
+
+Value SamplerAudioProcessor::getLastRecordedMidiNote() const
+{
+    return lastRecordedMidiNote;
+}
+
+void SamplerAudioProcessor::valueChanged(Value & v)
+{
+    //if (v.refersToSameSourceAs (listenForMidiLearn))
+    updateLastRecordedMidiNote = bool(v.getValue());
+}
+
+
 
 //==============================================================================
 // This creates new instances of the plugin..

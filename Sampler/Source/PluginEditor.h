@@ -176,7 +176,9 @@ public:
         addAndMakeVisible (chopList.get());
 
         // CHOPSETTINGS
-        chopSettings.reset(new ChopSettingsComponent(selectedChopId, samplerSource.getChopSoundsMap(), processor.getChopTree()));
+        chopSettings.reset(new ChopSettingsComponent(selectedChopId, samplerSource.getChopSoundsMap(), 
+                           processor.getChopTree(), processor.getLastRecordedMidiNote()));
+        processor.setListenerForMidiLearn (chopSettings.get()->listenForMidiLearn);
         addAndMakeVisible (chopSettings.get());
 
         // formats

@@ -20,7 +20,7 @@
 
 //==============================================================================
 
-class SamplerAudioProcessor  : public AudioProcessor
+class SamplerAudioProcessor  : public AudioProcessor, Value::Listener
 {
 public:
     //==============================================================================
@@ -65,7 +65,9 @@ public:
     ValueTree getChopTree() const;
     void clearChopTree();
     int addChop(Chop& chop);
-
+    void setListenerForMidiLearn (Value &value);
+    Value getLastRecordedMidiNote() const;
+    void valueChanged(Value &v);
 private:
     //==============================================================================
     
@@ -82,5 +84,9 @@ private:
     ValueTree chopTree;
     HashMap<int, ValueTree> chopMap;
 
+
+    Value listenForMidiLearn;
+    Value lastRecordedMidiNote;
+    bool updateLastRecordedMidiNote = false;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SamplerAudioProcessor)
 };

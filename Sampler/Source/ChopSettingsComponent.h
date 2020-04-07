@@ -96,16 +96,11 @@ public:
 
         addAndMakeVisible (attackLS);
         attackLS.setVisible (false);
-        //attackLS.addListener (this);
         addAndMakeVisible (decayLS);
-        decayLS.setVisible (false);
-        //decayLS.addListener (this);
         addAndMakeVisible (sustainLS);
         sustainLS.setVisible (false);
-        //sustainLS.addListener (this);
         addAndMakeVisible (releaseLS);
         releaseLS.setVisible (false);
-        //releaseLS.addListener (this);
 
         int midiNoteNr = FIRST_MIDI_NOTE;
 
@@ -281,7 +276,7 @@ private:
             slider.setColour (Slider::trackColourId, COLOR_BG);
             slider.setColour (Slider::backgroundColourId, COLOR_BG_DARK);
             slider.setColour (Slider::thumbColourId, COLOR_FG);
-            slider.setRange (0.0, 1.0, 0.01);
+            slider.setRange (0.0, 10.0, 0.01);
             slider.onDragEnd = [this]
             {
                 owner.sliderDragEnded (&slider);
@@ -313,7 +308,6 @@ private:
         }
         void setSliderValue(double d)
         {
-            jassert(d >= 0.0 && d <= 1.0);
             slider.setValue(d);
         }
 

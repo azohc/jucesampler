@@ -19,15 +19,15 @@
 
 
 
-\title{Instrumento virtual basado en samples para estaciones de trabajo de audio digital\\A sampler plugin for digital audio workstations}
+\title{Instrumento virtual basado en samples para estaciones de trabajo de audio digital\\Sampler plugin for digital audio workstations}
 \author{Juan Chozas Sumbera}
 
 
 \begin{document}
 	\maketitle
 	\begin{center}
-		Jaime Sánchez Hernández\\
-		Miguel Gómez-Zamalloa Gil
+		Coordinado por\\Jaime Sánchez Hernández y Miguel Gómez-Zamalloa Gil
+		\newline
 				
 		\includegraphics[width=\textwidth]{logo_UCM.jpg}
 	\end{center}
@@ -43,14 +43,16 @@
 	\newpage
 	\section{Description}
 
-	\begin{multicols}{2}[\subsection{Summary}]
-	Essentially, the plugin is a digital instrument that makes sounds using samples. Starting with an arbitrary audio sample, one can create sections within the sample. The, the sections can then be played back with a MIDI controller, or arranged in a pattern in the host's sequencer. 
+	\begin{multicols}{2}[\subsection{Abstract}]
+	A sampler is a synthesizer that uses samples rather than oscillators to produce sound.  The sources of the sounds it produces are samples, which can be described as clips of audio that are stored in a digital format within the sampler's memory. You're likely to find that hardware and software samplers offer sets of "stock" samples that are loaded by default. The option to load samples from an external source such as an SD card is also common, just like recording external input from a recording device such as a microphone. As is the case with non sample based synthesizers, there are several ways that the samples can be manipulated. Once samples are loaded, the sampler can make the notes on a keyboard trigger the samples so users can play them to compose music. This sampler, in particular, takes the form of a plugin for digital audio workstations. This means that the the digital audio workstation routes triggering events into the plugin, which in turn processes the input to produce a stream of audio that is returned to the host as sound.\\
 
-	El plugin es un instrumento digital que utiliza samples para crear sonido. Partiendo de un sample, podemos asignar secciones del sample a notas MIDI. El plugin puede reproducir estas subsecciones, y también se pueden organizar en el secuenciador del host que carga el plugin.
+
+	Un sampler es un sintetizador que produce sonido mediante samples en lugar de generar sonidos con osciladores. Las fuentes del sonido que produce son samples: muestras de sonido grabado en forma digital que se almacena en en la memoria del sampler. Muchos samplers vienen con una serie de samples cargados por defecto, pero siempre ofrecen la opción de cargar samples distintos. Esto se puede hacer a través de una unidad de almacenamiento, como una tarjeta SD, o con una señal externa usando un dispositivo con capacidad de grabación como la que tiene un micrófono. Igual que con los sintetizadores, hay múltiples formas de manipular los samples para producir sonidos personalizados. Una vez cargados los samples, se pueden asociar a las notas de un teclado para accionar su reproducción y permitir que el usuario componga música. Este sampler está implementado como plugin para estaciones de audio digital, y funciona tomando como entrada disparadores de la estación de audio digital para devolver las notas recibidas en forma de sonido. 
 	\end{multicols}
 
 	\subsection{Key words}
-		sound, audio, sample, sampler, plugin, vst, juce, daw, 
+		sound, sampler, sample, sampling, digital instrument, plugin, synthesizer\\
+		sonido, muestra, muestreo, instrumento digital, sintetizador
 
 	
 	% c. una introducción con los antecedentes, objetivos y plan de trabajo, 

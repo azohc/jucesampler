@@ -21,7 +21,9 @@
 class SamplerAudioSource    : public AudioSource, public Value::Listener
 {
 public:    
-    SamplerAudioSource (MidiKeyboardState& keyState) : keyboardState (keyState) {}
+    SamplerAudioSource (MidiKeyboardState& keyState) : keyboardState (keyState) {
+        synth.addVoice (new SamplerVoice());
+    }
 
     void makeSoundsFromChops(AudioFormatReader* formatReader, ValueTree chopTree)
     {

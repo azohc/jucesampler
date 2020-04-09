@@ -85,6 +85,9 @@ const String ONSET_METHODS[] = { ONSET_ENERGY, ONSET_HFC, ONSET_COMPLEX, ONSET_P
 const int INIT_NOTE_AUTO_ASSIGN = 48; // C2
 const int FIRST_MIDI_NOTE = 24; // C0
 
+const int MONO = -220;
+const int POLY = -221;
+
 // IDs for Radio buttons
 enum RadioButtonIds
 {

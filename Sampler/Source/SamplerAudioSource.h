@@ -18,17 +18,15 @@
 //==============================================================================
 /*
 */
-class SamplerAudioSource    : public AudioSource
+class SamplerAudioSource    : public AudioSource, public Value::Listener
 {
 public:    
-    SamplerAudioSource (MidiKeyboardState& keyState) : keyboardState (keyState)
-    {
-        synth.addVoice (new SamplerVoice());    // and these ones play the sampled sounds TODO voice counter modifier
-    }
+    SamplerAudioSource (MidiKeyboardState& keyState) : keyboardState (keyState) {}
 
     void makeSoundsFromChops(AudioFormatReader* formatReader, ValueTree chopTree)
     {
         synth.clearSounds();
+        numChops = chopTree.getNumChildren();
         for (auto i = 0; i < chopTree.getNumChildren(); ++i) {
             Chop chop (chopTree.getChild(i));
             int chopId = chop.getId();
@@ -77,6 +75,30 @@ public:
         synth.renderNextBlock (*bufferToFill.buffer, incomingMidi, 0, bufferToFill.numSamples);
     }
 
+    void valueChanged(Value &value) override
+    {
+        if (value.refersToSameSourceAs (playbackMode))
+        {
+            synth.clearVoices();
+            if (playbackMode == POLY)
+            {
+                for (int i = 0; i < numChops; ++i)
+                {
+                    synth.addVoice (new SamplerVoice());
+                }
+            } else
+            {
+                synth.addVoice (new SamplerVoice());
+            }
+        }
+    }
+
+    void setPlaybackModeListener(Value &value) 
+    {
+        playbackMode = Value(value);
+        playbackMode.addListener (this);
+    }
+
     HashMap<int, std::pair<SamplerSound*, ADSR::Parameters>> chopSounds;
 
     MidiMessageCollector midiCollector;
@@ -84,6 +106,9 @@ public:
 private:
     MidiKeyboardState& keyboardState;
     Synthesiser synth;
+    Value playbackMode;
+
+    int numChops = 0;
 
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SamplerAudioSource)

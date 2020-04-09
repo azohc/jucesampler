@@ -56,14 +56,14 @@ public:
         triggerNoteComboBox.setColour (ComboBox::textColourId, COLOR_FG);
         triggerNoteComboBox.setVisible (false);
 
-        addAndMakeVisible (midiLearnButton);
-        midiLearnButton.setButtonText (MIDI_LEARN);
-        midiLearnButton.setColour (ToggleButton::textColourId, COLOR_FG);
-        midiLearnButton.setColour (ToggleButton::tickColourId, COLOR_RED);
-        midiLearnButton.setEnabled (true);
-        midiLearnButton.setVisible (false);
-        midiLearnButton.onClick = [this] { 
-            auto toggledOn = midiLearnButton.getToggleState();
+        addAndMakeVisible (midiLearnToggleButton);
+        midiLearnToggleButton.setButtonText (MIDI_LEARN);
+        midiLearnToggleButton.setColour (ToggleButton::textColourId, COLOR_FG);
+        midiLearnToggleButton.setColour (ToggleButton::tickColourId, COLOR_RED);
+        midiLearnToggleButton.setEnabled (true);
+        midiLearnToggleButton.setVisible (false);
+        midiLearnToggleButton.onClick = [this] { 
+            auto toggledOn = midiLearnToggleButton.getToggleState();
             listenForMidiLearn = toggledOn;
             midiLearningLabel.setVisible (toggledOn);
             if (!toggledOn && lastRecordedMidiNoteDirty)
@@ -84,6 +84,38 @@ public:
         midiLearningLabel.setText (LISTENING, dontSendNotification);
         midiLearningLabel.setVisible (false);
 
+        playbackMode = MONO;
+        addAndMakeVisible (playbackButton);
+        playbackButton.setButtonText (PLAYBACK_MONO);
+        playbackButton.setColour (TextButton::buttonColourId, COLOR_BG_DARK);
+        playbackButton.setColour (TextButton::buttonOnColourId, COLOR_BG);
+        playbackButton.setEnabled (true);
+        playbackButton.setVisible (false);
+        playbackButton.onClick = [this]
+        {
+            if (playbackMode == MONO)
+            {
+                playbackMode = POLY;
+                playbackButton.setButtonText (PLAYBACK_POLY);
+
+            } else
+            {
+                playbackMode = MONO;
+                playbackButton.setButtonText (PLAYBACK_MONO);
+
+            }
+        };
+
+        addAndMakeVisible (playbackModeLabel);
+        playbackModeLabel.setFont (Font (15.00f, Font::plain));
+        playbackModeLabel.setJustificationType (Justification::centredRight);
+        playbackModeLabel.setEditable (false, false, false);
+        playbackModeLabel.setColour (Label::backgroundColourId, COLOR_BG);
+        playbackModeLabel.setColour (Label::textColourId, COLOR_FG);
+        playbackModeLabel.setColour (Label::outlineColourId, COLOR_BG);
+        playbackModeLabel.setText (PLAYBACK_MODE, dontSendNotification);
+        playbackModeLabel.setVisible (false);
+
         addAndMakeVisible (prevChopArrow);
         prevChopArrow.setEnabled (false); 
         prevChopArrow.setVisible (false);
@@ -97,6 +129,7 @@ public:
         addAndMakeVisible (attackLS);
         attackLS.setVisible (false);
         addAndMakeVisible (decayLS);
+        decayLS.setVisible (false);
         addAndMakeVisible (sustainLS);
         sustainLS.setVisible (false);
         addAndMakeVisible (releaseLS);
@@ -134,9 +167,11 @@ public:
     {
         triggerNoteLabel.setVisible (selectedChopId != NONE);
         triggerNoteComboBox.setVisible (selectedChopId != NONE);
-        midiLearnButton.setVisible (selectedChopId != NONE);
+        midiLearnToggleButton.setVisible (selectedChopId != NONE);
         prevChopArrow.setVisible (selectedChopId != NONE);
         nextChopArrow.setVisible (selectedChopId != NONE);
+        playbackButton.setVisible (selectedChopId != NONE);
+        playbackModeLabel.setVisible (selectedChopId != NONE);
         attackLS.setVisible (selectedChopId != NONE);
         decayLS.setVisible (selectedChopId != NONE);
         sustainLS.setVisible (selectedChopId != NONE);
@@ -169,7 +204,6 @@ public:
         {
             auto chop = Chop(*it);
             chopIds.add (chop.getId());
-            print(String(chop.getId()));
         }
         return chopIds;
     }
@@ -196,7 +230,7 @@ public:
         {
             lastRecordedMidiNoteDirty = true;
             triggerNoteComboBox.setSelectedId (lastRecordedMidiNote.getValue(), false);
-            midiLearnButton.triggerClick();
+            midiLearnToggleButton.triggerClick();
         }
     }
 
@@ -234,35 +268,46 @@ public:
         rectChopIdAndTrigger = r.removeFromTop (r.getHeight() * 0.11);
         auto rectChopIdAndTriggerAux = rectChopIdAndTrigger;
     
-        auto chopIdLabelWidth = rectChopIdAndTriggerAux.getWidth() * 0.15;
+        auto chopIdLabelWidth = rectChopIdAndTriggerAux.getWidth() * 0.111;
         auto triggerLabelWidth = rectChopIdAndTriggerAux.getWidth() * 0.09;
         auto triggerComboBoxWidth = rectChopIdAndTriggerAux.getWidth() * 0.066;
+        auto arrowRectWidth = rectChopIdAndTriggerAux.getWidth() * 0.01;
+        auto arrowSize = rectChopIdAndTriggerAux.getHeight() * 0.6;
+        auto midiLearnButtonWidth = rectChopIdAndTriggerAux.getWidth() * 0.09;
+        auto midiLearningLabelWidth = rectChopIdAndTriggerAux.getWidth() * 0.15;
+        auto playbackButtonWidth = rectChopIdAndTriggerAux.getWidth() * 0.05;
+
+        prevChopArrow.setBounds (rectChopIdAndTriggerAux.removeFromLeft (arrowRectWidth));
+        prevChopArrow.setTopLeftPosition (prevChopArrow.getX() + (arrowRectWidth * 0.18),
+                                          rectChopIdAndTriggerAux.getCentreY() - rectChopIdAndTriggerAux.getHeight() * 0.2);
+        prevChopArrow.setSize (arrowSize, arrowSize);
+
         selectedChopLabel.setBounds (rectChopIdAndTriggerAux.removeFromLeft (chopIdLabelWidth));
+
+        nextChopArrow.setBounds (rectChopIdAndTriggerAux.removeFromLeft (arrowRectWidth));
+        nextChopArrow.setTopLeftPosition (nextChopArrow.getX(),
+                                          rectChopIdAndTriggerAux.getCentreY() - rectChopIdAndTriggerAux.getHeight() * 0.2);
+        nextChopArrow.setSize (arrowSize, arrowSize);
+
         triggerNoteLabel.setBounds (rectChopIdAndTriggerAux.removeFromLeft (triggerLabelWidth));
         triggerNoteComboBox.setBounds (rectChopIdAndTriggerAux.removeFromLeft (triggerComboBoxWidth));
-        midiLearnButton.setBounds (rectChopIdAndTriggerAux.removeFromLeft (triggerLabelWidth));
-        midiLearningLabel.setBounds (rectChopIdAndTriggerAux);
+        midiLearnToggleButton.setBounds (rectChopIdAndTriggerAux.removeFromLeft (midiLearnButtonWidth));
+        midiLearningLabel.setBounds (rectChopIdAndTriggerAux.removeFromLeft (midiLearningLabelWidth));
+        playbackButton.setBounds (rectChopIdAndTriggerAux.removeFromRight (playbackButtonWidth));
+        playbackModeLabel.setBounds (rectChopIdAndTriggerAux.removeFromRight (midiLearningLabelWidth));
 
         rectSettingsAndArrows = r;
         auto rectSettingsAndArrowsAux = rectSettingsAndArrows;
-        auto arrowRectWidth = rectSettingsAndArrowsAux.getWidth() * 0.03;
-        auto arrowSize = rectSettingsAndArrows.getHeight() * 0.1;
-        prevChopArrow.setBounds (rectSettingsAndArrowsAux.removeFromLeft(arrowRectWidth));
-        prevChopArrow.setTopLeftPosition (prevChopArrow.getX() + (arrowRectWidth * 0.2), 
-                                         rectSettingsAndArrows.getCentreY());
-        prevChopArrow.setSize (arrowSize, arrowSize);
-        nextChopArrow.setBounds (rectSettingsAndArrowsAux.removeFromRight(arrowRectWidth));
-        nextChopArrow.setSize (arrowSize, arrowSize);
-        nextChopArrow.setTopLeftPosition (nextChopArrow.getX() + (arrowRectWidth * 0.36),
-                                          rectSettingsAndArrows.getCentreY());
-
         auto adsrLSWidth = rectSettingsAndArrowsAux.getWidth() / 4;
         attackLS.setBounds (rectSettingsAndArrowsAux.removeFromLeft (adsrLSWidth));
         decayLS.setBounds (rectSettingsAndArrowsAux.removeFromLeft (adsrLSWidth));
         sustainLS.setBounds (rectSettingsAndArrowsAux.removeFromLeft (adsrLSWidth));
         releaseLS.setBounds (rectSettingsAndArrowsAux.removeFromLeft (adsrLSWidth));
     }
+
     Value listenForMidiLearn;
+    Value playbackMode;
+
 
 private:
     class LabelledSlider : public Component
@@ -273,7 +318,7 @@ private:
             addAndMakeVisible (slider);
             slider.setEnabled (true);
             slider.setSliderStyle (Slider::LinearVertical);
-            slider.setColour (Slider::trackColourId, COLOR_BG);
+            slider.setColour (Slider::trackColourId, COLOR_BG_LIGHT);
             slider.setColour (Slider::backgroundColourId, COLOR_BG_DARK);
             slider.setColour (Slider::thumbColourId, COLOR_FG);
             slider.setRange (0.0, 10.0, 0.01);
@@ -333,8 +378,10 @@ private:
     Label selectedChopLabel;
     Label triggerNoteLabel;
     Label midiLearningLabel;
+    Label playbackModeLabel;
     ComboBox triggerNoteComboBox;
-    ToggleButton midiLearnButton;
+    ToggleButton midiLearnToggleButton;
+    TextButton playbackButton;
     ArrowButton prevChopArrow { "PREV", 0.5, COLOR_GRAY_LIGHT };
     ArrowButton nextChopArrow { "NEXT", 0.0, COLOR_GRAY_LIGHT };
     LabelledSlider attackLS { "Attack", *this }, decayLS { "Decay", *this }, sustainLS { "Sustain", *this }, releaseLS { "Release", *this };
@@ -344,6 +391,9 @@ private:
     const String TRIGGER_NOTE_LABEL = "Trigger Note: ";
     const String MIDI_LEARN = "MIDI Learn";
     const String LISTENING = "Press New Trigger Note";
+    const String PLAYBACK_MODE = "Playback Mode";
+    const String PLAYBACK_MONO = "MONO";
+    const String PLAYBACK_POLY = "POLY";
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ChopSettingsComponent)
 };

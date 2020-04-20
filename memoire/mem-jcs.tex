@@ -2,7 +2,7 @@
 % 2. en cada apartado
 % 3. La memoria constará de un mínimo de 25 páginas para los proyectos realizados por unúnico estudiant
 
-\documentclass[12pt , a4paper]{article}
+\documentclass[12pt, a4paper, hidelinks]{article}
 \usepackage[spanish, english]{babel} 	% language
 \usepackage{tocloft}					% table of contents
 
@@ -12,6 +12,19 @@
 % images
 \usepackage{graphicx}
 \graphicspath{ {./images/} }
+
+% wrap around images
+\usepackage{wrapfig}
+
+% tables
+\usepackage{longtable}
+\usepackage{booktabs} 	% line separators
+
+%links
+\usepackage{hyperref}
+\hypersetup{
+	colorlinks=false
+}
 
 % text columns
 \usepackage{multicol}
@@ -98,17 +111,47 @@
 	\tableofcontents
 
 
-	% c. una introducción con los antecedentes, objetivos y plan de trabajo, 
+	% c. (25 pg entre c y d) una introducción con los antecedentes, objetivos y plan de trabajo, 
 	\newpage
 	\section{Introduction}
 	\subsection{Background}
-	The technique of sampling dates back to the 1960s when recordings were captured on tape. Thanks to a hardware design that made contact between the playback head and different sections of a moving tape, musicians could play the distinct recordings on keyboards of instruments such as the Mellotron. During the 1980s, the popularity of drum machines increased significantly. Many drum machines were sample-based, i.e. they created sounds using digitally stored samples. The alternative was to synthesize sound in an analog fashion. In 1988, the first Music Production Center (MPC) by Akai was made available to the public: a sample-based music workstation that was capable of arranging samples of all lengths in its sequencer to produce full fledged music tracks without the need for additional instruments or hardware. In a recipe for music, an MPC could be the only ingredient, reaching a vast number of musicians because of its affordability in comparison to previous means of music production. It is a tool that gave artists a new way to create music, a technique that has been a foundation to several genres and highly influential to music as a whole.\par
+	The technique of sampling dates back to the 1960s when recordings were captured on tape. Thanks to a hardware design that made contact between the playback head and different sections of a moving tape, musicians could play the distinct recordings on keyboards of instruments such as the Mellotron. During the 1980s, the popularity of drum machines increased significantly. Many drum machines were sample-based, i.e. they created sounds using digitally stored samples, whereas the alternative was to synthesize sound in an analog fashion. In 1988, the first Music Production Center (MPC) by Akai was made available to the public: a sample-based music workstation that was capable of arranging samples of all lengths in its sequencer to produce full fledged music tracks without the need for additional instruments or hardware. In a recipe for music, an MPC could be the only ingredient, reaching a vast number of musicians because of its affordability in comparison to previous means of music production. It is a tool that gave artists a new way to create music, a technique that has been a foundation to several genres and highly influential to music as a whole.\par
  	
- 	When it comes to modern music composition, Musical Instrument Digital Interface (MIDI from now on) protocols provide grounds for an alternative to \textit{analog} instruments. This standard erects a bridge for communication between digital instruments and computers, providing the world of digital music production with the tangible interfaces of normal instruments. The MIDI standard provides, among many other features, a communications protocol that encodes music events. This manifests in the form of messages which describe data such as the pressing, releasing, and velocity of musical notes. A digital audio workstation (DAW from here on out) is a software environment for music production. These workstations revolve around MIDI, and can be extended with plugins in the form of effects or instruments. The former normally have a sound-based input-output relation with the DAW, meanwhile instruments will take MIDI messages and produce a sound as an output. For example, a simple plugin could be a sine wave based instrument. The frequency of the wave will depend on the note being held down, and the force applied to the key will dictate the amplitude of the wave. This plugin, although simple, could be considered a synthesizer. 	In a world of highly complex information systems, digital music production has been developed thoroughly. One can have an extensive range of digital synthesizers, samplers, and effect chains all working simultaneously in computer software. A DAW provides a playground that routes audio between racks of components and effects, making music production a possibility to anyone that owns a computer.\par
+ 	In a world of highly complex information systems, digital music production has been developed thoroughly. When it comes to modern music composition, Musical Instrument Digital Interface (MIDI from now on) protocols provide grounds for an alternative to \textit{analog} instruments. This standard erects a bridge for communication between digital instruments and computers, providing the world of digital music production with the tangible interfaces of normal instruments. The MIDI standard provides, among many other features, a communications protocol that encodes music events. This manifests in the form of messages which describe data such as the pressing, releasing, and velocity of musical notes. 	
+
+ 		\begin{longtable}[]{@{}cc@{}}
+ 			Syllabic & Alphabetical \tabularnewline
+ 			\midrule
+ 			Do  & C \tabularnewline
+ 			Re  & D \tabularnewline
+ 			Mi  & E \tabularnewline
+ 			Fa  & F \tabularnewline
+ 			Sol & G \tabularnewline
+ 			La  & A \tabularnewline
+ 			Si  & B \tabularnewline
+ 			\caption{Musical notes in syllabic and alphabetical form}
+ 			\label{table:notes}
+ 		\end{longtable}
+ 	A digital audio workstation (DAW from here on out) is a software environment for music production. These workstations revolve around MIDI, which provides an encoded language for musical notes. See Table \ref{table:notes} for a table of the syllabic and alphabetical equivalents of musical notes. 
+ 	\par
  	
-	A sampler is a synthesizer that uses samples rather than oscillators to produce sound.  The sources of the sounds it produces are samples, which can be described as clips of audio that are stored in a digital format within the sampler's memory. You're likely to find that hardware and software samplers offer sets of "stock" samples that are loaded by default. The option to load samples from an external source such as an SD card is also common, just like recording external input from a recording device such as a microphone. As is the case with non sample based synthesizers, there are several ways that the samples can be manipulated. Once samples are loaded, the sampler can make the notes on a keyboard trigger the samples so users can play them to compose music. This sampler, in particular, takes the form of a plugin for digital audio workstations. The DAW routes MIDI messages describing the notes being played into the plugin, which in turn processes the input to produce a stream of audio that is returned to the host as sound.\par
+	One can have an extensive range of digital synthesizers, samplers, and effect chains all working simultaneously in a DAW, the type of software that provides a playground that routes audio between racks of components and effects, making music production a possibility to anyone that owns a computer. DAWs have an element called a sequencer, which serves as a sort of digital equivalent to sheet music. The sequencer is where a musician draws out the music, placing small rectangles on a grid to represent the notes, their length, and their duration. These arrangements are made for instruments such as synthesizers or samplers to trigger the sounds they produce, and can be auto generated, drawn out manually, or recorded in real time with a MIDI controller. Auto generated patterns consist of filling a set length of time with notes separated by constant intervals, so as to mimic the timing of a metronome, for example. Patterns that are recorded in real time are made with the DAWs recording function, which is activated to record MIDI events from a controller. A user may have an instrument loaded during this recording period, so the user can know what sounds are being produced. It is important to highlight that it is a sequence of MIDI events that is recorded by the DAW, not the actual sounds being produced by the instrument. The relevant events associated to this process are: note-on events, the signal that a note has been pressed; note-off events, the signal that a note has been released. A musical note is associated to note-on and note-off events, having the note and octave being encoded as an integer in the range of $[0, 127)$. In addition, associated to note-on events is an element called velocity, which is a measure of the intensity of the note. The velocity of a note is sometimes processed by instruments to generate softer or stronger sounds. Some samplers use note velocity to trigger a sample from a set, i.e. a lower intensity recording of a snare drum for lower velocities as opposed to a sample of a powerful snare drum hit when the velocity is a higher range.
+ 	\par
+ 	
+	DAWs can be extended with plugins in the form of effects or instruments. The former normally have a sound-based input-output relation with the DAW, meanwhile instruments will take MIDI messages and produce a sound as an output. For example, a simple plugin could be a sine wave based instrument. The wave's frequency will depend on the key being pressed, and the force applied to the key will dictate the amplitude of the wave. This plugin, although simple, could be considered a synthesizer. A sampler is a synthesizer that uses samples rather than oscillators to produce sound.  The sources of the sounds it produces are samples, which can be described as clips of audio that are stored in a digital format within the sampler's memory. You're likely to find that hardware and software samplers offer sets of "stock" samples that are loaded by default. The option to load samples from an external source such as an SD card is also common, just like recording external input from a recording device such as a microphone. As is the case with non sample based synthesizers, there are several ways that the samples can be manipulated. This sampler, in particular, takes the form of a plugin for digital audio workstations. Once samples are loaded, the user associates the samples to MIDI notes to enable pattern arrangements and playback on controllers. The DAW then routes MIDI messages describing the notes being played into the plugin, which in turn processes the input to produce a stream of audio that is returned to the host as sound. The sound produced by this sampler comes from sub-samples: designated regions of a main sample. Once assigned to MIDI notes, these regions will then be playable from MIDI controllers. The DAW will also be able to trigger the sub-samples from an arrangement of notes in a pattern made for the sampler.\par 
 	
-	%TODO explain ADSR paramaters, PANNING, VELOCITY != VOLUME, CONTROLLER
+	To explore the ways in which a sampler can manipulate sound, I will start with \textit{envelopes}, which dictate the way a sound changes over time. Envelopes affect playback every time it is triggered, and are commonly composed of four parameters. 	
+	\begin{wrapfigure}[12]{r!}{188pt}
+		\centering
+		\vspace{-33pt}
+		\includegraphics[scale=0.4]{envelope.png}
+		\caption{ADSR parameters in envelopes}
+		\label{fig:envelope}
+	\end{wrapfigure}
+	The first one  comes into play upon note-on events, i.e. on a key press: \textit{attack}, describing the time it takes for the sound's level to rise from zero to its peak. Next, \textit{sustain} is the level at which the sound will hold until a note-off event, i.e. when a key is released. \textit{Decay} depends on sustain, and it describes the time it will take for the level to go from peak to sustain. Finally, \textit{release} is the tail end of the envelope. Starting on note-off events, it describes the time it will take to reach zero level from sustain level. These four concepts form the acronym ADSR, and can be pictured as a plot of level against time in Figure \ref{fig:envelope}. You may have noticed that three of the parameters refer to a time measure, whereas sustain refers to a level. \par 
+	
+	Some other ways to manipulate sounds are by altering volume and panning. Volume refers to the level of the sound, whereas panning dictates the direction the sound is perceived to be coming from. Panning only applies to stereo systems, where there the output is composed of two channels that represent left and right. 
+	
 	
 	\newpage
 	\subsection{Objectives}
@@ -125,9 +168,14 @@
 		\item Editable envelope parameters for each chop							% TODO chop pan? vol? filters?
 	\end{itemize}
 	
-	% d. resultados y discusión crítica y razonada de los mismos, con sus conclusiones,
+	% d. (25 pg entre c y d) resultados y discusión crítica y razonada de los mismos, con sus conclusiones,
 	\newpage
 	\section{Results}
+	%intro juce, support for plugins, extensive tutorials and examples
+	To implement the sampler, I used the JUCE application framework. It has cross-platform support is fully implemented in C++. 
+	
+
+	
 	
 	\subsection{Conclusion}
 	 

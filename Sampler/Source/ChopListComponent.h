@@ -69,13 +69,11 @@ public:
         delete columnXml;
     }
 
-    // This is overloaded from TableListBoxModel, and must return the total number of rows in our table
     int getNumRows() override
     {
         return numRows;
     }
 
-    // This is overloaded from TableListBoxModel, and should fill in the background of the whole row
     void paintRowBackground (Graphics& g, int rowNumber, int /*width*/, int /*height*/, bool rowIsSelected) override
     {
         auto selectedRowColour = COLOR_BG_DARK.interpolatedWith (COLOR_BG, 0.16f);
@@ -89,10 +87,8 @@ public:
             g.fillAll (rowColour);
     }
 
-    // This is overloaded from TableListBoxModel, and must paint any cells that aren't using custom
-    // components.
     void paintCell (Graphics& g, int rowNumber, int columnId,
-                    int width, int height, bool /*rowIsSelected*/) override
+                    int width, int height, bool rowIsSelected) override
     {
         g.setColour (COLOR_FG);
         g.setFont (font);
@@ -108,8 +104,6 @@ public:
         g.fillRect (width - 1, 0, 1, height);
     }
 
-    // This is overloaded from TableListBoxModel, and tells us that the user has clicked a table header
-    // to change the sort order.
     void sortOrderChanged (int newSortColumnId, bool isForwards) override
     {
         if (newSortColumnId != 0)
@@ -121,8 +115,7 @@ public:
         }
     }
 
-    // This is overloaded from TableListBoxModel, and must update any custom components that we're using
-    Component* refreshComponentForCell (int rowNumber, int columnId, bool /*isRowSelected*/,
+    Component* refreshComponentForCell (int rowNumber, int columnId, bool isRowSelected,
                                         Component* existingComponentToUpdate) override
     {
         if (columnId != COLID_TRIGG)    // only assert for custom columns
@@ -141,39 +134,15 @@ public:
             triggerComboBox->   setRowAndColumn (rowNumber, columnId);
             return triggerComboBox;
         }
-
-        //if (columnId == COLID_VISIB)
-        //{
-        //    auto* hiddenToggle = static_cast<ToggleButtonColumnComponent*> (existingComponentToUpdate);
-
-        //    if (hiddenToggle == nullptr)
-        //        hiddenToggle = new ToggleButtonColumnComponent (*this);
-
-        //    hiddenToggle->setRowAndColumn (rowNumber, columnId);
-        //    return hiddenToggle;
-        //}
-
-        //// The other columns are editable text columns, for which we use the custom Label component
-        //auto* textLabel = static_cast<EditableTextCustomComponent*> (existingComponentToUpdate);
-
-        //// same as above...
-        //if (textLabel == nullptr)
-        //    textLabel = new EditableTextCustomComponent (*this);
-
-        //textLabel->setRowAndColumn (rowNumber, columnId);
-        //return textLabel;
     }
 
-    // This is overloaded from TableListBoxModel, and should choose the best width for the specified
-    // column.
     int getColumnAutoSizeWidth (int columnId) override
     {
         if (columnId == 5)
-            return 100; // (this is the ratings column, containing a custom combobox component)
+            return 100;
 
         int widest = 32;
 
-        // find the widest bit of text in this column..
         for (int i = getNumRows(); --i >= 0;)
         {
             if (auto* rowElement = chopXml->getChildElement (i))
@@ -208,7 +177,6 @@ public:
     //==============================================================================
     void resized() override
     {
-        // position our table with a gap around its edge
         table.setBoundsInset (BorderSize<int> (1));
     }
 
@@ -222,7 +190,6 @@ public:
 
     void cellClicked(int rowNumber, int columnId, const MouseEvent &e)
     {
-        // for popup menu’s item selection use result
         int result = 0;
         if (e.mods.isLeftButtonDown())
         {

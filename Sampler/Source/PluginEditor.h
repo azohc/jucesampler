@@ -362,7 +362,7 @@ private:
 
     void loadFile()
     {
-        FileChooser fc ("Choose a Wave or MP3 file...", {}, "*wav;*mp3", true);
+        FileChooser fc ("Choose a WAVE file...", {}, "*wav", true);
 
         if (fc.browseForFileToOpen())
         {
@@ -410,10 +410,7 @@ private:
         if (reader != nullptr)
         {
             currentAudioFileSource.reset (new AudioFormatReaderSource (reader, true));
-
-            // ..and plug it into our transport source
             transportSource.setSource (currentAudioFileSource.get(), 32768, &thread, reader->sampleRate);
-
             return true;
         }
 
@@ -536,7 +533,7 @@ private:
         detectedChopNumberLabel.setText (String(n) + "\nDetected Chops", dontSendNotification);
     }
 
-    void valueChanged (Value& value)
+    void valueChanged (Value& value) override
     {
         if (value.refersToSameSourceAs(selectedChopId))
         {
@@ -603,7 +600,7 @@ private:
     }
     
     void valueTreeChildAdded (ValueTree& parentTree,
-                              ValueTree& childWhichHasBeenAdded)
+                              ValueTree& childWhichHasBeenAdded) override
     {
         thumbnail->addChopMarker(childWhichHasBeenAdded[ID_CHOPID]);
         chopList->reloadData();
@@ -611,7 +608,7 @@ private:
     }
    
     void valueTreePropertyChanged (ValueTree& treeWhosePropertyHasChanged,
-                                   const Identifier& property)
+                                   const Identifier& property) override
     {
         chopList->reloadData();
         samplerSource.makeSoundsFromChops(currentAudioFileSource.get()->getAudioFormatReader(), processor.getChopTree());
@@ -619,7 +616,7 @@ private:
 
     void valueTreeChildRemoved (ValueTree& parentTree,
                                 ValueTree& childWhichHasBeenRemoved,
-                                int indexFromWhichChildWasRemoved)
+                                int indexFromWhichChildWasRemoved) override
     {
         thumbnail->removeChopMarker(childWhichHasBeenRemoved[ID_CHOPID]);
         processor.getChopMap()->remove(childWhichHasBeenRemoved[ID_CHOPID]);

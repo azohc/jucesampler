@@ -178,29 +178,39 @@ style=numeric,
 		\label{fig:envelope}
 	\end{figure}
 	
-	The entity that is the sample based instrument is what holds and modifies the configuration that revolves around a main sample. It knows where to find the main sample, where each subsection starts and ends, and what the envelope parameters are set to for each chop. The sampler is equipped for playback, and is configurable in the way sounds interact as they are triggered. A parameter that can be found in most instruments is termed \textit{polyphony}, a measure that limits the playback at any moment to a particular number of notes. Polyphony is commonly described with an arbitrary number of \textit{voices}: an instrument with 3 voices can play at most 3 sounds at a time.
-	
-	% TODO siendo un plugin VST, como se integra en el DAW?
-	
+ 	The entity that is the sample based instrument is what holds and modifies the configuration that revolves around a main sample. It knows where to find the main sample, where each subsection starts and ends, and what the envelope parameters are set to for each chop. The sampler is equipped for playback, and is configurable in the way sounds interact as they are triggered. \par 
+ 	A parameter that can be found in most instruments is termed \textit{polyphony}, a measure that limits the playback at any moment to a particular number of notes. Polyphony is commonly described with an arbitrary number of \textit{voices}: an instrument with 3 voices can play at most 3 sounds at a time.\par
+ 	Furthermore, a series of effects may be applied to the sample in order to modify the sound that is output. Filters and compressors are some of the most common effects you may come across. Filters eliminate frequencies from the sound. Compressors apply reduction to the sound when the level crosses a certain threshold. Being applicable to any source of sound, these types of effects are most likely included with any arbitrary DAW, although they are sometimes also found within samplers.
 
- 	Furthermore, a series of effects may be applied to the sample in order to modify the sound that is output. Filters, compressors, delays and reverbs are some of the most common effects you may come across. % TODO explain each effect briefly.
-	
 	
 	\newpage
 	\subsection{Motivation}
-	% TODO DAWs pueden samplear, pero existen inconvenientes (no puedes evitar el workflow impuesto por el DAW (puede ser mejorado), hay un exceso de utilidades que yo nunca usaria, etc.)
+	Modern DAWs have built in samplers or similar tools that allow a user to sample sound and directly manipulate it so as to employ sampling techniques. In most cases, these tools are more than capable of providing the means to translate these techniques into action, however, depending on the DAW, you may be hindered due to the workstation's design. Whether it be the user interface, the imposed workflow, or the minimum amount of steps required to reach your sampling goals, it is likely that the process involves inconveniences.\par
+	 
+	Personally, I find that there are a minimum of three steps to achieve a usable sampler configuration. First, a main sample must be loaded. Second, a number of chops are delimited in the bounds of the main sample. Third comes the assignment of chops to MIDI notes, in other words, the mapping of sample subsection playback to a controller's keys. These steps are a prerequisite to playing chops on a controller, or to lay notes out within the DAW's sequencer. At this stage, the user can experience the instrument and judge whether it is necessary to take a step back and make adjustments, for example, shifting the start time of a chop, creating/deleting a chop, or moving the trigger note to another of higher convenience. All of this implies that the design of a sampler instrument is an iterative process, and that the user may keep reforming it in several ways to fit the necessities of the creative process in musical composition. \par 
 	
-	% TODO los pasos esenciales para crear un instrumento sampler son pocos. si se puede implementar con una interfaz que habilite la creación con rapidez, tenemos un instrumento efectivo que sirve para samplear que puede usarse en cualquier DAW
+	Since the essential number of steps and functions required to obtain a usable instrument are few, there is room for improvement in comparison to the process that takes place when using a DAW's default tools. By focusing on the indispensable functions and actions, the process can be simplified to provide a fast way of putting together a sample based instrument. Hindrances such as overloaded user interfaces are eliminated, leaving out the buttons and functionalities that are seldom used. \par
+	
+	By implementing the instrument as a VST plugin, a vast number of DAWs become candidates for the inclusion of this plugin and the streamlined process of sampling. Any DAW's inherent limitations and/or hindrances would no longer be obstacles when it comes to creating a sample based instrument. This way, the instrument would be attachable to the majority of workstations and optimized for the application of sampling techniques required to translate an idea into sound.
+	  
+
+	
 	
 	
 
 	\newpage
 	\subsection{Objectives}
 	% TODO creación de un instrumento personalizado mediante la inclusión de lo estrictamente necesario: 
-%	cargar audio
-%	crear subsecciones
-%	disparar subsecciones con eventos midi
-%	ajustar parametros de playback (adsr, poliphony)
+	For the simple implications of sampling techniques, the means by which you achieve a minimum setup with which you can play around and manifest ideas should be straightforward. The aim is to reduce the amount of user interaction required to reach a usable sample based instrument. To do so, I will downsize in the features that any arbitrary DAW has to offer, including only those that are strictly necessary. This translates to the reduction of hindrances that may arise when there is an excess amount of functionality that is rarely used.  By implementing the instrument as a VST plugin, I aspire to build an accessible sample based instrument optimized for the application  of sampling techniques. %This means that the user will be able to load, chop, and play samples with speed and ease in a reduced sequence of actions. In addition, the user should also be able to make fast corrections and tweaks to further develop the instrument. 
+	\par
+	The capabilities of the sampler can be summarized to four key functionalities:
+	\begin{itemize}
+		\item Capacity to load an audio clip as the main sample                     % TODO MORE THAN ONE SAMPLE?
+		\item Manual chopping and automatic chopping with a peak detection algorithm
+		\item Visual representation and audio preview of the main sample and its chops
+		\item Editable envelope parameters for each chop                            % TODO chop pan? vol? filters?
+	\end{itemize}
+
 
 	% TODO FUNCIONES A INCLUIRSE 
 %	visualización visual y sonora del sample y sus cortes

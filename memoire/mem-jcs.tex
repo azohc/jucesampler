@@ -191,33 +191,33 @@ style=numeric,
 	
 	Since the essential number of steps and functions required to obtain a usable instrument are few, there is room for improvement in comparison to the process that takes place when using a DAW's default tools. By focusing on the indispensable functions and actions, the process can be simplified to provide a fast way of putting together a sample based instrument. Hindrances such as overloaded user interfaces are eliminated, leaving out the buttons and functionalities that are seldom used. \par
 	
-	By implementing the instrument as a VST plugin, a vast number of DAWs become candidates for the inclusion of this plugin and the streamlined process of sampling. Any DAW's inherent limitations and/or hindrances would no longer be obstacles when it comes to creating a sample based instrument. This way, the instrument would be attachable to the majority of workstations and optimized for the application of sampling techniques required to translate an idea into sound.
+	By implementing the instrument as a VST plugin, a vast number of DAWs become candidates for the inclusion of this plugin and a streamlined sampling process. Any DAW's inherent limitations and/or hindrances would no longer be obstacles when it comes to creating a sample based instrument. This way, an instrument strictly designed for sampling would be attachable to the majority of workstations, providing a simple way to put sampling techniques to use on most platforms.
 	  
 
 	
 	
-	
-
 	\newpage
 	\subsection{Objectives}
 	% TODO creación de un instrumento personalizado mediante la inclusión de lo estrictamente necesario: 
 	For the simple implications of sampling techniques, the means by which you achieve a minimum setup with which you can play around and manifest ideas should be straightforward. The aim is to reduce the amount of user interaction required to reach a usable sample based instrument. To do so, I will downsize in the features that any arbitrary DAW has to offer, including only those that are strictly necessary. This translates to the reduction of hindrances that may arise when there is an excess amount of functionality that is rarely used.  By implementing the instrument as a VST plugin, I aspire to build an accessible sample based instrument optimized for the application  of sampling techniques. %This means that the user will be able to load, chop, and play samples with speed and ease in a reduced sequence of actions. In addition, the user should also be able to make fast corrections and tweaks to further develop the instrument. 
 	\par
-	The capabilities of the sampler can be summarized to four key functionalities:
+	The core capabilities the sampler can be listed as four points:
 	\begin{itemize}
-		\item Capacity to load an audio clip as the main sample                     % TODO MORE THAN ONE SAMPLE?
-		\item Manual chopping and automatic chopping with a peak detection algorithm
-		\item Visual representation and audio preview of the main sample and its chops
-		\item Editable envelope parameters for each chop                            % TODO chop pan? vol? filters?
+		\item Providing a visual representation and an audio preview of the main 
+		sample and its chops.
+		\item Chop creation: manual and \textit{automatic} chopping using peak detection algorithms.
+		\item List component that shows all chops and the trigger notes they are associated to.
+		\item Chop playback: adjustable envelope parameters for each chop, and a polyphony setting for the sampler as a whole.
+	\end{itemize}
+	
+	Furthermore, there are more features that would be of great value, such as the following:
+	\begin{itemize}
+		\item The ability to load and manage a set of main audio samples simultaneously.
+		\item Plugin state saving and loading, for the storage and recovery of configurations.
+		\item Pitch shifting algorithms to modify the tone of the main sample and its chops.
+		\item A series of effects for each chop: filters, compressors, 
 	\end{itemize}
 
-
-	% TODO FUNCIONES A INCLUIRSE 
-%	visualización visual y sonora del sample y sus cortes
-%	lista de cortes y a donde estan mapeados
-%	deteccion de picos para creacion "automática" de cortes
-%	opciones de playback (adsr, polyphony)
-		
 	
 	\newpage	
 	\section{Plugin design}
@@ -249,7 +249,7 @@ style=numeric,
 	
 
 	% PLAYBACK
-	Audio playback is achieved through the \textit{AudioTransportSource} class. It inherits from the \textit{AudioSource} class, which is a base class that enables continuous audio playback. The \textit{AudioTransportSource} is used because it implements can be positioned, played, paused, and stopped. These features are useful for previewing the initially loaded sample. Audio subsection playback is handled differently, and will be discussed later on. The connection of audio files to the \textit{AudioTransportSource} object is achieved via \textit{AudioSource} subclasses. In this case, an \textit{AudioFormatReaderSource}. The processor stores an instance of \textit{AudioFormatReaderSource} in \texttt{currentAudioFileSource}, and in \texttt{transportSource} an instance of \textit{AudioTransportSource}. \textit{AudioFormatReaderSource} objects of this class obtain streams of sound from \textit{AudioFormatReader} objects, which source their sound from audio file streams. Every time a user opens a file successfully, a function \texttt{loadFileIntoTransport(const File\& file)} is executed. This function will stop the \textit{AudioTransportSource} from continuing playback, and proceed to change the source. To do this, a new \textit{AudioFormatReader} object is created for \texttt{file}. This is done through an \texttt{AudioFormatManager} object, which is used to keep a list of the formats that are to be accepted by the application. It includes a method called \texttt{AudioFormatReader* createReaderFor (const File\& file)}, which returns a pointer to the \textit{AudioFormatReader} that is necessary for the creation of an \textit{AudioFormatReaderSource}. If \texttt{createReaderFor} fails, it returns a null pointer, so the following steps are only taken in cases where the pointer is not null. The \texttt{currentAudioFileSource} pointer is reset to the new reader source, and the \texttt{transportSource}'s new source is set with \texttt{setSource}.\\
+	Audio playback is achieved through the \textit{AudioTransportSource} class, which enables the audio preview of the main sample that is loaded in the plugin. It inherits from the \textit{AudioSource} class, which is a base class that enables continuous audio playback. The \textit{AudioTransportSource} is used because it implements can be positioned, played, paused, and stopped. These features are useful for previewing the initially loaded sample. Audio subsection playback is handled differently, and will be discussed later on. The connection of audio files to the \textit{AudioTransportSource} object is achieved via \textit{AudioSource} subclasses. In this case, an \textit{AudioFormatReaderSource}. The processor stores an instance of \textit{AudioFormatReaderSource} in \texttt{currentAudioFileSource}, and in \texttt{transportSource} an instance of \textit{AudioTransportSource}. \textit{AudioFormatReaderSource} objects of this class obtain streams of sound from \textit{AudioFormatReader} objects, which source their sound from audio file streams. Every time a user opens a file successfully, a function \texttt{loadFileIntoTransport(const File\& file)} is executed. This function will stop the \textit{AudioTransportSource} from continuing playback, and proceed to change the source. To do this, a new \textit{AudioFormatReader} object is created for \texttt{file}. This is done through an \texttt{AudioFormatManager} object, which is used to keep a list of the formats that are to be accepted by the application. It includes a method called \texttt{AudioFormatReader* createReaderFor (const File\& file)}, which returns a pointer to the \textit{AudioFormatReader} that is necessary for the creation of an \textit{AudioFormatReaderSource}. If \texttt{createReaderFor} fails, it returns a null pointer, so the following steps are only taken in cases where the pointer is not null. The \texttt{currentAudioFileSource} pointer is reset to the new reader source, and the \texttt{transportSource}'s new source is set with \texttt{setSource}.\\
 	All of these instances and connections lead to a functional way to play audio, however, there still is the need to connect the \texttt{transportSource}'s interface to GUI elements. The \textit{AudioTransportSource} class extends \textit{ChangeBroadcaster}, which allows for event driven reactivity to the state of the \textit{transportSource} object. To aid in the process, an \texttt{enum TransportState} is declared to include the states of \texttt{Stopping}, \texttt{Stopped}, \texttt{Starting}, \texttt{Playing}, \texttt{Pausing}, and \texttt{Paused}. Buttons layed out in the application will change a private variable \texttt{TransportState state} to \texttt{Starting}, \texttt{Stopping}, and \texttt{Pausing} to invoke \texttt{transportSource.start()} or \texttt{transportSource.stop()}. By executing these methods of the \texttt{transportSource}, every object that extends \textit{ChangeListener} that has been added to the \texttt{transportSource}'s list of listeners will be notified of a change. This notification manifests by invoking the callback function \texttt{void changeListenerCallback (ChangeBroadcaster* source)}, which is a virtual function that must be implemented by any class that extends \textit{ChangeListener}. The plugin editor extends this class and adds itself to the \texttt{transportSource}'s listener list with the following instruction: \texttt{transportSource.addChangeListener(this);}. In the \texttt{changeListenerCallback} function, the source of the event is checked by comparing references like so:
 	\begin{verbatim}
 	void changeListenerCallback (ChangeBroadcaster* source) override
@@ -260,24 +260,33 @@ style=numeric,
 	Inside the conditional block, the transport state is updated once more, and the GUI is synchronized in accordance to the next transport state, for example, when \texttt{Starting}, the state transitions to \texttt{Playing}, changing the play button's text to "Pause" and enabling the stop button. \par
 	
 	
-	
 	\newpage
-	\subsection{Subsection management}
-	% TODO Chop list & settings: ADSR, MIDI learn, poliphony
+	\subsection{Chopping the main sample}
+	Chops are modelled as a struct and are comprised of 6 fields: an unique identifier, start and stop times and samples, the trigger note, and a boolean value named \textit{hidden}. Start and stop measures are stored in seconds and samples. The trigger note is an integer encoding the MIDI note that is associated to the chop, and the \textit{hidden} field dictates the chops' visibility in the components that display chops. \par 
+	The storage of these fields is done via the \textit{ValueTree}\cite{valuetree} class, which is a lightweight data structure that is capable of handling datatypes of all sorts, storing a list of properties, subtrees, and references to shared data containers. Using a struct to wrap this data structure brings the benefit of type and validity checks when creating chops. The creation of a chop with this construct creates a \textit{ValueTree} object, setting the values for properties that resemble the fields previously described after performing some checks. This \textit{ValueTree} can then be added to the general \textit{ValueTree} that stores all chops with an assurance of validity in terms of types and value boundaries. The \textit{ValueTree} data structure supports event-driven programming: listeners can subscribe to a tree in order to invoke callbacks when events arise, such as property changes or the removal/addition of a subtree.
+	\subsubsection{Manual creation}
+	The \textit{AudioThumbnail} component plays a big part in manual chop creation. Since it displays a visual representation of the sample, it is possible to recognize patterns in the waveform to estimate the position and length of the subsection you wish to create. By default, the \textit{AudioThumbnail} does not interface with mouse clicks. Nevertheless, the interception of clicks as events with coordinates is fully supported. I found out about this through the \textit{AudioPlaybackDemo} that is part of the Projucer's examples, where it was possible to click on the \textit{AudioThumbnail} to relocate the playback head of the \textit{AudioTransportSource} to any position on the waveform. \par 
+	To do this, the \textit{AudioThumbnail} is instantiated as a member and placed within a parent component. This way, the parent component can override functions such as \texttt{void mouseDown (const MouseEvent\& e)} and \texttt{void mouseDrag (const MouseEvent\& e)} to define the interactions between the component and events triggered by the mouse. When one clicks on the thumbnail, the coordinates of the click event are part of the event's payload. The \textit{x} coordinate is all that is needed to obtain the equivalent point in time in the sample: it is done with a few arithmetic operations that use the parent component's and the thumbnail's width and the as operands, as well as the \textit{x} coordinate. This works both ways, such that a position in time can be converted to an \textit{x} coordinate. This feature allows for the rendering of a playback head that scrolls along the thumbnail as it plays in real time. Likewise, when a chop is created, its boundaries can be drawn upon the thumbnail with two markers to indicate the region it is contained in.
+	\par
+	The thumbnail then becomes the means through which manual chop creation is possible. One way of creating a subsection is goes by the name of \textit{Chop selection}. This is based on the possibility of overriding the \texttt{mouseDrag} function to display rectangles resembling selections over the thumbnail. The coordinates of the limits of these selected areas are stored upon the firing of the drag event. These pairs of coordinates are used to draw a see-through rectangles over the thumbnail, and, if need be, to create a chop out of the boundaries of the selection. Termed \textit{Chop from here} is the second way to manually create chops. This option uses only the earliest coordinate of the thumbnail selection, making the end of the chop always coincide with the end of the main sample. \par
 
-	\textit{TODO:}
-	\textit{Explain connection to chop list. link to table tutorial.}\par
-	
-	\textit{	midi learn and chop parameters. polyphony}
-	
-	
-	\newpage
-	\subsection{Peak detection}
+	\subsubsection{Peak detection}
 	% TODO Aubio para la detección de picos y conexión mediante Projucer
 	% projucer include external libraries, peak detection w aubio
 	\textit{	aubio external library for peak detection. projucer configuration and calling the C code from C++}
 	\par
 	
+	
+	
+	\newpage
+	\subsection{Subsection management}
+	% TODO Chop list & settings: ADSR, MIDI learn, poliphony
+    A table component was included to visualize the amount of chops and some of their details. Initially, the table is empty. Once a chop is created
+
+	\textit{TODO:}
+	\textit{Explain connection to chop list. link to table tutorial.}\par
+	
+	\textit{	midi learn and chop parameters. polyphony}
 	
 	
 	

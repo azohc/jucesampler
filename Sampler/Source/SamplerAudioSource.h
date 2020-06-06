@@ -29,7 +29,7 @@ public:
     {
         synth.clearSounds();
         numChops = chopTree.getNumChildren();
-        for (auto i = 0; i < chopTree.getNumChildren(); ++i) {
+        for (auto i = 0; i < numChops; ++i) {
             Chop chop (chopTree.getChild(i));
             int chopId = chop.getId();
             int64 startSample = chop.getStartSample();

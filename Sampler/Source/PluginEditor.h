@@ -172,7 +172,7 @@ public:
         detectedChopNumberLabel.setColour (Label::textColourId, COLOR_FG);
 
         // CHOPLIST
-        chopList.reset(new ChopListComponent(processor.getChopTree(), selectedChopId));
+        chopList.reset(new ChopListComponent(processor.getChopTree(), *processor.getChopMap(), selectedChopId));
         addAndMakeVisible (chopList.get());
 
         // CHOPSETTINGS
@@ -488,25 +488,24 @@ private:
         uint_t buf_size = 1024;
         uint_t hop_size = 256;
         uint_t n_frames = 0, read = 0;
-        auto source = new_aubio_source(file, samplerate, hop_size);
-        auto o = new_aubio_onset(ONSET_METHODS[onsetMethodNumber].getCharPointer(), buf_size, hop_size, aubio_source_get_samplerate(source));
-        auto threshset = aubio_onset_set_threshold(o, chopThresholdSlider.getValue());
-        fvec_t * in = new_fvec (hop_size); // input audio buffer
-        fvec_t * out = new_fvec (2); // output position
+        auto a_source = new_aubio_source(file, samplerate, hop_size);
+        auto a_onset = new_aubio_onset(ONSET_METHODS[onsetMethodNumber].getCharPointer(), buf_size, hop_size, aubio_source_get_samplerate(a_source));
+        auto threshset = aubio_onset_set_threshold(a_onset, chopThresholdSlider.getValue());
+        fvec_t * in = new_fvec (hop_size);
+        fvec_t * out = new_fvec (2);
 
         auto detections = Array<smpl_t>();
         do {
-            // put some fresh data in input vector
-            aubio_source_do(source, in, &read);
-            // execute onset
-            aubio_onset_do(o, in, out);
-            // do something with the onsets
+            aubio_source_do(a_source, in, &read);
+            aubio_onset_do(a_onset, in, out);
             if (out->data[0] != 0) {
                 // print(String::formatted("onset at %.3fms, %.3fs, frame %d\n", aubio_onset_get_last_ms(o), aubio_onset_get_last_s(o), aubio_onset_get_last(o)));
-                detections.addIfNotAlreadyThere(aubio_onset_get_last_s(o));
+                detections.addIfNotAlreadyThere(aubio_onset_get_last_s(a_onset));
             }
             n_frames += read;
         } while ( read == hop_size );
+        del_aubio_source(a_source);
+        del_aubio_onset(a_onset);
 
         auto numDetectedChops = detections.size();
         if (numDetectedChops == 0)              return 0;

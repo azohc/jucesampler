@@ -200,10 +200,12 @@ public:
     Array<int> getChopIds()
     {
         Array<int> chopIds;
+        print("ids:");
         for (auto it = chopTree.begin(); it != chopTree.end(); ++it)
         {
             auto chop = Chop(*it);
             chopIds.add (chop.getId());
+            print(String(chop.getId()));
         }
         return chopIds;
     }
@@ -213,7 +215,15 @@ public:
         auto chopIds = getChopIds();
         auto i = chopIds.indexOf(selectedChop.getValue());
         jassert(i != -1);
-        return i + 1 == chopIds.size() ? 0 : i + 1;
+        while(true)
+        {
+            if (i == chopIds.size() - 1)
+                i = 0;
+            else
+                i++;
+            if (chopIds.contains(i))
+                return i;
+        }
     }
 
     int getPrevChopId()
@@ -221,7 +231,15 @@ public:
         auto chopIds = getChopIds();
         auto i = chopIds.indexOf(selectedChop.getValue());
         jassert(i != -1);
-        return i - 1 == -1 ? chopIds.size() - 1 : i - 1;
+        while (true)
+        {
+            if (i == 0)
+                i = chopIds.size() - 1;
+            else
+                i--;
+            if (chopIds.contains(i))
+                return i;
+        }
     }
 
     void valueChanged(Value &value) override

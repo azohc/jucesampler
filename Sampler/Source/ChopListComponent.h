@@ -21,8 +21,8 @@ class ChopListComponent:
     public TableListBoxModel
 {
 public:
-    ChopListComponent(ValueTree chops, Value selected) :
-        chopTree (chops), selectedChop (selected)
+    ChopListComponent(ValueTree chops, HashMap<int, ValueTree> &cm, Value selected) :
+        chopTree (chops), chopMap (cm), selectedChop (selected)
     {
         initChopListColumns();
         numRows = 0;
@@ -211,16 +211,30 @@ public:
                 break;
 
                 case ROWMENUID_DELETE:
-                    deletedChopId = chopXml->getChildElement (rowNumber)->getIntAttribute (COLNAME_ID);
+                    deletedChopId = getChopIdAtRow(rowNumber);
                     if (deletedChopId == int (selectedChop.getValue()))
                     {
                         selectedChop = NONE;
                     }
+                    for (int i = 0; i < chopTree.getNumChildren(); i++)
+                    {
+                        Chop chop (chopTree.getChild(i));
+                        if (chop.getId() > deletedChopId)
+                        {
+                            auto v = chopMap[chop.getId()];
+                            chopMap.remove(chop.getId());
+                            chopMap.set(chop.getId() - 1, v);
+                            chop.setId(chop.getId() - 1);
+                        }
+                    }
                     chopTree.removeChild(chopTree.getChildWithProperty(ID_CHOPID, deletedChopId), nullptr);
+                    chopMap.remove(deletedChopId);
+                    reloadData();
                 break;
 
                 case ROWMENUID_DEL_ALL:
                     chopTree.removeAllChildren(nullptr);
+                    reloadData();
             }
         }
     }
@@ -272,6 +286,7 @@ private:
     Font font { 14.0f };
     
     ValueTree chopTree;
+    HashMap<int, ValueTree> &chopMap;
     XmlElement* chopXml = nullptr;
     XmlElement* columnXml = nullptr;
     
@@ -328,8 +343,6 @@ private:
         int row, columnId;
     };
 
-    //==============================================================================
-    // A comparator used to sort our data when the user clicks a column header
     class DemoDataSorter
     {
     public:
@@ -391,9 +404,6 @@ private:
         chopXml = chopTree.createXml().release();        
     }
 
-    //==============================================================================
-
-    // (a utility method to search our XML for the attribute that matches a column ID)
     String getAttributeNameForColumnId (const int columnId) const
     {
         forEachXmlChildElement (*columnXml, column)

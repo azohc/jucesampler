@@ -58,7 +58,7 @@ public:
         scrollbar.removeListener (this);
         thumbnail.removeChangeListener (this);
 
-        for (auto i = chopStartMarkerMap.begin(); i != chopStartMarkerMap.end(); i.next())
+        for (auto i = chopBoundsMarkerMap.begin(); i != chopBoundsMarkerMap.end(); i.next())
         {
             delete i.getValue().first;
             delete i.getValue().second;
@@ -192,24 +192,24 @@ public:
         DrawableRectangle* st = new DrawableRectangle();
         DrawableRectangle* en = new DrawableRectangle();
         addAndMakeVisible (st); addAndMakeVisible(en);
-        chopStartMarkerMap.set (key, std::make_pair(st,en));
+        chopBoundsMarkerMap.set (key, std::make_pair(st,en));
     }
 
-    void removeChopMarker (int key)
+    void deleteChopMarkers (int key)
     {
-        delete chopStartMarkerMap[key].first;
-        delete chopStartMarkerMap[key].second;
-        chopStartMarkerMap.remove (key);
+        delete chopBoundsMarkerMap[key].first;
+        delete chopBoundsMarkerMap[key].second;
+        chopBoundsMarkerMap.remove (key);
     }
 
     void clearChopMarkerMap()
     {
-        for (auto i = chopStartMarkerMap.begin(); i != chopStartMarkerMap.end(); i.next())
+        for (auto i = chopBoundsMarkerMap.begin(); i != chopBoundsMarkerMap.end(); i.next())
         {
             delete i.getValue().first;
             delete i.getValue().second;
         }
-        chopStartMarkerMap.clear();
+        chopBoundsMarkerMap.clear();
     }
 
     void setSelectedChopId(int id)
@@ -235,6 +235,7 @@ public:
         return std::make_pair(selectionStartTime, selectionEndTime);
     }
 
+    HashMap<int, std::pair<DrawableRectangle*, DrawableRectangle*>> chopBoundsMarkerMap;
 private:
     AudioTransportSource& transportSource;
     Slider& zoomSlider;
@@ -259,7 +260,6 @@ private:
     DrawableRectangle currentPositionMarker;
 
     DrawableRectangle selectionRect;
-    HashMap<int, std::pair<DrawableRectangle*, DrawableRectangle*>> chopStartMarkerMap;
    
     float timeToX (const double time) const
     {
@@ -315,12 +315,12 @@ private:
                                      (float) (getHeight() - scrollbar.getHeight()));
         };
 
-        for (auto it = chopStartMarkerMap.begin(); it != chopStartMarkerMap.end(); it.next())
+        for (auto it = chopBoundsMarkerMap.begin(); it != chopBoundsMarkerMap.end(); it.next())
         {
-            auto chop = chopTree.getChildWithProperty(ID_CHOPID, it.getKey());
-            double start = chop.getProperty(ID_START_TIME);
-            double end = chop.getProperty(ID_END_TIME);
-            bool hidden = chop.getProperty(ID_HIDDEN);
+            Chop chop (chopTree.getChild(it.getKey()));
+            double start = chop.getStartTime();
+            double end = chop.getEndTime();
+            bool hidden = chop.getHidden();
 
             it.getValue().first->setFill (COLOR_RED);
             it.getValue().first->setRectangle (marker(start));
@@ -329,8 +329,7 @@ private:
             it.getValue().second->setFill (COLOR_RED.darker(0.8f));
             it.getValue().second->setRectangle (marker(end));
             it.getValue().second->setVisible (!hidden);
-
-            if (it.getKey() == selectedChopId)
+            if (it.getKey() == selectedChop)
             {
                 selectionRect.setRectangle (selection (start, end));
                 selectionRect.setFill (COLOR_BLUE_DARK.brighter(0.11f));

@@ -21,8 +21,12 @@ class ChopListComponent:
     public TableListBoxModel
 {
 public:
-    ChopListComponent(ValueTree chops, HashMap<int, ValueTree> &cm, Value selected) :
-        chopTree (chops), chopMap (cm), selectedChop (selected)
+    ChopListComponent(ValueTree chops, 
+                      HashMap<int, ValueTree> &cm, 
+                      HashMap<int, std::pair<SamplerSound*, ADSR::Parameters>> &cs,
+                      HashMap<int, std::pair<DrawableRectangle*, DrawableRectangle*>> &cb,
+                      Value selected) :
+        chopTree (chops), chopMap (cm), chopSounds(cs), chopBounds(cb), selectedChop (selected)
     {
         initChopListColumns();
         numRows = 0;
@@ -216,19 +220,30 @@ public:
                     {
                         selectedChop = NONE;
                     }
+                    chopTree.removeChild(chopTree.getChildWithProperty(ID_CHOPID, deletedChopId), nullptr);
+                    chopMap.remove(deletedChopId);
+                    chopSounds.remove(deletedChopId);
                     for (int i = 0; i < chopTree.getNumChildren(); i++)
                     {
                         Chop chop (chopTree.getChild(i));
                         if (chop.getId() > deletedChopId)
                         {
-                            auto v = chopMap[chop.getId()];
-                            chopMap.remove(chop.getId());
-                            chopMap.set(chop.getId() - 1, v);
-                            chop.setId(chop.getId() - 1);
+                            auto id = chop.getId();
+                            auto v = chopMap[id];
+                            chopMap.remove(id);
+                            chopMap.set(id - 1, v);
+
+                            auto p = chopSounds[id];
+                            chopSounds.remove(id);
+                            chopSounds.set(id - 1, p);
+
+                            auto b = chopBounds[id];
+                            chopBounds.remove(id);
+                            chopBounds.set(id - 1, b);
+
+                            chop.setId(id - 1);
                         }
                     }
-                    chopTree.removeChild(chopTree.getChildWithProperty(ID_CHOPID, deletedChopId), nullptr);
-                    chopMap.remove(deletedChopId);
                     reloadData();
                 break;
 
@@ -287,6 +302,8 @@ private:
     
     ValueTree chopTree;
     HashMap<int, ValueTree> &chopMap;
+    HashMap<int, std::pair<SamplerSound*, ADSR::Parameters>> &chopSounds;
+    HashMap<int, std::pair<DrawableRectangle*, DrawableRectangle*>> &chopBounds;
     XmlElement* chopXml = nullptr;
     XmlElement* columnXml = nullptr;
     

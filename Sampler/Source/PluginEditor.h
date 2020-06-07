@@ -172,7 +172,7 @@ public:
         detectedChopNumberLabel.setColour (Label::textColourId, COLOR_FG);
 
         // CHOPLIST
-        chopList.reset(new ChopListComponent(processor.getChopTree(), *processor.getChopMap(), selectedChopId));
+        chopList.reset(new ChopListComponent(processor.getChopTree(), *processor.getChopMap(), samplerSource.chopSounds, thumbnail->chopBoundsMarkerMap, selectedChopId));
         addAndMakeVisible (chopList.get());
 
         // CHOPSETTINGS
@@ -617,7 +617,7 @@ private:
                                 ValueTree& childWhichHasBeenRemoved,
                                 int indexFromWhichChildWasRemoved) override
     {
-        thumbnail->removeChopMarker(childWhichHasBeenRemoved[ID_CHOPID]);
+        thumbnail->deleteChopMarkers(childWhichHasBeenRemoved[ID_CHOPID]);
         processor.getChopMap()->remove(childWhichHasBeenRemoved[ID_CHOPID]);
 
         if (parentTree.getNumChildren() == 0)

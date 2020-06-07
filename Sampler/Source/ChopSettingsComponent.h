@@ -68,9 +68,8 @@ public:
             midiLearningLabel.setVisible (toggledOn);
             if (!toggledOn && lastRecordedMidiNoteDirty)
             { // button toggled off
-                chopTree.getChildWithProperty (ID_CHOPID, selectedChop.getValue()).setProperty (
-                    ID_TRIGGER, lastRecordedMidiNote.getValue(), nullptr
-                );
+                auto chop = Chop(chopTree, selectedChop.getValue());
+                chop.setTriggerNote(lastRecordedMidiNote.getValue());
             } else { lastRecordedMidiNoteDirty = false; }
         };
 
@@ -151,7 +150,7 @@ public:
 
         triggerNoteComboBox.onChange = [this] {
             auto noteId = triggerNoteComboBox.getSelectedIdAsValue();
-            chopTree.getChildWithProperty (ID_CHOPID, selectedChop.getValue()).setProperty (ID_TRIGGER, noteId, nullptr);
+            Chop (chopTree, selectedChop.getValue()).setTriggerNote(noteId.getValue());
         };
 
         lastRecordedMidiNote.addListener (this);
@@ -181,7 +180,7 @@ public:
             selectedChopLabel.setText(SEL_CHOP_NONE, dontSendNotification);
         } else
         {
-            auto chop = Chop(chopTree.getChildWithProperty (ID_CHOPID, selectedChopId));
+            auto chop = Chop(chopTree, selectedChopId);
             auto numChops = chopTree.getNumChildren();
             prevChopArrow.setEnabled (numChops > 1);
             nextChopArrow.setEnabled (numChops > 1);

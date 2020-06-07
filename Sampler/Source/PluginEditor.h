@@ -172,7 +172,7 @@ public:
         detectedChopNumberLabel.setColour (Label::textColourId, COLOR_FG);
 
         // CHOPLIST
-        chopList.reset(new ChopListComponent(processor.getChopTree(), *processor.getChopMap(), samplerSource.chopSounds, thumbnail->chopBoundsMarkerMap, selectedChopId));
+        chopList.reset(new ChopListComponent(processor.getChopTree(), *processor.getChopMap(), samplerSource.chopSounds, thumbnail->chopBounds, selectedChopId));
         addAndMakeVisible (chopList.get());
 
         // CHOPSETTINGS
@@ -610,6 +610,7 @@ private:
                                    const Identifier& property) override
     {
         chopList->reloadData();
+        chopSettings->displayChop(selectedChopId.getValue());
         samplerSource.makeSoundsFromChops(currentAudioFileSource.get()->getAudioFormatReader(), processor.getChopTree());
     }
 
@@ -618,15 +619,15 @@ private:
                                 int indexFromWhichChildWasRemoved) override
     {
         thumbnail->deleteChopMarkers(childWhichHasBeenRemoved[ID_CHOPID]);
+        samplerSource.makeSoundsFromChops(currentAudioFileSource.get()->getAudioFormatReader(), processor.getChopTree());
         processor.getChopMap()->remove(childWhichHasBeenRemoved[ID_CHOPID]);
+        samplerSource.chopSounds.remove(childWhichHasBeenRemoved[ID_CHOPID]);
 
         if (parentTree.getNumChildren() == 0)
         {
             thumbnail->setSelectedChopId(NONE);
             lastMidiNoteAssigned = INIT_NOTE_AUTO_ASSIGN;
         }
-        chopList->reloadData();
-        samplerSource.makeSoundsFromChops(currentAudioFileSource.get()->getAudioFormatReader(), processor.getChopTree());
     }
 
     void changeState (TransportState newState)

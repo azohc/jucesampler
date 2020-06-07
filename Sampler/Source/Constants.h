@@ -114,7 +114,8 @@ enum ColumnIds
 struct Chop
 {
   Chop (const ValueTree &v) : state(v) { jassert (v.hasType (ID_CHOP)); }
-
+  Chop (const ValueTree &tree, int id) : state(tree.getChildWithProperty (ID_CHOPID, id)) { jassert (tree.hasType (ID_CHOPDATA)); }
+  
   int getId() const { return state[ID_CHOPID]; }
   void setId (int id) { state.setProperty (ID_CHOPID, id, nullptr); }
 

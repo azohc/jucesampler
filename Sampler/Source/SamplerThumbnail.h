@@ -58,7 +58,7 @@ public:
         scrollbar.removeListener (this);
         thumbnail.removeChangeListener (this);
 
-        for (auto i = chopBoundsMarkerMap.begin(); i != chopBoundsMarkerMap.end(); i.next())
+        for (auto i = chopBounds.begin(); i != chopBounds.end(); i.next())
         {
             delete i.getValue().first;
             delete i.getValue().second;
@@ -192,32 +192,42 @@ public:
         DrawableRectangle* st = new DrawableRectangle();
         DrawableRectangle* en = new DrawableRectangle();
         addAndMakeVisible (st); addAndMakeVisible(en);
-        chopBoundsMarkerMap.set (key, std::make_pair(st,en));
+        chopBounds.set (key, std::make_pair(st,en));
     }
 
     void deleteChopMarkers (int key)
     {
-        delete chopBoundsMarkerMap[key].first;
-        delete chopBoundsMarkerMap[key].second;
-        chopBoundsMarkerMap.remove (key);
+        delete chopBounds[key].first;
+        delete chopBounds[key].second;
+        int n = chopBounds.size();
+        for (auto id = 0; id < n; id++)
+        {
+            if (id > key)
+            {
+                auto b = chopBounds[id];
+                chopBounds.remove(id);
+                chopBounds.set(id - 1, b);
+            }
+        }
+       
     }
 
     void clearChopMarkerMap()
     {
-        for (auto i = chopBoundsMarkerMap.begin(); i != chopBoundsMarkerMap.end(); i.next())
+        for (auto i = chopBounds.begin(); i != chopBounds.end(); i.next())
         {
             delete i.getValue().first;
             delete i.getValue().second;
         }
-        chopBoundsMarkerMap.clear();
+        chopBounds.clear();
     }
 
     void setSelectedChopId(int id)
     {
         userSelectionActive = true;
         selectedChopId = id;
-        selectionStartTime = chopTree.getChildWithProperty(ID_CHOPID, id)[ID_START_TIME];
-        selectionEndTime = chopTree.getChildWithProperty(ID_CHOPID, id)[ID_END_TIME];
+        selectionStartTime = Chop(chopTree, id).getStartTime();
+        selectionEndTime = Chop(chopTree, id).getEndTime();
     }
 
     bool getNewFileDropped()
@@ -235,7 +245,7 @@ public:
         return std::make_pair(selectionStartTime, selectionEndTime);
     }
 
-    HashMap<int, std::pair<DrawableRectangle*, DrawableRectangle*>> chopBoundsMarkerMap;
+    HashMap<int, std::pair<DrawableRectangle*, DrawableRectangle*>> chopBounds;
 private:
     AudioTransportSource& transportSource;
     Slider& zoomSlider;
@@ -315,9 +325,9 @@ private:
                                      (float) (getHeight() - scrollbar.getHeight()));
         };
 
-        for (auto it = chopBoundsMarkerMap.begin(); it != chopBoundsMarkerMap.end(); it.next())
+        for (auto it = chopBounds.begin(); it != chopBounds.end(); it.next())
         {
-            Chop chop (chopTree.getChild(it.getKey()));
+            Chop chop (chopTree, it.getKey());
             double start = chop.getStartTime();
             double end = chop.getEndTime();
             bool hidden = chop.getHidden();

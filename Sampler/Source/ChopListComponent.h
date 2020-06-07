@@ -160,12 +160,6 @@ public:
         return widest + 8;
     }
 
-    void setChopVisible (const int rowNumber, const bool hidden)
-    {
-        auto chop = chopTree.getChildWithProperty(ID_CHOPID, getChopIdAtRow(rowNumber));
-        chop.setProperty(ID_HIDDEN, hidden, nullptr);
-    }
-
     int getTriggerNote (const int rowNumber) const
     {
         return chopXml->getChildElement (rowNumber)->getIntAttribute (COL_TRIGG);
@@ -173,8 +167,8 @@ public:
 
     void setTriggerNote (const int rowNumber, const int newTrigger)
     {
-        auto chop = chopTree.getChildWithProperty(ID_CHOPID, getChopIdAtRow(rowNumber));
-        chop.setProperty (ID_TRIGGER, newTrigger, nullptr);
+        auto chop = Chop (chopTree, getChopIdAtRow(rowNumber));
+        chop.setTriggerNote (newTrigger);
         chopXml->getChildElement (rowNumber)->setAttribute (COL_TRIGG, newTrigger);
     }
 
@@ -188,8 +182,8 @@ public:
         return chopXml->getChildElement (rowNumber)->getIntAttribute (COLNAME_ID);
     }
 
-    ValueTree getChopAtRow (int rowNumber) {
-        return chopTree.getChildWithProperty(ID_CHOPID, getChopIdAtRow(rowNumber));
+    Chop getChopAtRow (int rowNumber) {
+        return Chop (chopTree, getChopIdAtRow(rowNumber));
     }
 
     void cellClicked(int rowNumber, int columnId, const MouseEvent &e)
@@ -200,7 +194,7 @@ public:
         } else if (e.mods.isRightButtonDown())
         {
             rowClickedMenu->clear();
-            rowClickedMenu->addItem (ROWMENUID_HIDDEN, ROW_HIDDEN, true, getChopAtRow (rowNumber).getProperty(ID_HIDDEN));
+            rowClickedMenu->addItem (ROWMENUID_HIDDEN, ROW_HIDDEN, true, getChopAtRow (rowNumber).getHidden());
             rowClickedMenu->addItem (ROWMENUID_DELETE, ROW_DELETE, true, false);
             rowClickedMenu->addItem (ROWMENUID_DEL_ALL, ROW_DEL_ALL, true, false);
             result = rowClickedMenu->show();
@@ -211,7 +205,7 @@ public:
             switch (result)
             {
                 case ROWMENUID_HIDDEN:
-                    setChopVisible (rowNumber, !getChopAtRow (rowNumber).getProperty(ID_HIDDEN));
+                    Chop(chopTree, rowNumber).setHidden (!getChopAtRow (rowNumber).getHidden());
                 break;
 
                 case ROWMENUID_DELETE:
@@ -220,7 +214,6 @@ public:
                     {
                         selectedChop = NONE;
                     }
-                    chopTree.removeChild(chopTree.getChildWithProperty(ID_CHOPID, deletedChopId), nullptr);
                     chopMap.remove(deletedChopId);
                     chopSounds.remove(deletedChopId);
                     for (int i = 0; i < chopTree.getNumChildren(); i++)
@@ -237,13 +230,10 @@ public:
                             chopSounds.remove(id);
                             chopSounds.set(id - 1, p);
 
-                            auto b = chopBounds[id];
-                            chopBounds.remove(id);
-                            chopBounds.set(id - 1, b);
-
                             chop.setId(id - 1);
                         }
                     }
+                    chopTree.removeChild (deletedChopId, nullptr);
                     reloadData();
                 break;
 

@@ -30,7 +30,7 @@ public:
         synth.clearSounds();
         numChops = chopTree.getNumChildren();
         for (auto i = 0; i < numChops; ++i) {
-            Chop chop (chopTree.getChild(i));
+            Chop chop (chopTree, i);
             int chopId = chop.getId();
             int64 startSample = chop.getStartSample();
             int64 endSample = chop.getEndSample();
@@ -41,9 +41,18 @@ public:
 
             BigInteger singleNoteRange;
             singleNoteRange.setBit(rootNote);
+
             auto sound = new SamplerSound (String (chopId), *audioSSReader, singleNoteRange, rootNote, 0.1, 0.1, endTime - startTime);
-            auto params = ADSR::Parameters();
-            chopSounds.set (chopId, std::make_pair(sound, params));
+
+            if (chopSounds.contains(i))
+            {
+                sound->setEnvelopeParameters(chopSounds[i].second);
+            } else
+            {
+                auto params = ADSR::Parameters();
+                chopSounds.set (chopId, std::make_pair(sound, params));
+            }
+            
             synth.addSound (sound);
             delete audioSSReader;
         }

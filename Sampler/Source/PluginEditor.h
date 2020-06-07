@@ -619,7 +619,7 @@ private:
                                 int indexFromWhichChildWasRemoved) override
     {
         thumbnail->deleteChopMarkers(childWhichHasBeenRemoved[ID_CHOPID]);
-        samplerSource.makeSoundsFromChops(currentAudioFileSource.get()->getAudioFormatReader(), processor.getChopTree());
+        //samplerSource.makeSoundsFromChops(currentAudioFileSource.get()->getAudioFormatReader(), processor.getChopTree());
         processor.getChopMap()->remove(childWhichHasBeenRemoved[ID_CHOPID]);
         samplerSource.chopSounds.remove(childWhichHasBeenRemoved[ID_CHOPID]);
 

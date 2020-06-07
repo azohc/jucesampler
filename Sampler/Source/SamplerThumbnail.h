@@ -200,6 +200,7 @@ public:
         delete chopBounds[key].first;
         delete chopBounds[key].second;
         int n = chopBounds.size();
+        chopBounds.remove(key);
         for (auto id = 0; id < n; id++)
         {
             if (id > key)
@@ -209,7 +210,6 @@ public:
                 chopBounds.set(id - 1, b);
             }
         }
-       
     }
 
     void clearChopMarkerMap()

@@ -205,13 +205,14 @@ style=numeric,
 	\begin{itemize}
 		\item Providing a visual representation and an audio preview of the main 
 		sample and its chops.
-		\item Chop creation: manual and \textit{automatic} chopping using peak detection algorithms.
+		\item A way to create subsections in the audio clip.
 		\item List component that shows all chops and the trigger notes they are associated to.
 		\item Chop playback: adjustable envelope parameters for each chop, and a polyphony setting for the sampler as a whole.
 	\end{itemize}
 	
 	Furthermore, there are more features that would be of great value, such as the following:
 	\begin{itemize}
+		\item \textit{Automatic} chop creation using peak detection algorithms.
 		\item The ability to load and manage a set of main audio samples simultaneously.
 		\item Plugin state saving and loading, for the storage and recovery of configurations.
 		\item Pitch shifting algorithms to modify the tone of the main sample and its chops.
@@ -268,25 +269,34 @@ style=numeric,
 	The \textit{AudioThumbnail} component plays a big part in manual chop creation. Since it displays a visual representation of the sample, it is possible to recognize patterns in the waveform to estimate the position and length of the subsection you wish to create. By default, the \textit{AudioThumbnail} does not interface with mouse clicks. Nevertheless, the interception of clicks as events with coordinates is fully supported. I found out about this through the \textit{AudioPlaybackDemo} that is part of the Projucer's examples, where it was possible to click on the \textit{AudioThumbnail} to relocate the playback head of the \textit{AudioTransportSource} to any position on the waveform. \par 
 	To do this, the \textit{AudioThumbnail} is instantiated as a member and placed within a parent component. This way, the parent component can override functions such as \texttt{void mouseDown (const MouseEvent\& e)} and \texttt{void mouseDrag (const MouseEvent\& e)} to define the interactions between the component and events triggered by the mouse. When one clicks on the thumbnail, the coordinates of the click event are part of the event's payload. The \textit{x} coordinate is all that is needed to obtain the equivalent point in time in the sample: it is done with a few arithmetic operations that use the parent component's and the thumbnail's width and the as operands, as well as the \textit{x} coordinate. This works both ways, such that a position in time can be converted to an \textit{x} coordinate. This feature allows for the rendering of a playback head that scrolls along the thumbnail as it plays in real time. Likewise, when a chop is created, its boundaries can be drawn upon the thumbnail with two markers to indicate the region it is contained in.
 	\par
-	The thumbnail then becomes the means through which manual chop creation is possible. One way of creating a subsection is goes by the name of \textit{Chop selection}. This is based on the possibility of overriding the \texttt{mouseDrag} function to display rectangles resembling selections over the thumbnail. The coordinates of the limits of these selected areas are stored upon the firing of the drag event. These pairs of coordinates are used to draw a see-through rectangles over the thumbnail, and, if need be, to create a chop out of the boundaries of the selection. Termed \textit{Chop from here} is the second way to manually create chops. This option uses only the earliest coordinate of the thumbnail selection, making the end of the chop always coincide with the end of the main sample. \par
+	The thumbnail then becomes the means through which manual chop creation is possible. One way of creating a subsection is goes by the name of \textit{Chop selection}. This is based on the possibility of overriding the \texttt{mouseDrag} function to display rectangles resembling selections over the thumbnail. The coordinates of the limits of these selected areas are stored upon the firing of the drag event. These pairs of coordinates are used to draw a see-through rectangles over the thumbnail, and, if need be, to create a chop out of the boundaries of the selection. Termed \textit{Chop from here} is the second way to manually create chops. On activation, this option uses only the earliest coordinate of the thumbnail selection, making chop's end point always coincide with the end of the main sample. \par
 
 	\subsubsection{Peak detection}
-	% TODO Aubio para la detección de picos y conexión mediante Projucer
-	% projucer include external libraries, peak detection w aubio
-	\textit{	aubio external library for peak detection. projucer configuration and calling the C code from C++}
-	\par
+	Automatic chopping is achieved through the aubio library, a set of tools designed for the extraction of annotations from audio signals\cite{aubio}. Being an open source library written in C, it seemed a perfectly suitable inclusion to the sampler. To interface with the library from the application, the Projucer must know the paths to the libraries and the header files. It then adjusts the exporter in order to link the libraries when building the application.\par	
+	Onset, meaning the start of a musical note, is the name of the module relevant to this task. To use the peak or onset detection algorithms provided by aubio, the first step is to create a source object to be later passed onto the onset object. The source is created using the path to the file and the sample rate of the file. These values are found through two members of the \textit{PluginEditor} class, with the \textit{File} object's  \texttt{getFullPathName()} function and the \textit{AudioFormatReaderSource} object's \texttt{getAudioFormatReader()->sampleRate} attribute. \par	
+	The library provides a range of eight different onset detection methods, so I created a button that allows for the selection of any method. To indicate the detection sensibility, the onset object requires a threshold be set, via\\
+	\texttt{aubio\_onset\_set\_threshold(aubio\_onset\_t * o, smpl\_t threshold)}.\\
+	The desired threshold is selectable with a slider element in the user interface. The plugin editor registers as a listener to this slider to know when the value of the threshold is changed. This is done to provide an anticipation of the number of chops that would be created with any configuration of an onset method and an arbitrary threshold setting. \par 	Finally, associated to the press of a button, the execution of the onset algorithm is triggered with the current threshold value and onset method. Chops are created in the non-overlapping areas delimited by the detected peaks. In other words, the first chop begins on the first peak and ends on the second peak, the second begins on the second peak and ends on the third peak, etc.
 	
 	
-	
-	\newpage
 	\subsection{Subsection management}
 	% TODO Chop list & settings: ADSR, MIDI learn, poliphony
-    A table component was included to visualize the amount of chops and some of their details. Initially, the table is empty. Once a chop is created
+    A table component was included to visualize the amount of chops and some of their details. Initially empty, the table sees the addition of rows as chops are created. Rows are composed of four fields of information related to the chop: one for the chop's unique identifier, another two dedicated to the start and stop times describing the region covered by the chop, and a final one for the note that triggers the chop's playback.
+    The latter field is interactive in the sense that it is represented with a drop down list, allowing the reassigning of chops' trigger notes. The notion of the essential steps to implement \textit{custom} cells for the trigger note column was easily captured with the help of the table list box tutorial\cite{tablelistbox}. Furthermore, I added right click interaction with rows to open a menu from which chops can be deleted and hidden.\\ %IFNEEDED popupmenu connection
+    
+	The chop list table allows for the selection of single rows. The selection of a row triggers a change on the thumbnail, which highlights the region associated to the chop. To do so, the chop list component keeps a member variable of the \textit{Value} class named \texttt{selectedChop}. The \textit{Value} class is a wrapper around a shared, reference-counted underlying data object \cite{value}. It allows for the notification of changes to attached listeners, which is the main reason for choosing the \textit{Value} class for this variable. With every change in the table's selected row, the thumbnail and other listening components will execute callback functions to react to the changes immediately.\\
+	
+	On the lower part of the user interface is the chop settings component. By registering as a listener to the chop list component's \texttt{selectedChop} variable, this panel displays the selected chop's envelope parameters, which can be modified in order to determine the behavior of its playback over time. Each envelope parameter is associated to a \textit{LabelledSlider} object, a component with the necessary objects that are a common factor in all parameters: a slider for its value and a label for its name. As will be mentioned in detail later on, each chop is associated to a \textit{SamplerSound} object, which is responsible for it's playback. This object is the place to set the envelope parameters for each chop, so it is necessary to modify these whenever a parameter is changed. \\
+	Another 
+	
+	\textit{	midi learn and chop parameters. polyphony}
+    
+   	The selected row on the chop list table component affects the chop settings component as well as the thumbnail. % Explain Value selectedChopId and the listening to it
 
 	\textit{TODO:}
 	\textit{Explain connection to chop list. link to table tutorial.}\par
 	
-	\textit{	midi learn and chop parameters. polyphony}
+
 	
 	
 	

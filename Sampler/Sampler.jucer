@@ -2,7 +2,8 @@
 
 <JUCERPROJECT id="oWfbQZ" name="Sampler" projectType="audioplug" jucerVersion="5.4.5"
               pluginFormats="buildVST3" pluginVST3Category="Instrument,Sampler"
-              pluginCharacteristicsValue="pluginEditorRequiresKeys,pluginIsSynth,pluginProducesMidiOut,pluginWantsMidiIn">
+              pluginCharacteristicsValue="pluginEditorRequiresKeys,pluginIsSynth,pluginProducesMidiOut,pluginWantsMidiIn"
+              companyName="JCS" companyEmail="juanchoz@ucm.es">
   <MAINGROUP id="BkkyvB" name="Sampler">
     <GROUP id="{33229E8B-F3CD-6BB0-771B-06E291FA31DC}" name="Source">
       <FILE id="uZCJPj" name="ChopSettingsComponent.h" compile="0" resource="0"

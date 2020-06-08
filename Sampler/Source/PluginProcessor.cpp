@@ -237,8 +237,7 @@ int SamplerAudioProcessor::addChop(Chop& chop)
 
 void SamplerAudioProcessor::setListenerForMidiLearn(Value & value)
 {
-    //listenForMidiLearn = Value(value);
-    value.addListener(this); // TODO ? this or value.addListener(this)
+    value.addListener(this);
 }
 
 Value SamplerAudioProcessor::getLastRecordedMidiNote() const
@@ -246,10 +245,9 @@ Value SamplerAudioProcessor::getLastRecordedMidiNote() const
     return lastRecordedMidiNote;
 }
 
-void SamplerAudioProcessor::valueChanged(Value & v)
+void SamplerAudioProcessor::valueChanged(Value & listen)
 {
-    //if (v.refersToSameSourceAs (listenForMidiLearn))
-    updateLastRecordedMidiNote = bool(v.getValue());
+    updateLastRecordedMidiNote = bool(listen.getValue());
 }
 
 

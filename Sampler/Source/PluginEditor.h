@@ -54,14 +54,7 @@ public:
         //currentPositionLabel.setColour (Label::backgroundWhenEditingColourId)
         currentPositionLabel.setColour (Label::backgroundColourId, COLOR_BG);
         currentPositionLabel.setColour (Label::textColourId, COLOR_FG);
-        
-        addAndMakeVisible (loopLabel);
-        loopLabel.setFont (Font (15.00f, Font::plain));
-        loopLabel.setJustificationType (Justification::left);
-        loopLabel.setEditable (false, false, false);
-        loopLabel.setColour (Label::backgroundColourId, COLOR_BG);
-        loopLabel.setColour (Label::textColourId, COLOR_FG);
-
+      
         addAndMakeVisible (fullLoopToggle);
         fullLoopToggle.setColour (TextButton::buttonColourId, COLOR_BG);
         fullLoopToggle.setColour (TextButton::textColourOffId, COLOR_FG);
@@ -255,20 +248,11 @@ public:
 
         auto rectThumbnailFunctsAux = rectThumbnailFuncts.reduced(1);
         auto functionWidth = small (small (rectThumbnailFunctsAux.getWidth()));
-
-        currentPositionLabel.setBounds (rectThumbnailFunctsAux.removeFromLeft (functionWidth)); // flex1
-
-        rectLoopFunctions = rectThumbnailFunctsAux.removeFromLeft (functionWidth);
-        auto loopFns = rectLoopFunctions;                                                       // flex2
-        loopLabel.setBounds (loopFns.removeFromLeft (small (loopFns.getWidth())));
-        fullLoopToggle.setBounds (loopFns.removeFromLeft (loopFns.getWidth() / 2));
-        selectionLoopToggle.setBounds (loopFns.removeFromLeft (loopFns.getWidth()));
-
-        startTimeChopButton.setBounds (rectThumbnailFunctsAux.removeFromLeft (functionWidth).reduced(3));  // flex3
-        selectionChopButton.setBounds (rectThumbnailFunctsAux.removeFromLeft (functionWidth).reduced(3));  // flex3
-
-        //followTransportButton.setBounds (rectThumbnailFunctsAux.removeFromLeft (small (small (rectThumbnailFunctsAux.getWidth()))));
-        
+        currentPositionLabel.setBounds (rectThumbnailFunctsAux.removeFromLeft (functionWidth));
+        fullLoopToggle.setBounds (rectThumbnailFunctsAux.removeFromLeft (functionWidth).reduced(3));
+        selectionLoopToggle.setBounds (rectThumbnailFunctsAux.removeFromLeft (functionWidth*2).reduced(3));
+        startTimeChopButton.setBounds (rectThumbnailFunctsAux.removeFromLeft (functionWidth).reduced(3));  
+        selectionChopButton.setBounds (rectThumbnailFunctsAux.removeFromLeft (functionWidth).reduced(3));
 
         // Choplist
         chopList->setBounds (rectChopList);
@@ -337,10 +321,8 @@ private:
     TextButton selectionChopButton { "Chop Selection", "Creates a new chop out of the current selection" };
 
     ToggleButton followTransportButton { "Follow Transport" };
-
-    Label loopLabel { "loopLabel", "Loop" };
-    ToggleButton fullLoopToggle { "F" };
-    ToggleButton selectionLoopToggle { "S" };
+    ToggleButton fullLoopToggle { "Toggle Full Loop" };
+    ToggleButton selectionLoopToggle { "Toggle Selection Loop" };
 
     Value selectedChopId;
     Value userSelectionActive;

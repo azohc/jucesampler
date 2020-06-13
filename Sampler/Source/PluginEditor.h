@@ -572,29 +572,21 @@ private:
         }
         if (source == thumbnail.get())
         {
-            if (thumbnail.get()->getNewFileDropped())
+            if (selectionLoopToggle.getToggleState())
             {
-                showAudioResource (File (thumbnail->getLastDroppedFile()));
-                thumbnail->unsetNewFileDropped();
-            }
-            else
-            {
-                if (selectionLoopToggle.getToggleState())
+                auto bounds = thumbnail->getSelectionBounds();
+                bounds = bounds.first < bounds.second ? std::make_pair(bounds.first, bounds.second) : std::make_pair(bounds.second, bounds.first);
+                if (transportSource.getCurrentPosition() >= bounds.second || transportSource.getCurrentPosition() < bounds.first)
                 {
-                    auto bounds = thumbnail->getSelectionBounds();
-                    bounds = bounds.first < bounds.second ? std::make_pair(bounds.first, bounds.second) : std::make_pair(bounds.second, bounds.first);
-                    if (transportSource.getCurrentPosition() >= bounds.second || transportSource.getCurrentPosition() < bounds.first)
-                    {
-                        transportSource.setPosition (bounds.first);
-                    }
+                    transportSource.setPosition (bounds.first);
                 }
-                auto getLabel = [this] (double d) {
-                    auto str = (String) d;
-                    return (str.length() > 5) ? str.substring(0, 5) : str;
-                };
-                currentPositionLabel.setText ("Position: " + getLabel(transportSource.getCurrentPosition()),
-                                              dontSendNotification);
             }
+            auto getLabel = [this] (double d) {
+                auto str = (String) d;
+                return (str.length() > 5) ? str.substring(0, 5) : str;
+            };
+            currentPositionLabel.setText ("Position: " + getLabel(transportSource.getCurrentPosition()),
+                                            dontSendNotification);
         }
     }
     

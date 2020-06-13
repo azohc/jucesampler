@@ -148,7 +148,6 @@ void SamplerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
 {
     buffer.clear();
 
-    //MidiBuffer processedMidi;   // TODO: rm -> no necesario, no se procesa midi. ¿ o si ?
     int time;
     MidiMessage m;
     
@@ -171,12 +170,7 @@ void SamplerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
         {
             samplerSource.midiCollector.addMessageToQueue (m);
         }  
-        //processedMidi.addEvent (m, time);
     }
-
-    //midiMessages.swapWith (processedMidi); // TODO: rm -> misma razon: salvo que sea necesario sacar midi al DAW ?
-    // myDEF de instrumento vst3:: 
-    // daw recibe eventos midi, los pasa al VST3, el cual se encarga de procesar y generar SONIDO (no output midi)
 }
 
 //==============================================================================

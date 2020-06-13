@@ -82,8 +82,8 @@ const String ONSET_MKL = "mkl";
 const String ONSET_SPECFLUX = "specflux";
 const String ONSET_METHODS[] = { ONSET_ENERGY, ONSET_HFC, ONSET_COMPLEX, ONSET_PHASE, ONSET_SPECDIFF, ONSET_KL, ONSET_MKL, ONSET_SPECFLUX };
 
-const int INIT_NOTE_AUTO_ASSIGN = 48; // C2
-const int FIRST_MIDI_NOTE = 24; // C0
+const int INIT_NOTE_AUTO_ASSIGN = 48; // C3
+const int FIRST_MIDI_NOTE = 12; // C0
 
 const int MONO = -220;
 const int POLY = -221;

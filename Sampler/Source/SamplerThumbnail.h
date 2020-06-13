@@ -19,7 +19,6 @@
 class SamplerThumbnail: 
     public Component, 
     public ChangeListener,
-    public FileDragAndDropTarget,
     public ChangeBroadcaster,
     private ScrollBar::Listener,
     private Timer
@@ -76,8 +75,6 @@ public:
         startTimerHz (40);
     }
 
-    File getLastDroppedFile() const noexcept { return lastFileDropped; }
-
     void setZoomFactor (double amount)
     {
         if (thumbnail.getTotalLength() > 0)
@@ -117,7 +114,7 @@ public:
         } else
         {
             g.setFont (14.0f);
-            g.drawFittedText ("Drag and drop audio file here to load it", getLocalBounds(), Justification::centred, 2);
+            g.drawFittedText ("Load an audio file to begin", getLocalBounds(), Justification::centred, 2);
         }
     }
 
@@ -132,17 +129,6 @@ public:
         repaint();
     }
 
-    bool isInterestedInFileDrag (const StringArray&) override
-    {
-        return true;
-    }
-
-    void filesDropped (const StringArray& files, int, int) override
-    {
-        lastFileDropped = File (files[0]);
-        newFileDropped = true;
-        sendChangeMessage();
-    }
 
     void mouseDown (const MouseEvent& e) override
     {
@@ -230,16 +216,6 @@ public:
         selectionEndTime = Chop(chopTree, id).getEndTime();
     }
 
-    bool getNewFileDropped()
-    {
-        return newFileDropped;
-    }
-
-    void unsetNewFileDropped()
-    {
-        newFileDropped = false;
-    }
-
     std::pair<double, double> getSelectionBounds()
     {
         return std::make_pair(selectionStartTime, selectionEndTime);
@@ -255,9 +231,6 @@ private:
     AudioThumbnail thumbnail;
     Range<double> visibleRange;
     bool isFollowingTransport = false;
-
-    File lastFileDropped;
-    bool newFileDropped = false;
 
     ValueTree chopTree;
      

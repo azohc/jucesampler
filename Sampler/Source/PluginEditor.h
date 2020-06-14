@@ -172,9 +172,8 @@ public:
         addAndMakeVisible (chopList.get());
 
         // CHOPSETTINGS
-        chopSettings.reset(new ChopSettingsComponent(selectedChopId, processor.getChopTree(), processor.getLastRecordedMidiNote()));
+        chopSettings.reset(new ChopSettingsComponent(selectedChopId, processor.playbackMode, processor.getChopTree(), processor.getLastRecordedMidiNote()));
         processor.setListenerForMidiLearn (chopSettings.get()->listenForMidiLearn);
-        sampler.setPlaybackModeListener (chopSettings.get()->playbackMode);
         addAndMakeVisible (chopSettings.get());
 
         // formats
@@ -275,7 +274,6 @@ public:
         if (loadFileIntoTransport (file))
         {
             zoomSlider.setEnabled (true);
-            followTransportButton.setEnabled (true);
             zoomSlider.setValue (0, dontSendNotification);
             processor.getThumbnail()->setFile (file);
             playButton.setEnabled (true);
@@ -287,6 +285,7 @@ public:
             updateDetectedChopsLabel();
             onsetMethodButton.setEnabled (true);
             chopList->reloadData();
+            chopSettings.get()->setMaxSliderValue(transportSource.getLengthInSeconds());
         }
     }
 

@@ -27,6 +27,7 @@ SamplerAudioProcessor::SamplerAudioProcessor()
 #endif
 {
     chopTree = ValueTree { ID_CHOPDATA, {} };
+    playbackMode = MONO;
 };
 
 SamplerAudioProcessor::~SamplerAudioProcessor()

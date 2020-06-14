@@ -22,10 +22,13 @@ class SamplerAudioSource    : public AudioSource, public Value::Listener
 {
 public:    
     SamplerAudioSource (MidiKeyboardState& keyState, 
-                        MidiMessageCollector* mmc):
+                        MidiMessageCollector* mmc,
+                        Value mode):
         keyboardState (keyState),
-        midiCollector (mmc)
+        midiCollector (mmc),
+        playbackMode (mode)
     {
+        playbackMode.addListener (this);
         synth.addVoice (new SamplerVoice());
     }
 
@@ -106,11 +109,6 @@ public:
         }
     }
 
-    void setPlaybackModeListener(Value &value) 
-    {
-        playbackMode = Value(value);
-        playbackMode.addListener (this);
-    }
 
 private:
     MidiKeyboardState& keyboardState;

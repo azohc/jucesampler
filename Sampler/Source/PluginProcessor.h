@@ -77,10 +77,12 @@ public:
     void resetFileReaderSourceTo (AudioFormatReaderSource *source);
     File getFile() const;
     void setCurrentFile (File &file);
+    Value playbackMode;
+
 private:
     //==============================================================================
     
-    SamplerAudioSource samplerSource { keyboardState, &midiCollector };
+    SamplerAudioSource samplerSource { keyboardState, &midiCollector, playbackMode };
     AudioTransportSource transportSource;
     MixerAudioSource mixerSource;    // combines sampler & transport
     AudioSourcePlayer sourcePlayer;
@@ -100,6 +102,7 @@ private:
     Value userSelectionActive;
     Value listenForMidiLearn;
     Value lastRecordedMidiNote;
+
     bool updateLastRecordedMidiNote = false;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SamplerAudioProcessor)
 };

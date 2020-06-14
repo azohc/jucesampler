@@ -19,10 +19,12 @@
 class ChopSettingsComponent    : public Component, public Value::Listener
 {
 public:
-    ChopSettingsComponent(Value selected, 
+    ChopSettingsComponent(Value selected,
+                          Value mode,
                           ValueTree chops,
                           Value lastRecordedMidiNoteValue) :
-        selectedChop (selected), 
+        selectedChop (selected),
+        playbackMode (mode),
         chopTree(chops),
         lastRecordedMidiNote (lastRecordedMidiNoteValue)
     {
@@ -81,9 +83,8 @@ public:
         midiLearningLabel.setText (LISTENING, dontSendNotification);
         midiLearningLabel.setVisible (false);
 
-        playbackMode = MONO;
         addAndMakeVisible (playbackButton);
-        playbackButton.setButtonText (PLAYBACK_MONO);
+        playbackButton.setButtonText (playbackMode == MONO ? PLAYBACK_MONO : PLAYBACK_POLY);
         playbackButton.setColour (TextButton::buttonColourId, COLOR_BG_DARK);
         playbackButton.setColour (TextButton::buttonOnColourId, COLOR_BG);
         playbackButton.setEnabled (true);
@@ -247,6 +248,13 @@ public:
         }
     }
 
+    void setMaxSliderValue (double v)
+    {
+        attackLS.slider.setRange (0.0, v, 0.01);
+        decayLS.slider.setRange (0.0, v, 0.01);
+        releaseLS.slider.setRange (0.0, v, 0.01);
+    }
+
     void sliderDragEnded (Slider * slider)
     {
         auto chop = Chop(chopTree, selectedChop.getValue());
@@ -316,7 +324,6 @@ public:
     }
 
     Value listenForMidiLearn;
-    Value playbackMode;
 
 
 private:
@@ -375,8 +382,8 @@ private:
     ValueTree chopTree;
     Value selectedChop;
     Value lastRecordedMidiNote;
+    Value playbackMode;
     bool lastRecordedMidiNoteDirty = false;
-
     Rectangle<int> rectChopIdAndTrigger;
     Rectangle<int> rectSettingsAndArrows;
     Label selectedChopLabel;
@@ -388,7 +395,10 @@ private:
     TextButton playbackButton;
     ArrowButton prevChopArrow { "PREV", 0.5, COLOR_GRAY_LIGHT };
     ArrowButton nextChopArrow { "NEXT", 0.0, COLOR_GRAY_LIGHT };
-    LabelledSlider attackLS { "Attack", *this }, decayLS { "Decay", *this }, sustainLS { "Sustain", *this }, releaseLS { "Release", *this };
+    LabelledSlider attackLS { "Attack", *this },
+        decayLS     { "Decay", *this },
+        sustainLS   { "Sustain", *this },
+        releaseLS   { "Release", *this };
 
 
     const String SEL_CHOP_NONE = "No Chop Selected";

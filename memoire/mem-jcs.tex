@@ -166,7 +166,7 @@ style=numeric,
  	
 	DAWs can be extended with plugins in the form of effects or instruments. The former normally have a sound-based input-output relation with the DAW, meanwhile instruments will take MIDI messages and produce a sound as an output. The most common standard for plugins is Virtual Studio Technology (VST), created by a german company called Steinberg. VST plugins have multi platform support on major operating systems, however, plugins must be exported for a target operating system, i.e. a VST plugin that is exported for Windows will not work on Mac OS or Linux. A possible VST plugin could be a sine wave based instrument, for example. The wave's frequency will depend on the key being pressed, and the force applied to the key will dictate the amplitude of the wave. This plugin, although simple, could be considered a synthesizer. A sampler is a synthesizer that uses samples rather than oscillators to produce sound.  The sources of the sounds it produces are samples, which can be described as clips of audio that are stored in a digital format within the sampler's memory. You're likely to find that hardware and software samplers offer sets of "stock" samples that are loaded by default. The option to load samples from an external source such as an SD card is also common, just like recording external input from a recording device such as a microphone. As is the case with non sample based synthesizers, there are several ways that the samples can be manipulated.\par
 	
-	\subsubsection{Sampling technique}
+	\subsubsection{Sampling technique} \label{st}
 	The key concept of sampling techniques is to modify and manipulate audio samples to create sounds. Many types of transformations can be applied to samples in order to drastically change the way they sound, although products that sound far different to the source sample are not always the objective. A sample can be manipulated by delimiting subsections within it, so as to create separated sub-samples that can be treated as individual notes. This process is colloquially referred to as \textit{chopping} the sample, resulting in a set of \textit{chops}, the sub-samples obtained from the main sample. \par
 	Another way to manipulate a sample is via \textit{envelopes}, which dictate the way a sound changes over time. Envelopes affect playback every time it is triggered, and are commonly composed of four parameters. The first one  comes into play upon note-on events, i.e. on a key press: \textit{attack}, describing the time it takes for the sound's level to rise from zero to its peak. Next, \textit{sustain} is the level at which the sound will hold until a note-off event, i.e. when a key is released. \textit{Decay} depends on sustain, and it describes the time it will take for the level to go from peak to sustain. Finally, \textit{release} is the tail end of the envelope. Starting on note-off events, it describes the time it will take to reach zero level from sustain level. These four concepts form the acronym ADSR, and can be pictured as a plot of level against time in Figure \ref{fig:envelope}. You may have noticed that three of the parameters refer to a time measure, whereas sustain refers to a level. \par
 	
@@ -198,7 +198,7 @@ style=numeric,
 	
 	\newpage
 	\subsection{Objectives}
-	% TODO creación de un instrumento personalizado mediante la inclusión de lo estrictamente necesario: 
+
 	For the simple implications of sampling techniques, the means by which you achieve a minimum setup with which you can play around and manifest ideas should be straightforward. The aim is to reduce the amount of user interaction required to reach a usable sample based instrument. To do so, I will downsize in the features that any arbitrary DAW has to offer, including only those that are strictly necessary. This translates to the reduction of hindrances that may arise when there is an excess amount of functionality that is rarely used.  By implementing the instrument as a VST plugin, I aspire to build an accessible sample based instrument optimized for the application  of sampling techniques. %This means that the user will be able to load, chop, and play samples with speed and ease in a reduced sequence of actions. In addition, the user should also be able to make fast corrections and tweaks to further develop the instrument. 
 	\par
 	The core capabilities the sampler can be listed as four points:
@@ -278,7 +278,7 @@ style=numeric,
 
 	\subsubsection{Peak detection}
 	Automatic chopping is achieved through the aubio library, a set of tools designed for the extraction of annotations from audio signals\cite{aubio}. Being an open source library written in C, it seemed a perfectly suitable inclusion to the sampler. To interface with the library from the application, the Projucer must know the paths to the libraries and the header files. It then adjusts the exporter in order to link the libraries when building the application.\par	
-	Onset, meaning the start of a musical note, is the name of the module relevant to this task. To use the peak or onset detection algorithms provided by aubio, the first step is to create a source object to be later passed onto the onset object. The source is created using the path to the file and the sample rate of the file. These values are found through two members of the \textit{PluginEditor} class, with the \textit{File} object's  \texttt{getFullPathName()} function and the \textit{AudioFormatReaderSource} object's \texttt{getAudioFormatReader()->sampleRate} attribute. \par
+	Onset, meaning the start of a musical note, is the name of the module relevant to this task. To use the peak or onset detection algorithms provided by aubio, the first step is to create a source object to be later passed onto the onset object. The source is created using the path to the file and the sample rate of the file. These values are found through two members of the \textit{PluginProcessor} class, with the \textit{File} object's  \texttt{getFullPathName()} function and the \textit{AudioFormatReaderSource} object's \texttt{getAudioFormatReader()->sampleRate} attribute. \par
 	
 	The library provides a range of eight different onset detection methods, so I created a button that allows for the selection of any method. To indicate the detection sensibility, the onset object requires a threshold be set, via\\
 	\texttt{aubio\_onset\_set\_threshold(aubio\_onset\_t * o, smpl\_t threshold)}.\\
@@ -343,31 +343,63 @@ style=numeric,
 		\label{fig:load}
 	\end{figure}
 	
+	~\\
+	~\\
+	Start by loading a WAVE file as the main audio sample with the \textit{Load} button on the top left corner. The waveform representation of the file will be visible in the thumbnail. The slider to the right of the thumbnail is a control of the thumbnail's scale, while the slider beneath is for horizontal scrolling when the scale is larger than the thumbnail's boundaries. The preview's playback can be controlled with the \textit{Play}, \textit{Pause}, and \textit{Stop} buttons on the panel to the left. \par 
+	The bar located above the thumbnail holds a \textit{Position} label, which indicates the position of the playback head for the audio preview. This position is also relevant for the manual creation of subsections. Playback can be looped in the full boundaries of the audio file with the \textit{Toggle Full Loop} button. The playback position can be manually positioned by clicking on any part of the thumbnail, and a selection can be made if a click is dragged across the desired area. After making a selection, you can loop the audio preview within the selection's boundaries with the \textit{Toggle Loop Selection} button. \par
+	
+	Chop creation can happen in two different ways:
+	\paragraph{Manual chopping\\}
+	The two buttons located above the thumbnail on the top right corner of the plugin create chops. The first, \textit{Chop From Here} will use the region between the current position and the end of the sample to create a chop. The second option will only be available if a selection is exists in the thumbnail, and it will create a chop with boundaries equal to those of the selection.
+	\paragraph{Automatic chopping\\}
+	If your audio clip has noticeable peaks, where the level of sound changes notably and within a short time frame, then automatic chopping provides a fast way to split the sample into regions separated by sharp peaks. The \textit{Chop} button will create as many chops as chops are detected. This number will differ depending on the configurations of the mode and threshold, which can be modified with the button and slider. The changes made to these two options will be reflected in the label placed under them, which indicates how many chops are detected with the current configuration.\par
+	
+	\begin{figure}[h!]
+		\centering
+		\includegraphics[width=0.9\textwidth]{u/learn.png}
+		\caption{Reassigning trigger notes with MIDI Learn.}
+		\label{fig:learn}
+	\end{figure}	
+	
+	~\\
+	After chopping the sample, the table under the thumbnail will display the details for each chop. Trigger notes can be changed from the last column in the table, or they can be changed by pressing a note on your controller with the MIDI Learn function. To do this, select a chop from the table by clicking on it and press the MIDI Learn button located under the table. As shown in figure \ref{fig:learn}, a label that reads \textit{Press New Trigger Note} will be displayed, and the trigger note will be updated to the next note you press on the controller. \par
+	
+	A chop can be selected for further editing with a simple left click on a row from the table, or you can scroll through the chops with the arrows on the top left part of the lowest panel. The selected chop's playback can be tweaked with the envelope parameters in this lower panel. Each parameter will affect the way the chop sounds over time. The purpose of each parameter is explained in section \ref{st}. The instrument's polyphony can be changed in this panel as well: to allow for more than one chop to sound at the same time, change the \textit{Playback Mode} on the top right part of the lower panel to POLY. When set to MONO, chops are played exclusively, and the triggering of one chop will cut off the playback of any other.
+	
+	The instrument is now playable, and a series of notes can be sequenced in Reaper. You can try out different combinations of notes to see the order in which they sound best to you. To record your sequence, press the red \textit{Record} button visible in figure \ref{fig:rec}. When recording, Reaper will save the MIDI notes you press into a MIDI item, which can be found in the playlist to the right of the instrument rack. \par
+	
+
+	\begin{figure}[h!]
+		\centering
+		\includegraphics[width=0.9\textwidth]{u/rec.png}
+		\caption{Record button in Reaper.}
+		\label{fig:rec}
+	\end{figure}
+			
 	% d. (25 pg entre c y d) resultados y discusión crítica y razonada de los mismos, con sus conclusiones,
 	\newpage
 	\section{Results}
 	The implementation of the plugin meets the main objectives of the sampler's core functionalities. The audio preview of a main audio sample is available, and its visual representation is achieved in an interactive audio thumbnail. Audio regions can be created manually with the visual aid of the thumbnail component. Subsections are organized into a table, and their playback is triggered by associated MIDI note events. \par 
 	Additional features were also included, the most important being the inclusion of envelope parameters to each chop. With this feature and the instrument's polyphony setting, the interaction between chops and the way they behave over time is adjustable. Furthermore, automatic chop creation is a part of the plugin thanks to the aubio onset detection module\cite{aubioonset}.\par
+	
+	The resulting VST plugin is limited to Windows operating systems, which is unfortunate because the current version of the Projucer has no support for Linux VST exports. A Mac OS version of the plugin could not be provided either, as the Projucer can only export plugins for the host operating system, and I have no access to a Mac OS machine. \par
 		
 	There is room for improvement in further features such as the capability to load more than one audio file in a single instance of the plugin. As of now, several instances of the plugin can be created to create samplers from different audio files, but it would without a doubt be more efficient and user friendly to provide the possibility to avoid this workaround. A feature that would make the plugin more usable and aligned with the objectives of efficiency in the process of designing an instrument would be the possibility to undo and redo actions. This functionality would greatly enhance the user experience, making actions that are now permanent be undo-able. Had the \textit{ValueTree} class been used with more ties to the plugin's state, actions, and workflow, the straightforward combination with an \textit{UndoManager} would have alleviated the task of implementing this feature.\par 
-	
-	The feature whose absence is most unfortunate is the ability for state saving and loading. Without this, the configuration of the instrument can not be stored in a DAW's project file. This is a great inconvenience because closing the workstation implies discarding the configuration of the plugin, leaving users with two options if they want to save the productions of the sampler: the first would allow for the recreation of the same plugin state, but the user would have to note down the configuration manually, including all the details surrounding every chop. The second option is a less tedious task, but it does not provide a recovery for the instrument's configuration. The sequences created with the instrument could be recorded within the DAW to solidify the sampler's output into a track of audio.
-	
-	
-
 
 	\newpage
 	\subsection{Conclusion}
-	Having no experience in digital audio processing, I have to say that the JUCE framework made the process straightforward and easy to grasp.
-
-\textit{TODO}
-\textit{	juce's tutorials and example code allow for fast understanding of the framework}
-
-\textit{	very powerful and capable of building audio applications}
-
-\textit{translate}
+	The final product is an instrument that can perform the essential tasks required to implement the outlined sampling techniques.	Having no experience in digital audio processing, I have to say that the JUCE framework made the implementation process straightforward and easy to grasp. The development took part on different operating systems with a seamless transition in between them. In my experience, JUCE also handles the inclusion of external libraries well, which makes a simple task out of extending the framework with new tools.
 	
-		
+	Nevertheless, there is a lack of features which would enhance the plugin's usability. The instrument would be more versatile if it included the ability to undo and redo actions. Furthermore, the feature whose absence is most unfortunate is the ability for state saving and loading. Without this, the configuration of the instrument can not be stored in a DAW's project file. This is a great inconvenience because closing the workstation implies discarding the configuration of the plugin.%, leaving users with two options if they want to save the productions of the sampler: the first would allow for the recreation of the same plugin state, but the user would have to note down the configuration manually, including all the details surrounding every chop. The second option is a less tedious task, but it does not provide a recovery for the instrument's configuration. The sequences created with the instrument could be recorded within the DAW to solidify the sampler's output into a track of audio.
+	
+	\newpage
+	\subsection{Conclusión}
+	El plugin resultante es un instrumento capaz de llevar a cabo las las tareas esenciales necesarias para aplicar las técnicas de muestreo descritas.	Con una falta de experiencia en el procesamiento de audio digital, tengo que decir que el framework de JUCE hizo que el proceso de implementación fuera sencillo y fácil de comprender. El desarrollo se llevó a cabo en diferentes sistemas operativos con una transición fluida entre ellos. Bajo mi punto de vista, JUCE también maneja bien la inclusión de librerías externas, lo que hace que la ampliación del framework con nuevas herramientas sea una tarea sencilla.
+	
+	Sin embargo, faltan características que mejorarían la usabilidad del plugin. El instrumento sería más versátil si incluyera la capacidad de deshacer y rehacer acciones. Además, la característica cuya ausencia es más desafortunada es la capacidad de guardar y cargar estados. Sin esto, la configuración del instrumento no puede ser almacenada en el archivo de proyecto de un DAW. Esto es bastante inconveniente porque cerrar el DAW implica descartar la configuración del plugin.
+	
+
+
 	\newpage
 	% e. bibliografía.
 	\section{Bibliography}

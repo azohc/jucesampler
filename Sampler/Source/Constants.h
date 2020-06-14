@@ -48,6 +48,10 @@ static const Identifier ID_START_SAMPLE = "StartSample";
 static const Identifier ID_END_SAMPLE = "EndSample";
 static const Identifier ID_TRIGGER = "Trigger";
 static const Identifier ID_HIDDEN = "Hidden";
+static const Identifier ID_ATTACK = "Attack";
+static const Identifier ID_DECAY = "Decay";
+static const Identifier ID_SUSTAIN = "Sustain";
+static const Identifier ID_RELEASE = "Release";
 
 static const int NONE = -110;
 
@@ -115,45 +119,78 @@ enum ColumnIds
 
 struct Chop
 {
-  Chop (const ValueTree &v) : state(v) { jassert (v.hasType (ID_CHOP)); }
-  Chop (const ValueTree &tree, int id) : state(tree.getChildWithProperty (ID_CHOPID, id)) { jassert (tree.hasType (ID_CHOPDATA)); }
+    Chop (const ValueTree &v) : state(v) { jassert (v.hasType (ID_CHOP)); }
+    Chop (const ValueTree &tree, int id) : state(tree.getChildWithProperty (ID_CHOPID, id)) { jassert (tree.hasType (ID_CHOPDATA)); }
   
-  int getId() const { return state[ID_CHOPID]; }
-  void setId (int id) { state.setProperty (ID_CHOPID, id, nullptr); }
+    int getId() const { return state[ID_CHOPID]; }
+    void setId (int id) { state.setProperty (ID_CHOPID, id, nullptr); }
 
-  double getStartTime() const { return state[ID_START_TIME]; }
+    double getStartTime() const { return state[ID_START_TIME]; }
 
-  void setStartTime (double time) {
-    jassert (time >= 0.0);
-    state.setProperty (ID_START_TIME, time, nullptr);
-  }
+    void setStartTime (double time) {
+        jassert (time >= 0.0);
+        state.setProperty (ID_START_TIME, time, nullptr);
+    }
 
-  double getEndTime() const { return state[ID_END_TIME]; }
+    double getEndTime() const { return state[ID_END_TIME]; }
 
-  void setEndTime (double time) {
-    jassert (time >= 0.0);
-    state.setProperty (ID_END_TIME, time, nullptr);
-  }
+    void setEndTime (double time) {
+        jassert (time >= 0.0);
+        state.setProperty (ID_END_TIME, time, nullptr);
+    }
 
-  int64 getStartSample() const { return state[ID_START_SAMPLE]; }
+    int64 getStartSample() const { return state[ID_START_SAMPLE]; }
 
-  void setStartSample (int64 sample) {
-    jassert (sample >= 0.0);
-    state.setProperty (ID_START_SAMPLE, sample, nullptr);
-  }
+    void setStartSample (int64 sample) {
+        jassert (sample >= 0.0);
+        state.setProperty (ID_START_SAMPLE, sample, nullptr);
+    }
 
-  int64 getEndSample() const { return state[ID_END_SAMPLE]; }
+    int64 getEndSample() const { return state[ID_END_SAMPLE]; }
 
-  void setEndSample (int64 sample) {
-    jassert (sample >= 0.0);
-    state.setProperty (ID_END_SAMPLE, sample, nullptr);
-  }   
+    void setEndSample (int64 sample) {
+        jassert (sample >= 0.0);
+        state.setProperty (ID_END_SAMPLE, sample, nullptr);
+    }  
 
-  int getTriggerNote() const { return state[ID_TRIGGER]; }
-  void setTriggerNote (int note) { state.setProperty (ID_TRIGGER, note, nullptr); }
+    float getAttack() const { return state[ID_ATTACK]; }
+    void setAttack (float p)
+    {
+        jassert (p >= 0.0);
+        state.setProperty (ID_ATTACK, p, nullptr);
+    }
+    float getDecay() const { return state[ID_DECAY]; }
+    void setDecay (float p)
+    {
+        jassert (p >= 0.0);
+        state.setProperty (ID_DECAY, p, nullptr);
+    }
+    float getSustain() const { return state[ID_SUSTAIN]; }
+    void setSustain (float p)
+    {
+        jassert (p >= 0.0);
+        state.setProperty (ID_SUSTAIN, p, nullptr);
+    }
+    float getRelease() const { return state[ID_RELEASE]; }
+    void setRelease (float p)
+    {
+        jassert (p >= 0.0);
+        state.setProperty (ID_RELEASE, p, nullptr);
+    }
+
+    int getTriggerNote() const { return state[ID_TRIGGER]; }
+    void setTriggerNote (int note) { state.setProperty (ID_TRIGGER, note, nullptr); }
   
-  bool getHidden() const { return state[ID_HIDDEN]; }
-  void setHidden (bool hidden) { state.setProperty (ID_HIDDEN, hidden, nullptr); } 
+    bool getHidden() const { return state[ID_HIDDEN]; }
+    void setHidden (bool hidden) { state.setProperty (ID_HIDDEN, hidden, nullptr); } 
 
-  ValueTree state;
+    void setDefaultADSR()
+    {
+        setAttack(0.1f);
+        setDecay(0.1f);
+        setSustain(1.0f);
+        setRelease(0.1f);
+    }
+
+    ValueTree state;
 };

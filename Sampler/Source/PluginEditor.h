@@ -27,24 +27,23 @@ class SamplerAudioProcessorEditor :
     public Value::Listener
 {
 public:
-    SamplerAudioProcessorEditor (SamplerAudioProcessor& p, 
+    SamplerAudioProcessorEditor (SamplerAudioProcessor& p,
                                  AudioTransportSource& transport,
                                  SamplerAudioSource& sampler,
-                                 AudioSourcePlayer& player, 
+                                 AudioSourcePlayer& player,
                                  AudioDeviceManager& device,
-                                 MidiKeyboardState& kbstate) 
-        : AudioProcessorEditor (&p), 
-        processor (p), 
+                                 Value selectedChop,
+                                 Value selectionActive)
+        : AudioProcessorEditor (&p),
+        processor (p),
         state (Stopped),
-        transportSource (transport), 
-        samplerSource (sampler), 
+        transportSource (transport),
+        samplerSource (sampler),
         sourcePlayer (player),
         deviceManager (device),
-        keyboardState (kbstate)
+        selectedChopId (selectedChop),
+        userSelectionActive (selectionActive)
     {
-        // THUMBNAIL 
-        thumbnail.reset (new SamplerThumbnail (formatManager, transportSource, zoomSlider, processor.getChopTree(), selectedChopId, userSelectionActive));
-        addAndMakeVisible (thumbnail.get());
 
         // THUMBNAIL FUNCTIONS
         addAndMakeVisible (currentPositionLabel);
@@ -60,8 +59,8 @@ public:
         fullLoopToggle.setColour (TextButton::textColourOffId, COLOR_FG);
         fullLoopToggle.setEnabled (false);
         fullLoopToggle.onClick = [this] { 
-            auto l = !currentAudioFileSource.get()->isLooping();
-            currentAudioFileSource.get()->setLooping(l);
+            auto l = !processor.getFileReaderSource()->isLooping();
+            processor.getFileReaderSource()->setLooping(l);
             fullLoopToggle.setToggleState (l, dontSendNotification);
             if (selectionLoopToggle.getToggleState()) {
                 selectionLoopToggle.triggerClick();
@@ -74,7 +73,7 @@ public:
         selectionLoopToggle.setEnabled (false);
         selectionLoopToggle.setClickingTogglesState(true);
         selectionLoopToggle.onClick = [this] { 
-            currentAudioFileSource.get()->setLooping(selectionLoopToggle.getToggleState());
+            processor.getFileReaderSource()->setLooping(selectionLoopToggle.getToggleState());
             if (fullLoopToggle.getToggleState()) {
                 fullLoopToggle.triggerClick();
             }
@@ -100,12 +99,16 @@ public:
         // THUMBNAIL SLIDER
         addAndMakeVisible (zoomSlider);
         zoomSlider.setRange (0, 1, 0);
-        zoomSlider.onValueChange = [this] { thumbnail->setZoomFactor (zoomSlider.getValue()); };
+        zoomSlider.onValueChange = [this] { processor.getThumbnail()->setZoomFactor (zoomSlider.getValue()); };
         zoomSlider.setEnabled (false);
         // zoomSlider.setSkewFactor (2);
         zoomSlider.setColour (Slider::backgroundColourId, COLOR_BLUE.darker(0.6));
         zoomSlider.setColour (Slider::trackColourId, COLOR_BLUE.darker(0.3));
         zoomSlider.setColour (Slider::thumbColourId, COLOR_BLUE);
+
+        // THUMBNAIL 
+        processor.resetThumbnailTo (new SamplerThumbnail (formatManager, transportSource, zoomSlider, processor.getChopTree(), processor.getChopBounds() ,selectedChopId, userSelectionActive));
+        addAndMakeVisible (processor.getThumbnail());
 
 
         // BUTTONS
@@ -165,12 +168,11 @@ public:
         detectedChopNumberLabel.setColour (Label::textColourId, COLOR_FG);
 
         // CHOPLIST
-        chopList.reset(new ChopListComponent(processor.getChopTree(), *processor.getChopMap(), samplerSource.chopSounds, thumbnail->chopBounds, selectedChopId));
+        chopList.reset(new ChopListComponent(processor.getChopTree(), selectedChopId));
         addAndMakeVisible (chopList.get());
 
         // CHOPSETTINGS
-        chopSettings.reset(new ChopSettingsComponent(selectedChopId, samplerSource.chopSounds, 
-                           processor.getChopTree(), processor.getLastRecordedMidiNote()));
+        chopSettings.reset(new ChopSettingsComponent(selectedChopId, processor.getChopTree(), processor.getLastRecordedMidiNote()));
         processor.setListenerForMidiLearn (chopSettings.get()->listenForMidiLearn);
         sampler.setPlaybackModeListener (chopSettings.get()->playbackMode);
         addAndMakeVisible (chopSettings.get());
@@ -179,7 +181,7 @@ public:
         formatManager.registerBasicFormats();
 
         // listeners
-        thumbnail->addChangeListener (this);
+        processor.getThumbnail()->addChangeListener (this);
         transportSource.addChangeListener (this);
 
         selectedChopId = NONE;
@@ -199,8 +201,9 @@ public:
     ~SamplerAudioProcessorEditor()
     {
         sourcePlayer.setSource (nullptr);
-        deviceManager.removeMidiInputDeviceCallback ({}, &(samplerSource.midiCollector));
-        deviceManager.removeAudioCallback (&sourcePlayer);
+        transportSource.removeAllChangeListeners();
+        processor.getThumbnail()->removeAllChangeListeners();
+        processor.getThumbnail()->deleteAllMarkers();
     }
 
     void paint (Graphics& g) override
@@ -261,10 +264,30 @@ public:
         rectThumbnail = r;
         auto rectThumbnailAux = rectThumbnail;
         zoomSlider.setBounds (rectThumbnailAux.removeFromRight (small (small (rectThumbnailAux.getHeight()))));
-        thumbnail->setBounds (rectThumbnailAux.reduced(1));
+        processor.getThumbnail()->setBounds (rectThumbnailAux.reduced(1));
 
         // Chop settings
         chopSettings.get()->setBounds (rectChopSettings);
+    }
+
+    void showAudioResource (const File& file)
+    {
+        if (loadFileIntoTransport (file))
+        {
+            zoomSlider.setEnabled (true);
+            followTransportButton.setEnabled (true);
+            zoomSlider.setValue (0, dontSendNotification);
+            processor.getThumbnail()->setFile (file);
+            playButton.setEnabled (true);
+            fullLoopToggle.setEnabled (true);
+            startTimeChopButton.setEnabled (true);
+            chopButton.setEnabled (true);
+            chopThresholdSlider.setEnabled (true);
+            chopThresholdSlider.setValue (1);
+            updateDetectedChopsLabel();
+            onsetMethodButton.setEnabled (true);
+            chopList->reloadData();
+        }
     }
 
 private:
@@ -284,21 +307,17 @@ private:
     AudioFormatManager formatManager;
     TimeSliceThread thread { "audio file preview" };
 
-    File currentAudioFile;
     AudioSourcePlayer& sourcePlayer;
-    std::unique_ptr<AudioFormatReaderSource> currentAudioFileSource;
 
     AudioTransportSource& transportSource;
     SamplerAudioSource& samplerSource;
 
-    std::unique_ptr<SamplerThumbnail> thumbnail;
     Slider zoomSlider { Slider::LinearVertical, Slider::NoTextBox };
 
     std::unique_ptr<ChopListComponent> chopList;
 
     std::unique_ptr<ChopSettingsComponent> chopSettings;
 
-    MidiKeyboardState& keyboardState;
 
     int onsetMethodNumber;
     int lastMidiNoteAssigned = INIT_NOTE_AUTO_ASSIGN;
@@ -348,33 +367,9 @@ private:
 
         if (fc.browseForFileToOpen())
         {
-            currentAudioFile = fc.getResult();
-            showAudioResource(currentAudioFile);
-        }
-    }
-
-    void showAudioResource (const File& file)
-    {
-        if (loadFileIntoTransport (file))
-        {
-            if (processor.getChopTree().getNumChildren()) 
-            {
-                processor.clearChopTree();
-                chopList->reloadData();
-            }
-
-            zoomSlider.setEnabled (true);
-            followTransportButton.setEnabled (true);
-            zoomSlider.setValue (0, dontSendNotification);
-            thumbnail->setFile (file);
-            playButton.setEnabled (true);
-            fullLoopToggle.setEnabled (true);
-            startTimeChopButton.setEnabled (true);
-            chopButton.setEnabled (true);
-            chopThresholdSlider.setEnabled (true);
-            chopThresholdSlider.setValue (1);
-            updateDetectedChopsLabel();
-            onsetMethodButton.setEnabled (true);
+            processor.setCurrentFile(fc.getResult());
+            processor.getChopTree().removeAllChildren(nullptr);
+            showAudioResource(processor.getFile());
         }
     }
 
@@ -382,7 +377,7 @@ private:
     {
         transportSource.stop();
         transportSource.setSource (nullptr);
-        currentAudioFileSource.reset();
+        processor.resetFileReaderSource();
 
         AudioFormatReader* reader = nullptr;
 
@@ -391,8 +386,8 @@ private:
 
         if (reader != nullptr)
         {
-            currentAudioFileSource.reset (new AudioFormatReaderSource (reader, true));
-            transportSource.setSource (currentAudioFileSource.get(), 32768, &thread, reader->sampleRate);
+            processor.resetFileReaderSourceTo (new AudioFormatReaderSource (reader, true));
+            transportSource.setSource (processor.getFileReaderSource(), 32768, &thread, reader->sampleRate);
             return true;
         }
 
@@ -422,7 +417,7 @@ private:
 
     void startTimeChopClicked()
     {
-        auto sr = currentAudioFileSource.get()->getAudioFormatReader()->sampleRate;
+        auto sr = processor.getFileReaderSource()->getAudioFormatReader()->sampleRate;
         auto currentTime = transportSource.getCurrentPosition();
         auto lengthTime = transportSource.getLengthInSeconds();
 
@@ -434,13 +429,14 @@ private:
         c.setEndSample (int64(lengthTime * sr));
         c.setHidden (false);
         c.setTriggerNote (lastMidiNoteAssigned++);
+        c.setDefaultADSR();
         processor.addChop (c);
     }
 
     void selectionChopClicked()
     {
-        auto bounds = thumbnail->getSelectionBounds();
-        auto sr = currentAudioFileSource.get()->getAudioFormatReader()->sampleRate;
+        auto bounds = processor.getThumbnail()->getSelectionBounds();
+        auto sr = processor.getFileReaderSource()->getAudioFormatReader()->sampleRate;
         ValueTree chopState (ID_CHOP);
         Chop c (chopState);
         if (bounds.first < bounds.second) {
@@ -456,6 +452,7 @@ private:
         }
         c.setTriggerNote (lastMidiNoteAssigned++);
         c.setHidden (false);
+        c.setDefaultADSR();
         processor.addChop (c);
     }
 
@@ -465,8 +462,8 @@ private:
     }
 
     int detectChopsOnset (bool createChopsFromDetections) {
-        auto file = currentAudioFile.getFullPathName().getCharPointer();
-        uint_t samplerate = currentAudioFileSource.get()->getAudioFormatReader()->sampleRate;
+        auto file = processor.getFile().getFullPathName().getCharPointer();
+        uint_t samplerate = processor.getFileReaderSource()->getAudioFormatReader()->sampleRate;
         uint_t buf_size = 1024;
         uint_t hop_size = 256;
         uint_t n_frames = 0, read = 0;
@@ -503,6 +500,7 @@ private:
             c.setEndSample (c.getEndTime() * samplerate);
             c.setHidden (false);
             c.setTriggerNote (lastMidiNoteAssigned++);
+            c.setDefaultADSR();
             processor.addChop (c);
         }
         return numDetectedChops;
@@ -519,7 +517,7 @@ private:
         if (value.refersToSameSourceAs(selectedChopId))
         {
             int selectedChopIdValue = int(value.getValue());
-            thumbnail->setSelectedChopId(selectedChopIdValue);
+            processor.getThumbnail()->setSelectedChopId(selectedChopIdValue);
             chopList->selectRow(selectedChopIdValue);
             chopSettings->displayChop(selectedChopIdValue);
         }
@@ -531,14 +529,14 @@ private:
             if (!bool (userSelectionActive.getValue()) && selectionLoopToggle.getToggleState())
             {
                 selectionLoopToggle.setToggleState (false, dontSendNotification);
-                currentAudioFileSource.get()->setLooping(false);
+                processor.getFileReaderSource()->setLooping(false);
             }
         }
     }
 
     void updateFollowTransportState()
     {
-        thumbnail->setFollowsTransport (followTransportButton.getToggleState());
+        processor.getThumbnail()->setFollowsTransport (followTransportButton.getToggleState());
     }
 
     void changeListenerCallback (ChangeBroadcaster* source) override
@@ -552,11 +550,11 @@ private:
             else if (state == Pausing)
                 changeState (Paused);
         }
-        if (source == thumbnail.get())
+        if (source == processor.getThumbnail())
         {
             if (selectionLoopToggle.getToggleState())
             {
-                auto bounds = thumbnail->getSelectionBounds();
+                auto bounds = processor.getThumbnail()->getSelectionBounds();
                 bounds = bounds.first < bounds.second ? std::make_pair(bounds.first, bounds.second) : std::make_pair(bounds.second, bounds.first);
                 if (transportSource.getCurrentPosition() >= bounds.second || transportSource.getCurrentPosition() < bounds.first)
                 {
@@ -575,9 +573,9 @@ private:
     void valueTreeChildAdded (ValueTree& parentTree,
                               ValueTree& childWhichHasBeenAdded) override
     {
-        thumbnail->addChopMarker(childWhichHasBeenAdded[ID_CHOPID]);
+        processor.getThumbnail()->addChopMarker(childWhichHasBeenAdded[ID_CHOPID]);
         chopList->reloadData();
-        samplerSource.makeSoundsFromChops(currentAudioFileSource.get()->getAudioFormatReader(), processor.getChopTree());
+        samplerSource.makeSoundsFromChops(processor.getFileReaderSource()->getAudioFormatReader(), processor.getChopTree());
     }
    
     void valueTreePropertyChanged (ValueTree& treeWhosePropertyHasChanged,
@@ -585,23 +583,20 @@ private:
     {
         chopList->reloadData();
         chopSettings->displayChop(selectedChopId.getValue());
-        samplerSource.makeSoundsFromChops(currentAudioFileSource.get()->getAudioFormatReader(), processor.getChopTree());
+        samplerSource.makeSoundsFromChops(processor.getFileReaderSource()->getAudioFormatReader(), processor.getChopTree());
     }
 
     void valueTreeChildRemoved (ValueTree& parentTree,
                                 ValueTree& childWhichHasBeenRemoved,
                                 int indexFromWhichChildWasRemoved) override
     {
-        thumbnail->deleteChopMarkers(childWhichHasBeenRemoved[ID_CHOPID]);
-        //samplerSource.makeSoundsFromChops(currentAudioFileSource.get()->getAudioFormatReader(), processor.getChopTree());
-        processor.getChopMap()->remove(childWhichHasBeenRemoved[ID_CHOPID]);
-        samplerSource.chopSounds.remove(childWhichHasBeenRemoved[ID_CHOPID]);
-
+                
         if (parentTree.getNumChildren() == 0)
         {
-            thumbnail->setSelectedChopId(NONE);
+            processor.getThumbnail()->setSelectedChopId(NONE);
             lastMidiNoteAssigned = INIT_NOTE_AUTO_ASSIGN;
         }
+        samplerSource.makeSoundsFromChops(processor.getFileReaderSource()->getAudioFormatReader(), processor.getChopTree());
     }
 
     void changeState (TransportState newState)

@@ -17,6 +17,7 @@
 #include "Constants.h"
 #include "aubio.h"
 #include "SamplerAudioSource.h"
+#include "SamplerThumbnail.h"
 
 //==============================================================================
 
@@ -61,32 +62,42 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     
     //==============================================================================
-    AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
-    HashMap<int, ValueTree>* getChopMap();
     ValueTree getChopTree() const;
     void clearChopTree();
     int addChop(Chop& chop);
+    void removeChop(int id);
+    HashMap<int, std::pair<DrawableRectangle*, DrawableRectangle*>>* getChopBounds();
     void setListenerForMidiLearn (Value &value);
     Value getLastRecordedMidiNote() const;
-    void valueChanged(Value &v);
+    void valueChanged (Value &v);
+    SamplerThumbnail* getThumbnail();
+    void resetThumbnailTo (SamplerThumbnail *tn);
+    AudioFormatReaderSource* getFileReaderSource();
+    void resetFileReaderSource();
+    void resetFileReaderSourceTo (AudioFormatReaderSource *source);
+    File getFile() const;
+    void setCurrentFile (File &file);
 private:
     //==============================================================================
     
-    SamplerAudioSource samplerSource { keyboardState };
+    SamplerAudioSource samplerSource { keyboardState, &midiCollector };
     AudioTransportSource transportSource;
     MixerAudioSource mixerSource;    // combines sampler & transport
     AudioSourcePlayer sourcePlayer;
     AudioDeviceManager deviceManager;
 
+    std::unique_ptr<SamplerThumbnail> thumbnail;
+    MidiMessageCollector midiCollector;
     MidiKeyboardState keyboardState;
-
     Synthesiser synth;
 
     ValueTree chopTree;
-    HashMap<int, ValueTree> chopMap;
+    HashMap<int, std::pair<DrawableRectangle*, DrawableRectangle*>> chopBounds;
+    File currentAudioFile;
+    std::unique_ptr<AudioFormatReaderSource> audioFileSource;
 
-    AudioProcessorValueTreeState state;
-
+    Value selectedChopId;
+    Value userSelectionActive;
     Value listenForMidiLearn;
     Value lastRecordedMidiNote;
     bool updateLastRecordedMidiNote = false;

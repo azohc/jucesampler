@@ -21,7 +21,11 @@
 class SamplerAudioSource    : public AudioSource, public Value::Listener
 {
 public:    
-    SamplerAudioSource (MidiKeyboardState& keyState) : keyboardState (keyState) {
+    SamplerAudioSource (MidiKeyboardState& keyState, 
+                        MidiMessageCollector* mmc):
+        keyboardState (keyState),
+        midiCollector (mmc)
+    {
         synth.addVoice (new SamplerVoice());
     }
 
@@ -44,14 +48,12 @@ public:
 
             auto sound = new SamplerSound (String (chopId), *audioSSReader, singleNoteRange, rootNote, 0.1, 0.1, endTime - startTime);
 
-            if (chopSounds.contains(i))
-            {
-                sound->setEnvelopeParameters(chopSounds[i].second);
-            } else
-            {
-                auto params = ADSR::Parameters();
-                chopSounds.set (chopId, std::make_pair(sound, params));
-            }
+            auto params = ADSR::Parameters();
+            params.attack = chop.getAttack();
+            params.decay = chop.getDecay();
+            params.sustain = chop.getSustain();
+            params.release = chop.getRelease();
+            sound->setEnvelopeParameters(params);
             
             synth.addSound (sound);
             delete audioSSReader;
@@ -60,7 +62,7 @@ public:
 
     void prepareToPlay (int /*samplesPerBlockExpected*/, double sampleRate) override
     {
-        midiCollector.reset (sampleRate);
+        midiCollector->reset (sampleRate);
         synth.setCurrentPlaybackSampleRate (sampleRate);
     }
 
@@ -74,7 +76,7 @@ public:
 
         // fill a midi buffer with incoming messages from the midi input.
         MidiBuffer incomingMidi;
-        midiCollector.removeNextBlockOfMessages (incomingMidi, bufferToFill.numSamples);
+        midiCollector->removeNextBlockOfMessages (incomingMidi, bufferToFill.numSamples);
 
         // pass these messages to the keyboard state so that it can update the component
         // to show on-screen which keys are being pressed on the physical midi keyboard.
@@ -110,12 +112,10 @@ public:
         playbackMode.addListener (this);
     }
 
-    HashMap<int, std::pair<SamplerSound*, ADSR::Parameters>> chopSounds;
-
-    MidiMessageCollector midiCollector;
-
 private:
     MidiKeyboardState& keyboardState;
+    MidiMessageCollector* midiCollector;
+
     Synthesiser synth;
     Value playbackMode;
 

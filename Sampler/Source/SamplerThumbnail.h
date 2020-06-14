@@ -28,12 +28,14 @@ public:
                      AudioTransportSource& source,
                      Slider& slider,
                      ValueTree chops,
+                     HashMap<int, std::pair<DrawableRectangle*, DrawableRectangle*>>* bounds,
                      Value& selectedChop,
-                     Value& selectionActive):
+                     Value& selectionActive) :
         transportSource (source),
         zoomSlider (slider),
         thumbnail (512, formatManager, thumbnailCache),
         chopTree (chops),
+        chopBounds (bounds),
         selectedChopId (selectedChop),
         userSelectionActive (selectionActive)
     {
@@ -56,12 +58,7 @@ public:
     {
         scrollbar.removeListener (this);
         thumbnail.removeChangeListener (this);
-
-        for (auto i = chopBounds.begin(); i != chopBounds.end(); i.next())
-        {
-            delete i.getValue().first;
-            delete i.getValue().second;
-        }
+        deleteAllMarkers();
     }
 
     void setFile (const File& file)
@@ -178,34 +175,34 @@ public:
         DrawableRectangle* st = new DrawableRectangle();
         DrawableRectangle* en = new DrawableRectangle();
         addAndMakeVisible (st); addAndMakeVisible(en);
-        chopBounds.set (key, std::make_pair(st,en));
+        chopBounds->set (key, std::make_pair(st,en));
     }
 
     void deleteChopMarkers (int key)
     {
-        delete chopBounds[key].first;
-        delete chopBounds[key].second;
-        int n = chopBounds.size();
-        chopBounds.remove(key);
+        delete chopBounds->operator[](key).first;
+        delete chopBounds->operator[](key).second;
+        int n = chopBounds->size();
+        chopBounds->remove(key);
         for (auto id = 0; id < n; id++)
         {
             if (id > key)
             {
-                auto b = chopBounds[id];
-                chopBounds.remove(id);
-                chopBounds.set(id - 1, b);
+                auto b = chopBounds->operator[](id);
+                chopBounds->remove(id);
+                chopBounds->set(id - 1, b);
             }
         }
     }
 
-    void clearChopMarkerMap()
+    void deleteAllMarkers()
     {
-        for (auto i = chopBounds.begin(); i != chopBounds.end(); i.next())
+        for (auto i = chopBounds->begin(); i != chopBounds->end(); i.next())
         {
             delete i.getValue().first;
             delete i.getValue().second;
         }
-        chopBounds.clear();
+        chopBounds->clear();
     }
 
     void setSelectedChopId(int id)
@@ -221,7 +218,6 @@ public:
         return std::make_pair(selectionStartTime, selectionEndTime);
     }
 
-    HashMap<int, std::pair<DrawableRectangle*, DrawableRectangle*>> chopBounds;
 private:
     AudioTransportSource& transportSource;
     Slider& zoomSlider;
@@ -232,6 +228,7 @@ private:
     Range<double> visibleRange;
     bool isFollowingTransport = false;
 
+    HashMap<int, std::pair<DrawableRectangle*, DrawableRectangle*>>* chopBounds;
     ValueTree chopTree;
      
     double selectionStartTime;
@@ -298,7 +295,7 @@ private:
                                      (float) (getHeight() - scrollbar.getHeight()));
         };
 
-        for (auto it = chopBounds.begin(); it != chopBounds.end(); it.next())
+        for (auto it = chopBounds->begin(); it != chopBounds->end(); it.next())
         {
             Chop chop (chopTree, it.getKey());
             double start = chop.getStartTime();

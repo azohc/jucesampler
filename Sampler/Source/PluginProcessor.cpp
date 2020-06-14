@@ -14,9 +14,9 @@
 
 //==============================================================================
 
-SamplerAudioProcessor::SamplerAudioProcessor() : state (*this, nullptr, ID_PARAMETERS, createParameterLayout())
+SamplerAudioProcessor::SamplerAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
-     , AudioProcessor (BusesProperties()
+     : AudioProcessor (BusesProperties()
                      #if ! JucePlugin_IsMidiEffect
                       #if ! JucePlugin_IsSynth
                        .withInput  ("Input",  AudioChannelSet::stereo(), true)
@@ -109,7 +109,7 @@ void SamplerAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBloc
     
     deviceManager.initialiseWithDefaultDevices(getTotalNumInputChannels(), getTotalNumOutputChannels());
     deviceManager.addAudioCallback (&sourcePlayer);
-    deviceManager.addMidiInputDeviceCallback ({}, &(samplerSource.midiCollector));
+    deviceManager.addMidiInputDeviceCallback ({}, &(midiCollector));
 }
 
 void SamplerAudioProcessor::releaseResources()
@@ -118,6 +118,8 @@ void SamplerAudioProcessor::releaseResources()
     transportSource.setSource (nullptr);
     mixerSource.releaseResources();
     sourcePlayer.setSource (nullptr);
+    deviceManager.removeMidiInputDeviceCallback ({}, &midiCollector);
+    deviceManager.removeAudioCallback (&sourcePlayer);
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -168,7 +170,7 @@ void SamplerAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
         }
         else if (m.getTimeStamp() != 0)
         {
-            samplerSource.midiCollector.addMessageToQueue (m);
+            midiCollector.addMessageToQueue (m);
         }  
     }
 }
@@ -181,7 +183,21 @@ bool SamplerAudioProcessor::hasEditor() const
 
 AudioProcessorEditor* SamplerAudioProcessor::createEditor()
 {
-    auto editor = new SamplerAudioProcessorEditor (*this, transportSource, samplerSource, sourcePlayer, deviceManager, keyboardState);
+    //String chops = "Current chop ids in chopTree: ";
+    //for (int i = 0; i < chopTree.getNumChildren(); i++)
+    //{
+    //    chops += String(Chop(chopTree, i).getId()) + " ";
+    //}
+    //print(chops);
+    print("number of voices " + String(synth.getNumVoices() + "nr sounds: " + String(synth.getNumSounds())));
+    auto editor = new SamplerAudioProcessorEditor (*this, transportSource, samplerSource, sourcePlayer, deviceManager, selectedChopId, userSelectionActive);
+
+    if (currentAudioFile.exists())
+    {
+        editor->showAudioResource(currentAudioFile);
+        for (int i = 0; i < chopTree.getNumChildren(); i++)
+            thumbnail.get()->addChopMarker(i);
+    }
     chopTree.addListener(editor);
     return editor;
 }
@@ -200,11 +216,6 @@ void SamplerAudioProcessor::setStateInformation (const void* data, int sizeInByt
     // whose contents will have been created by the getStateInformation() call.
 }
 
-HashMap<int, ValueTree>* SamplerAudioProcessor::getChopMap()
-{
-    return &chopMap;
-}
-
 ValueTree SamplerAudioProcessor::getChopTree() const
 {
     return chopTree;
@@ -213,20 +224,35 @@ ValueTree SamplerAudioProcessor::getChopTree() const
 void SamplerAudioProcessor::clearChopTree()
 {
     chopTree.removeAllChildren(nullptr);
-    chopMap.clear();
 }
+
 
 int SamplerAudioProcessor::addChop(Chop& chop) 
 {
     auto newKey = chopTree.getNumChildren();
-    while (chopMap.contains(newKey)) {
+    HashMap<int, int> ids;
+    for (int i = 0; i < newKey; i++)
+    {
+        Chop c = Chop(chopTree, i);
+        ids.set(c.getId(), 0);
+    }
+    while (ids.contains(newKey)) {
         newKey++;
     }
     chop.setId (newKey);
-    chopMap.set (newKey, chop.state);
     chopTree.appendChild (chop.state, nullptr);
     
     return newKey;
+}
+
+void SamplerAudioProcessor::removeChop(int id)
+{
+    thumbnail.get()->deleteChopMarkers(id);
+}
+
+HashMap<int, std::pair<DrawableRectangle*, DrawableRectangle*>>* SamplerAudioProcessor::getChopBounds()
+{
+    return &chopBounds;
 }
 
 void SamplerAudioProcessor::setListenerForMidiLearn(Value & value)
@@ -244,7 +270,40 @@ void SamplerAudioProcessor::valueChanged(Value & listen)
     updateLastRecordedMidiNote = bool(listen.getValue());
 }
 
+SamplerThumbnail * SamplerAudioProcessor::getThumbnail()
+{
+    return thumbnail.get();
+}
 
+void SamplerAudioProcessor::resetThumbnailTo(SamplerThumbnail * tn)
+{
+    thumbnail.reset(tn);
+}
+
+AudioFormatReaderSource* SamplerAudioProcessor::getFileReaderSource()
+{
+    return audioFileSource.get();
+}
+
+void SamplerAudioProcessor::resetFileReaderSource()
+{
+    audioFileSource.reset();
+}
+
+void SamplerAudioProcessor::resetFileReaderSourceTo(AudioFormatReaderSource * source)
+{
+    audioFileSource.reset(source);
+}
+
+File SamplerAudioProcessor::getFile() const
+{
+    return currentAudioFile;
+}
+
+void SamplerAudioProcessor::setCurrentFile(File & file)
+{
+    currentAudioFile = file;
+}
 
 //==============================================================================
 // This creates new instances of the plugin..

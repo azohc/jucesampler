@@ -22,11 +22,8 @@ class ChopListComponent:
 {
 public:
     ChopListComponent(ValueTree chops, 
-                      HashMap<int, ValueTree> &cm, 
-                      HashMap<int, std::pair<SamplerSound*, ADSR::Parameters>> &cs,
-                      HashMap<int, std::pair<DrawableRectangle*, DrawableRectangle*>> &cb,
                       Value selected) :
-        chopTree (chops), chopMap (cm), chopSounds(cs), chopBounds(cb), selectedChop (selected)
+        chopTree (chops), selectedChop (selected)
     {
         initChopListColumns();
         numRows = 0;
@@ -214,26 +211,16 @@ public:
                     {
                         selectedChop = NONE;
                     }
-                    chopMap.remove(deletedChopId);
-                    chopSounds.remove(deletedChopId);
                     for (int i = 0; i < chopTree.getNumChildren(); i++)
                     {
                         Chop chop (chopTree.getChild(i));
                         if (chop.getId() > deletedChopId)
                         {
                             auto id = chop.getId();
-                            auto v = chopMap[id];
-                            chopMap.remove(id);
-                            chopMap.set(id - 1, v);
-
-                            auto p = chopSounds[id];
-                            chopSounds.remove(id);
-                            chopSounds.set(id - 1, p);
-
                             chop.setId(id - 1);
                         }
                     }
-                    chopTree.removeChild (deletedChopId, nullptr);
+                    chopTree.removeChild (Chop(chopTree, deletedChopId).state, nullptr);
                     reloadData();
                 break;
 
@@ -291,9 +278,6 @@ private:
     Font font { 14.0f };
     
     ValueTree chopTree;
-    HashMap<int, ValueTree> &chopMap;
-    HashMap<int, std::pair<SamplerSound*, ADSR::Parameters>> &chopSounds;
-    HashMap<int, std::pair<DrawableRectangle*, DrawableRectangle*>> &chopBounds;
     XmlElement* chopXml = nullptr;
     XmlElement* columnXml = nullptr;
     

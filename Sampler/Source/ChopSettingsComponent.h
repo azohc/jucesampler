@@ -20,11 +20,9 @@ class ChopSettingsComponent    : public Component, public Value::Listener
 {
 public:
     ChopSettingsComponent(Value selected, 
-                          HashMap<int, std::pair<SamplerSound*, ADSR::Parameters>> &chopSoundsMap,
                           ValueTree chops,
                           Value lastRecordedMidiNoteValue) :
         selectedChop (selected), 
-        chopSounds (chopSoundsMap), 
         chopTree(chops),
         lastRecordedMidiNote (lastRecordedMidiNoteValue)
     {
@@ -158,7 +156,6 @@ public:
 
     ~ChopSettingsComponent()
     {
-
     }
 
 
@@ -188,11 +185,10 @@ public:
             triggerNoteLabel.setText ("Mapped To", dontSendNotification);
             triggerNoteComboBox.setSelectedId (chop.getTriggerNote(), dontSendNotification);
             
-            auto params = chopSounds[selectedChopId].second;
-            attackLS.setSliderValue (params.attack);
-            decayLS.setSliderValue (params.decay);
-            sustainLS.setSliderValue (params.sustain);
-            releaseLS.setSliderValue (params.release);
+            attackLS.setSliderValue (chop.getAttack());
+            decayLS.setSliderValue (chop.getDecay());
+            sustainLS.setSliderValue (chop.getSustain());
+            releaseLS.setSliderValue (chop.getRelease());
         }
     }
 
@@ -253,23 +249,20 @@ public:
 
     void sliderDragEnded (Slider * slider)
     {
-        auto chopPair = chopSounds[selectedChop.getValue()];
-        auto params = chopPair.second;
+        auto chop = Chop(chopTree, selectedChop.getValue());
         if (slider == &attackLS.slider)
         {
-            params.attack = slider->getValue();
+            chop.setAttack (slider->getValue());
         } else if (slider == &decayLS.slider)
         {
-            params.decay = slider->getValue();
+            chop.setDecay (slider->getValue());
         } else if (slider == &sustainLS.slider)
         {
-            params.sustain = slider->getValue();
+            chop.setSustain (slider->getValue());
         } else
         {
-            params.release = slider->getValue();
+            chop.setRelease (slider->getValue());
         }
-        chopPair.first->setEnvelopeParameters(params);
-        chopSounds.set(selectedChop.getValue(), std::make_pair(chopPair.first, params));
     }
 
     void paint (Graphics& g) override
@@ -373,18 +366,12 @@ private:
             slider.setValue(d);
         }
 
- /*       void addListener(juce::Slider::Listener *listener)
-        {
-            slider.addListener(listener);
-        }*/
-
         Slider slider { Slider::LinearVertical, Slider::TextBoxBelow };
     private:
         ChopSettingsComponent &owner;
         Label label;
     };
 
-    HashMap<int, std::pair<SamplerSound*, ADSR::Parameters>> &chopSounds;
     ValueTree chopTree;
     Value selectedChop;
     Value lastRecordedMidiNote;

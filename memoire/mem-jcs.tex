@@ -126,7 +126,7 @@ style=numeric,
 	
 
 	\subsubsection{Pulse-Code Modulation}
-		\begin{figure}[h]
+	\begin{figure}[h]
 		\centering
 		\includegraphics[width=0.5\textwidth]{pcm.png}
 		\caption{Linear pulse-code modulation at 4 bit depth. \cite{pcm_img}}
@@ -207,12 +207,13 @@ style=numeric,
 		sample and its chops.
 		\item A way to create subsections in the audio clip.
 		\item List component that shows all chops and the trigger notes they are associated to.
-		\item Chop playback: adjustable envelope parameters for each chop, and a polyphony setting for the sampler as a whole.
+		\item The ability to play individual chops in response to triggering MIDI events.
 	\end{itemize}
 	
 	Furthermore, there are more features that would be of great value, such as the following:
 	\begin{itemize}
 		\item \textit{Automatic} chop creation using peak detection algorithms.
+		\item Chop playback: adjustable envelope parameters for each chop, and a polyphony setting for the sampler as a whole.
 		\item The ability to load and manage a set of main audio samples simultaneously.
 		\item Plugin state saving and loading, for the storage and recovery of configurations.
 		\item Pitch shifting algorithms to modify the tone of the main sample and its chops.
@@ -220,25 +221,25 @@ style=numeric,
 	\end{itemize}
 
 	
-	\newpage	
-	\section{Plugin design}
-	% TODO reiterar las funciones a incluirse pero mediante elementos GUI y lo necesario de la interfaz (?)
-	
-	
 	\newpage
 	\section{Implementation}
-	\subsection{JUCE framework}
+	\subsection{Technologies}	
+	\paragraph{JUCE framework\\}
 	%intro juce, support for plugins, extensive tutorials and examples
-	To implement the sampler, I used an application framework called JUCE\cite{juceweb}. It has cross-platform support and is written in C++. The amount of documentation and tutorials available online was enough to convince me that I would need nothing else to implement the majority of the instrument.
+	To implement the sampler, I used an application framework called JUCE\cite{juceweb}. It has cross-platform support and is written in C++. It is the best choice because  it is a mature project that is still growing, and I am familiar and comfortable with C++. It is also open-source and licensed for free for personal, non-commercial use. The amount of documentation and tutorials available online was enough to convince me that I would need nothing else to implement the majority of the instrument.
 	
 	% how does juce work? what does it offer? object oriented, event driven 
 	JUCE makes use of the object oriented capabilities of C++ to present a wide array of classes and utilities. It offers the building blocks to application development with a reasonably gentle learning curve that discards the need to reinvent the wheel. These utilities help with tasks that range from audio playback, to event driven data structures, to the design of user interfaces. Furthermore, the framework is in line with the event-driven paradigm, which makes the development of action based applications a simple and efficient task. As stated, the documentation is vast and there are numerous descriptive tutorials. On top of that, at the programmers disposal are more than 70 example applications that showcase the several features the framework has to offer. 
 	
-	% linux - windows tradeoff, makefile & freedom from ide VS vst export only on windows and vs2017/codeblocks
+	\paragraph{Projucer\\}
 	The Projucer is JUCE's cross-platform application that allows for the creation, management and configuration of JUCE projects. To enable development on Linux, for example, one can add a Makefile exporter to their project. The Projucer will create an architecture specific Makefile that links external libraries and builds the application. The templates offered from which to start new projects include GUI Application, Animated Application, Console Application, Audio Application, Audio Plugin, and Static Library and Dynamic Library. Each of these archetypes are configurable in distinct ways, and are initialized to include the fundamental code inherent to the nature of the application. For Audio Plugin projects, the Projucer can export several plugin formats, such that one build process compiles and exports the plugin formats that the project is configured to build. The formats include VST and Standalone Application, among other less relevant plugin formats. Building a Standalone Application allows for the usage of the plugin without the need of a DAW. Building VST plugins is only supported on Windows, which means that for development on Linux, one can only test the build in an isolated, standalone application, void of connections to a DAW. \par
 	
 	% 0. explain components and structure of project
 	The Projucer's base audio plugin project provides fundamental code containing two classes. The dichotomy encourages the separation of the audio processing logic from the GUI side of the plugin. The \textit{PluginProcessor}, as the name suggests, is the audio processing heart of the application. This class extends the \textit{AudioProcessor} class, a base class for audio processing. This is where tasks such as MIDI connection management and audio rendering take place. The \textit{PluginEditor} extends from the \textit{AudioProcessorEditor} class, and is intended to be the GUI. It is the place where interaction with GUI and all on screen visualizations are created and managed. Unlike the \textit{AudioProcessor} class, which inherits from no other, the \textit{AudioProcessorEditor} class extends from the \textit{Component} class. This is the base class for all user interface objects that can be visualized. The \textit{Component} class has two virtual functions that are to be overridden by any class derived from it: \texttt{paint()}, the function that dictates the on screen layout of the component; \texttt{resized()}, which contains reactionary logic for when the component is resized. Both functions are callbacks, which means they are invoked automatically upon triggering events.\par
+	
+	\paragraph{Alternatives\\}
+	For the automatic creation of audio regions, the vamp\cite{vamp} library could have been a viable alternative to aubio\cite{aubio}. It provides an onset detection module\cite{vamponset} and uses C/C++ interfaces, so it has equal offerings to aubio, essentially. After trying aubio's onset detection module and successfully integrating it within the plugin, I decided to keep it and forgo vamp, as aubio had a variety of different detection methods which seems to be sufficient for the purpose of automatic sample splitting.\par	
+	Another possible implementation could have been based on jVSTwRapper\cite{jVSTwRapper}. This library is based on Java for development of VST audio plugins. It is open source, which makes it suitable for the task at hand, and based on a language I am also comfortable using. It is a smaller and younger project, bringing up inconveniences such as the lack of features and abundance in comparison to JUCE. 
 	
 	
 	\newpage	
@@ -251,7 +252,8 @@ style=numeric,
 
 	% PLAYBACK
 	Audio playback is achieved through the \textit{AudioTransportSource} class, which enables the audio preview of the main sample that is loaded in the plugin. It inherits from the \textit{AudioSource} class, which is a base class that enables continuous audio playback. The \textit{AudioTransportSource} is used because it implements can be positioned, played, paused, and stopped. These features are useful for previewing the initially loaded sample. Audio subsection playback is handled differently, and will be discussed later on. The connection of audio files to the \textit{AudioTransportSource} object is achieved via \textit{AudioSource} subclasses. In this case, an \textit{AudioFormatReaderSource}. The processor stores an instance of \textit{AudioFormatReaderSource} in \texttt{currentAudioFileSource}, and in \texttt{transportSource} an instance of \textit{AudioTransportSource}. \textit{AudioFormatReaderSource} objects of this class obtain streams of sound from \textit{AudioFormatReader} objects, which source their sound from audio file streams. Every time a user opens a file successfully, a function \texttt{loadFileIntoTransport(const File\& file)} is executed. This function will stop the \textit{AudioTransportSource} from continuing playback, and proceed to change the source. To do this, a new \textit{AudioFormatReader} object is created for \texttt{file}. This is done through an \texttt{AudioFormatManager} object, which is used to keep a list of the formats that are to be accepted by the application. It includes a method called \texttt{AudioFormatReader* createReaderFor (const File\& file)}, which returns a pointer to the \textit{AudioFormatReader} that is necessary for the creation of an \textit{AudioFormatReaderSource}. If \texttt{createReaderFor} fails, it returns a null pointer, so the following steps are only taken in cases where the pointer is not null. The \texttt{currentAudioFileSource} pointer is reset to the new reader source, and the \texttt{transportSource}'s new source is set with \texttt{setSource}.\\
-	All of these instances and connections lead to a functional way to play audio, however, there still is the need to connect the \texttt{transportSource}'s interface to GUI elements. The \textit{AudioTransportSource} class extends \textit{ChangeBroadcaster}, which allows for event driven reactivity to the state of the \textit{transportSource} object. To aid in the process, an \texttt{enum TransportState} is declared to include the states of \texttt{Stopping}, \texttt{Stopped}, \texttt{Starting}, \texttt{Playing}, \texttt{Pausing}, and \texttt{Paused}. Buttons layed out in the application will change a private variable \texttt{TransportState state} to \texttt{Starting}, \texttt{Stopping}, and \texttt{Pausing} to invoke \texttt{transportSource.start()} or \texttt{transportSource.stop()}. By executing these methods of the \texttt{transportSource}, every object that extends \textit{ChangeListener} that has been added to the \texttt{transportSource}'s list of listeners will be notified of a change. This notification manifests by invoking the callback function \texttt{void changeListenerCallback (ChangeBroadcaster* source)}, which is a virtual function that must be implemented by any class that extends \textit{ChangeListener}. The plugin editor extends this class and adds itself to the \texttt{transportSource}'s listener list with the following instruction: \texttt{transportSource.addChangeListener(this);}. In the \texttt{changeListenerCallback} function, the source of the event is checked by comparing references like so:
+	All of these instances and connections lead to a functional way to play audio, however, there still is the need to connect the \texttt{transportSource}'s interface to GUI elements. The \textit{AudioTransportSource} class extends \textit{ChangeBroadcaster}, which allows for event driven reactivity to the state of the \textit{transportSource} object. To aid in the process, an \texttt{enum TransportState} is declared to include the states of \texttt{Stopping}, \texttt{Stopped}, \texttt{Starting}, \texttt{Playing}, \texttt{Pausing}, and \texttt{Paused}. Buttons layed out in the application will change a private variable \texttt{TransportState state} to \texttt{Starting}, \texttt{Stopping}, and \texttt{Pausing} to invoke \texttt{transportSource.start()} or \texttt{transportSource.stop()}. By executing these methods of the \texttt{transportSource}, every object that extends \textit{ChangeListener} that has been added to the \texttt{transportSource}'s list of listeners will be notified of a change. This notification manifests by invoking the callback function \texttt{void changeListenerCallback (ChangeBroadcaster*\\ source)}, which is a virtual function that must be implemented by any class that extends \textit{ChangeListener}. The plugin editor extends this class and adds itself to the \texttt{transportSource}'s listener list with the following instruction: \texttt{transportSource.addChangeListener(this);}. In the \texttt{changeListener-\\
+	Callback} function, the source of the event is checked by comparing references like so:
 	\begin{verbatim}
 	void changeListenerCallback (ChangeBroadcaster* source) override
 	{
@@ -286,7 +288,6 @@ style=numeric,
 	
 	
 	\subsection{Subsection management}
-	% TODO Chop list & settings: ADSR, MIDI learn, poliphony
     A table component was included to visualize the amount of chops and some of their details. Initially empty, the table sees the addition of rows as chops are created. Rows are composed of four fields of information related to the chop: one for the chop's unique identifier, another two dedicated to the start and stop times describing the region covered by the chop, and a final one for the note that triggers the chop's playback.
     The latter field is interactive in the sense that it is represented with a drop down list, allowing the reassigning of chops' trigger notes. The notion of the essential steps to implement \textit{custom} cells for the trigger note column was easily captured with the help of the table list box tutorial\cite{tablelistbox}. Furthermore, I added right click interaction with rows to open a menu from which chops can be deleted and hidden.\par %IFNEEDED popupmenu connection
     
@@ -299,24 +300,58 @@ style=numeric,
 	For a more tangible and straightforward way to reassign chops' trigger notes, the chop settings section includes the concept colloquially known as MIDI Learn. It achieves the task of rebinding the note by \textit{listening} to the connected MIDI controller. When a MIDI note press event is detected, the chop's trigger note is assigned to the event's note. This feature also makes use of the \textit{Value} class.  The processor declares one to know what the last recorded MIDI note is, and the chop settings component declares another to dictate whether or not to listen to MIDI notes at all. The latter, named \texttt{listenForMidiLearn} is listened to by the processor in order to dictate whether or not to update the former \textit{Value} \texttt{lastRecordedMidiNote} to that of the incoming MIDI notes. The chop settings component listens to \texttt{lastRecordedMidiNote} to finally update the chop's trigger note with the note newly detected by the processor. In doing so, the chop list component notifies the processor via \texttt{listenForMidiLearn} that \texttt{lastRecordedMidiNote} should no longer updated.
 	
 	
-
-	
-	
 	
 	\newpage
 	\subsection{Audio playback}
-	% TODO Synthesizer: implementación de SamplerVoice & SamplerSound, procesamiento de mensajes MIDI
-	% step 5: playback with midi controller: sourcereaders, synths, midi in processblock, samplerate of sample, vst debugger
-	\textit{	synthesizer explained in voices, sounds. midi message detection in processblock }
+	The object in charge of translating trigger notes to production of sound in this instrument is the \textit{SamplerAudioSource}. This class extends the \textit{AudioSource} class, meaning that it is equipped for continuous audio playback, just like the aforementioned \textit{AudioTransportSource}. With the addition of this audio source for the playback of individual chops, the plugin now has two audio outputs (since the transport source is still present for the audio preview of the main sample). To support both of these sources, the \textit{MixerAudioSource} presents a simple solution. Like both sources, this class also extends the \textit{AudioSource} class, and it mixes the output of several audio sources into one, making the mixer source the desired audio source for the plugin's output signal. Both audio sources are connected to the mixer, which is set as an \textit{AudioSourcePlayer} object's source, which accepts a single audio source as input. This chain ends with the source player, which is what enables continuous audio playback from an audio source. Now for the ways sound is created in the sampler audio source. \par
+	
+	An object of the \textit{Synthesizer} class is held within the \textit{SamplerAudioSource} class, where the connection is made between sounds and voices and the synthesizer. As mentioned in previously, the playback of chops happens through objects termed sounds. These objects extend the \textit{SynthesizerSound} class and are sounds that a synthesizer can play. Likewise, \textit{SynthesizerVoice} objects are the voices that a synthesizer is equipped with to play instances of the \textit{SynthesizerSound} class. The \textit{SamplerSound} and \textit{SamplerVoice} classes are the sound and voice implementations chosen for the synthesizer, due to their ability to source sound from audio files. \textit{SamplerSound} objects are constructed with an object of the class \textit{AudioFormatReader} that represents the file to source the sound from. This leads us to one the reader's child classes: \textit{AudioSubsectionReader}. This implementation not only reads samples from an audio file, but it does so in a delimited region. This makes the programmatic  creation of a chop as simple as instantiating a \textit{SamplerSound} object with an audio subsection reader as a source. \par
+	
+	MIDI messages reach the synthesizer via the processor. It contains a method named \texttt{void processBlock (AudioBuffer<float>\& buffer, \\
+	MidiBuffer\& midiMessages)} which is the point where the plugin's inputs are received for processing. Since the plugin has no need for input audio, the \texttt{buffer} parameter is unused, however, the \texttt{midiMessages} parameter is the way the plugin can listen and respond to the host workstation. When the plugin is loaded in a DAW, MIDI events are passed onto the plugin from the DAW itself. These events can come from a pattern of notes drawn out in the workstation's sequencer, or from notes being pressed on a MIDI controller, for example. In the \texttt{processBlock} function, the \texttt{midiMessages} buffer's contents are transferred to a \textit{MidiCollector} object that is stored in the \textit{SamplerAudioSource} class. The entirety of the incoming MIDI events from the host are redirected to the audio source through the midi message collector, and finally, all is left to the synthesizer, which has access to the stream of MIDI messages and is equipped with \textit{SamplerSound} and \textit{SamplerVoice} objects to render the audio regions of the main sample. The amount of sounds that can be played at any moment is dictated by the amount of voices the synthesizer has. This represents the instrument's polyphony and can be toggled between \textit{mono} and \textit{poly} mode, as explained in the subsection management section.
 	\par
 	
+		
+	\newpage	
+	\section{Plugin design}
+	% TODO reiterar las funciones a incluirse pero mediante elementos GUI y lo necesario de la interfaz (?)
+	This section will provide an overview of the the usage and configuration of the instrument in an audio workstation. In this guide, the DAW that will host the plugin is Reaper \cite{reaper} on a computer running Windows. This feature rich software can be evaluated for free, and has support for VST plugins. Download \cite{plugin} and place the plugin in the C:$\backslash$Program Files$\backslash$Common Files$\backslash$VST3 directory.
+	As additional preparation for the process, it is useful to have an audio file of WAVE format ready, as well as a MIDI controller connected to the machine.\par
 	
+	To begin, open Reaper and open the \textit{Preferences} dialog under the \textit{Options} menu. In the list of categories on the left, select the \textit{MIDI Devices} (figure \ref{fig:udevoff}) option under the \textit{Audio} section. 
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=0.7\textwidth]{u/dev_off.png}
+		\caption{MIDI devices preferences.}
+		\label{fig:udevoff}
+	\end{figure}
 	
+	Your MIDI controller should appear in the upper box of MIDI inputs. Right click on the device and enable it if is disabled as shown in figure \ref{fig:udevon}.
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=0.7\textwidth]{u/dev_on.png}
+		\caption{An enabled MIDI controller.}
+		\label{fig:udevon}
+	\end{figure}
+	
+	Next, add an instrument track from the \textit{Insert} menu, with the \textit{Virtual instrument on new track...} option. On the window that pops up, you can type JCS in the filter field on the bottom. The plugin should appear as shown on figure \ref{fig:load}. If it isn't shown, make sure Sampler.vst3 exists in the directory C:$\backslash$Program Files$\backslash$Common Files$\backslash$VST3 and refresh the list under \textit{FX} $\rightarrow$ \textit{Scan for new plugins}. Press OK to load the sampler onto the instrument track, and a new window will pop up with the a blank plugin.
+	
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=0.9\textwidth]{u/load.png}
+		\caption{Selecting the plugin in the virtual instrument dialog.}
+		\label{fig:load}
+	\end{figure}
 	
 	% d. (25 pg entre c y d) resultados y discusión crítica y razonada de los mismos, con sus conclusiones,
 	\newpage
 	\section{Results}
+	The implementation of the plugin meets the main objectives of the sampler's core functionalities. The audio preview of a main audio sample is available, and its visual representation is achieved in an interactive audio thumbnail. Audio regions can be created manually with the visual aid of the thumbnail component. Subsections are organized into a table, and their playback is triggered by associated MIDI note events. \par 
+	Additional features were also included, the most important being the inclusion of envelope parameters to each chop. With this feature and the instrument's polyphony setting, the interaction between chops and the way they behave over time is adjustable. Furthermore, automatic chop creation is a part of the plugin thanks to the aubio onset detection module\cite{aubioonset}.\par
+		
+	There is room for improvement in further features such as the capability to load more than one audio file in a single instance of the plugin. As of now, several instances of the plugin can be created to create samplers from different audio files, but it would without a doubt be more efficient and user friendly to provide the possibility to avoid this workaround. A feature that would make the plugin more usable and aligned with the objectives of efficiency in the process of designing an instrument would be the possibility to undo and redo actions. This functionality would greatly enhance the user experience, making actions that are now permanent be undo-able. Had the \textit{ValueTree} class been used with more ties to the plugin's state, actions, and workflow, the straightforward combination with an \textit{UndoManager} would have alleviated the task of implementing this feature.\par 
 	
+	The feature whose absence is most unfortunate is the ability for state saving and loading. Without this, the configuration of the instrument can not be stored in a DAW's project file. This is a great inconvenience because closing the workstation implies discarding the configuration of the plugin, leaving users with two options if they want to save the productions of the sampler: the first would allow for the recreation of the same plugin state, but the user would have to note down the configuration manually, including all the details surrounding every chop. The second option is a less tedious task, but it does not provide a recovery for the instrument's configuration. The sequences created with the instrument could be recorded within the DAW to solidify the sampler's output into a track of audio.
 	
 	
 

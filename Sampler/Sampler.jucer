@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="oWfbQZ" name="Sampler" projectType="audioplug" jucerVersion="5.4.5"
-              pluginFormats="buildVST3" pluginVST3Category="Instrument,Sampler"
-              pluginCharacteristicsValue="pluginEditorRequiresKeys,pluginIsSynth,pluginProducesMidiOut,pluginWantsMidiIn"
-              companyName="JCS" companyEmail="juanchoz@ucm.es">
+              pluginVST3Category="Instrument,Sampler" pluginCharacteristicsValue="pluginEditorRequiresKeys,pluginIsSynth,pluginProducesMidiOut,pluginWantsMidiIn"
+              companyName="JCS" companyEmail="juanchoz@ucm.es" pluginFormats="buildVST3">
   <MAINGROUP id="BkkyvB" name="Sampler">
     <GROUP id="{33229E8B-F3CD-6BB0-771B-06E291FA31DC}" name="Source">
       <FILE id="uZCJPj" name="ChopSettingsComponent.h" compile="0" resource="0"
@@ -27,7 +26,8 @@
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" headerPath="..\..\Plugins\waubio\src"
                        libraryPath="..\..\Plugins\waubio\lib"/>
-        <CONFIGURATION isDebug="0" name="Release"/>
+        <CONFIGURATION isDebug="0" name="Release" headerPath="..\..\Plugins\waubio\src"
+                       libraryPath="..\..\Plugins\waubio\lib"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_audio_basics" path="../JUCE/modules"/>

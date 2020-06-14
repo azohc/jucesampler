@@ -37,6 +37,8 @@ auto strokeRect = [] (Graphics& g, Rectangle<int> r, int s)
 };
 
 // ValueTree Identifiers
+static const Identifier ID_PARAMETERS = "StateParameters";
+
 static const Identifier ID_CHOPDATA = "ChopData";
 static const Identifier ID_CHOP = "Chop";
 static const Identifier ID_CHOPID = "ID";

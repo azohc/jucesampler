@@ -61,6 +61,7 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     
     //==============================================================================
+    AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     HashMap<int, ValueTree>* getChopMap();
     ValueTree getChopTree() const;
     void clearChopTree();
@@ -84,6 +85,7 @@ private:
     ValueTree chopTree;
     HashMap<int, ValueTree> chopMap;
 
+    AudioProcessorValueTreeState state;
 
     Value listenForMidiLearn;
     Value lastRecordedMidiNote;

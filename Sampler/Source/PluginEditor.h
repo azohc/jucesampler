@@ -30,7 +30,6 @@ public:
     SamplerAudioProcessorEditor (SamplerAudioProcessor& p,
                                  AudioTransportSource& transport,
                                  SamplerAudioSource& sampler,
-                                 AudioSourcePlayer& player,
                                  AudioDeviceManager& device,
                                  Value selectedChop,
                                  Value selectionActive)
@@ -39,7 +38,6 @@ public:
         state (Stopped),
         transportSource (transport),
         samplerSource (sampler),
-        sourcePlayer (player),
         deviceManager (device),
         selectedChopId (selectedChop),
         userSelectionActive (selectionActive)
@@ -107,7 +105,7 @@ public:
         zoomSlider.setColour (Slider::thumbColourId, COLOR_BLUE);
 
         // THUMBNAIL 
-        processor.resetThumbnailTo (new SamplerThumbnail (formatManager, transportSource, zoomSlider, processor.getChopTree(), processor.getChopBounds() ,selectedChopId, userSelectionActive));
+        processor.resetThumbnailTo (new SamplerThumbnail (processor.getFormatManager(), transportSource, zoomSlider, processor.getChopTree(), processor.getChopBounds() ,selectedChopId, userSelectionActive));
         addAndMakeVisible (processor.getThumbnail());
 
 
@@ -176,9 +174,6 @@ public:
         processor.setListenerForMidiLearn (chopSettings.get()->listenForMidiLearn);
         addAndMakeVisible (chopSettings.get());
 
-        // formats
-        formatManager.registerBasicFormats();
-
         // listeners
         processor.getThumbnail()->addChangeListener (this);
         transportSource.addChangeListener (this);
@@ -199,10 +194,11 @@ public:
 
     ~SamplerAudioProcessorEditor()
     {
-        sourcePlayer.setSource (nullptr);
         transportSource.removeAllChangeListeners();
         processor.getThumbnail()->removeAllChangeListeners();
         processor.getThumbnail()->deleteAllMarkers();
+        chopList.reset();
+        chopSettings.reset();
     }
 
     void paint (Graphics& g) override
@@ -303,10 +299,8 @@ private:
     SamplerAudioProcessor& processor;
 
     AudioDeviceManager& deviceManager;
-    AudioFormatManager formatManager;
     TimeSliceThread thread { "audio file preview" };
 
-    AudioSourcePlayer& sourcePlayer;
 
     AudioTransportSource& transportSource;
     SamplerAudioSource& samplerSource;
@@ -376,12 +370,8 @@ private:
     {
         transportSource.stop();
         transportSource.setSource (nullptr);
-        processor.resetFileReaderSource();
 
-        AudioFormatReader* reader = nullptr;
-
-        if (reader == nullptr)
-            reader = formatManager.createReaderFor (file);
+        AudioFormatReader* reader = processor.getFormatManager()->createReaderFor (file);
 
         if (reader != nullptr)
         {
@@ -460,7 +450,7 @@ private:
         detectChopsOnset (true);
     }
 
-    int detectChopsOnset (bool createChopsFromDetections) {
+    int detectChopsOnset (bool createChops) {
         auto file = processor.getFile().getFullPathName().getCharPointer();
         uint_t samplerate = processor.getFileReaderSource()->getAudioFormatReader()->sampleRate;
         uint_t buf_size = 1024;
@@ -477,7 +467,6 @@ private:
             aubio_source_do(a_source, in, &read);
             aubio_onset_do(a_onset, in, out);
             if (out->data[0] != 0) {
-                // print(String::formatted("onset at %.3fms, %.3fs, frame %d\n", aubio_onset_get_last_ms(o), aubio_onset_get_last_s(o), aubio_onset_get_last(o)));
                 detections.addIfNotAlreadyThere(aubio_onset_get_last_s(a_onset));
             }
             n_frames += read;
@@ -487,7 +476,7 @@ private:
 
         auto numDetectedChops = detections.size();
         if (numDetectedChops == 0)              return 0;
-        else if (!createChopsFromDetections)    return numDetectedChops;
+        else if (!createChops)    return numDetectedChops;
         
         for (auto i = 0; i < detections.size(); i++) 
         {
@@ -588,13 +577,13 @@ private:
     void valueTreeChildRemoved (ValueTree& parentTree,
                                 ValueTree& childWhichHasBeenRemoved,
                                 int indexFromWhichChildWasRemoved) override
-    {
-                
+    {  
         if (parentTree.getNumChildren() == 0)
         {
             processor.getThumbnail()->setSelectedChopId(NONE);
             lastMidiNoteAssigned = INIT_NOTE_AUTO_ASSIGN;
         }
+        processor.removeChop(childWhichHasBeenRemoved[ID_CHOPID]);
         samplerSource.makeSoundsFromChops(processor.getFileReaderSource()->getAudioFormatReader(), processor.getChopTree());
     }
 

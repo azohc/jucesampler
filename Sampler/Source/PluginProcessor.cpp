@@ -26,12 +26,16 @@ SamplerAudioProcessor::SamplerAudioProcessor()
                        )
 #endif
 {
+    formatManager.registerBasicFormats();
     chopTree = ValueTree { ID_CHOPDATA, {} };
     playbackMode = MONO;
 };
 
 SamplerAudioProcessor::~SamplerAudioProcessor()
 {
+    synth.clearVoices();
+    synth.clearSounds();
+    fileReaderSource.reset();
 }
 
 //==============================================================================
@@ -184,20 +188,15 @@ bool SamplerAudioProcessor::hasEditor() const
 
 AudioProcessorEditor* SamplerAudioProcessor::createEditor()
 {
-    //String chops = "Current chop ids in chopTree: ";
-    //for (int i = 0; i < chopTree.getNumChildren(); i++)
-    //{
-    //    chops += String(Chop(chopTree, i).getId()) + " ";
-    //}
-    //print(chops);
-    print("number of voices " + String(synth.getNumVoices() + "nr sounds: " + String(synth.getNumSounds())));
-    auto editor = new SamplerAudioProcessorEditor (*this, transportSource, samplerSource, sourcePlayer, deviceManager, selectedChopId, userSelectionActive);
+    auto editor = new SamplerAudioProcessorEditor (*this, transportSource, samplerSource, deviceManager, selectedChopId, userSelectionActive);
 
     if (currentAudioFile.exists())
     {
         editor->showAudioResource(currentAudioFile);
         for (int i = 0; i < chopTree.getNumChildren(); i++)
             thumbnail.get()->addChopMarker(i);
+        samplerSource.makeSoundsFromChops(fileReaderSource.get()->getAudioFormatReader(), chopTree);
+        samplerSource.makeVoices();
     }
     chopTree.addListener(editor);
     return editor;
@@ -283,17 +282,22 @@ void SamplerAudioProcessor::resetThumbnailTo(SamplerThumbnail * tn)
 
 AudioFormatReaderSource* SamplerAudioProcessor::getFileReaderSource()
 {
-    return audioFileSource.get();
+    return fileReaderSource.get();
 }
 
 void SamplerAudioProcessor::resetFileReaderSource()
 {
-    audioFileSource.reset();
+    fileReaderSource.reset();
 }
 
 void SamplerAudioProcessor::resetFileReaderSourceTo(AudioFormatReaderSource * source)
 {
-    audioFileSource.reset(source);
+    fileReaderSource.reset(source);
+}
+
+AudioFormatManager* SamplerAudioProcessor::getFormatManager()
+{
+    return &formatManager;
 }
 
 File SamplerAudioProcessor::getFile() const

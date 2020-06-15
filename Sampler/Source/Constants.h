@@ -186,8 +186,8 @@ struct Chop
 
     void setDefaultADSR()
     {
-        setAttack(0.1f);
-        setDecay(0.1f);
+        setAttack(0.0f);
+        setDecay(0.0f);
         setSustain(1.0f);
         setRelease(0.1f);
     }

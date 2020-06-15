@@ -75,6 +75,7 @@ public:
     AudioFormatReaderSource* getFileReaderSource();
     void resetFileReaderSource();
     void resetFileReaderSourceTo (AudioFormatReaderSource *source);
+    AudioFormatManager* getFormatManager();
     File getFile() const;
     void setCurrentFile (File &file);
     Value playbackMode;
@@ -82,27 +83,29 @@ public:
 private:
     //==============================================================================
     
-    SamplerAudioSource samplerSource { keyboardState, &midiCollector, playbackMode };
-    AudioTransportSource transportSource;
-    MixerAudioSource mixerSource;    // combines sampler & transport
-    AudioSourcePlayer sourcePlayer;
     AudioDeviceManager deviceManager;
+    
+    MixerAudioSource mixerSource;    // combines sampler & transport
+    AudioTransportSource transportSource;
+    AudioSourcePlayer sourcePlayer;
 
-    std::unique_ptr<SamplerThumbnail> thumbnail;
-    MidiMessageCollector midiCollector;
-    MidiKeyboardState keyboardState;
+    SamplerAudioSource samplerSource { &synth, keyboardState, &midiCollector, playbackMode };
     Synthesiser synth;
+    MidiKeyboardState keyboardState;
+    MidiMessageCollector midiCollector;
 
     ValueTree chopTree;
+    std::unique_ptr<SamplerThumbnail> thumbnail;
     HashMap<int, std::pair<DrawableRectangle*, DrawableRectangle*>> chopBounds;
+    AudioFormatManager formatManager;
     File currentAudioFile;
-    std::unique_ptr<AudioFormatReaderSource> audioFileSource;
+    std::unique_ptr<AudioFormatReaderSource> fileReaderSource;
 
     Value selectedChopId;
     Value userSelectionActive;
     Value listenForMidiLearn;
     Value lastRecordedMidiNote;
-
     bool updateLastRecordedMidiNote = false;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SamplerAudioProcessor)
 };

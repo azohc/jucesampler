@@ -21,20 +21,21 @@
 class SamplerAudioSource    : public AudioSource, public Value::Listener
 {
 public:    
-    SamplerAudioSource (MidiKeyboardState& keyState, 
+    SamplerAudioSource (Synthesiser* s,
+                        MidiKeyboardState& keyState,
                         MidiMessageCollector* mmc,
-                        Value mode):
+                        Value mode) :
+        synth (s),
         keyboardState (keyState),
         midiCollector (mmc),
         playbackMode (mode)
     {
         playbackMode.addListener (this);
-        synth.addVoice (new SamplerVoice());
     }
 
     void makeSoundsFromChops(AudioFormatReader* formatReader, ValueTree chopTree)
     {
-        synth.clearSounds();
+        synth->clearSounds();
         numChops = chopTree.getNumChildren();
         for (auto i = 0; i < numChops; ++i) {
             Chop chop (chopTree, i);
@@ -58,7 +59,7 @@ public:
             params.release = chop.getRelease();
             sound->setEnvelopeParameters(params);
             
-            synth.addSound (sound);
+            synth->addSound (sound);
             delete audioSSReader;
         }
     }
@@ -66,7 +67,7 @@ public:
     void prepareToPlay (int /*samplesPerBlockExpected*/, double sampleRate) override
     {
         midiCollector->reset (sampleRate);
-        synth.setCurrentPlaybackSampleRate (sampleRate);
+        synth->setCurrentPlaybackSampleRate (sampleRate);
     }
 
     void releaseResources() override {}
@@ -88,33 +89,38 @@ public:
         keyboardState.processNextMidiBuffer (incomingMidi, 0, bufferToFill.numSamples, true);
 
         // and now get the synth to process the midi events and generate its output.
-        synth.renderNextBlock (*bufferToFill.buffer, incomingMidi, 0, bufferToFill.numSamples);
+        synth->renderNextBlock (*bufferToFill.buffer, incomingMidi, 0, bufferToFill.numSamples);
     }
 
     void valueChanged(Value &value) override
     {
         if (value.refersToSameSourceAs (playbackMode))
         {
-            synth.clearVoices();
+            synth->clearVoices();
             if (playbackMode == POLY)
             {
                 for (int i = 0; i < numChops; ++i)
                 {
-                    synth.addVoice (new SamplerVoice());
+                    synth->addVoice (new SamplerVoice());
                 }
             } else
             {
-                synth.addVoice (new SamplerVoice());
+                synth->addVoice (new SamplerVoice());
             }
         }
     }
 
+    void makeVoices()
+    {
+        valueChanged(playbackMode);
+    }
+
 
 private:
-    MidiKeyboardState& keyboardState;
+    Synthesiser* synth;
     MidiMessageCollector* midiCollector;
+    MidiKeyboardState& keyboardState;
 
-    Synthesiser synth;
     Value playbackMode;
 
     int numChops = 0;

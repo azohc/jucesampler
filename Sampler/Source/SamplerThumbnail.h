@@ -24,7 +24,7 @@ class SamplerThumbnail:
     private Timer
 {
 public:
-    SamplerThumbnail(AudioFormatManager& formatManager,
+    SamplerThumbnail(AudioFormatManager* formatManager,
                      AudioTransportSource& source,
                      Slider& slider,
                      ValueTree chops,
@@ -33,7 +33,7 @@ public:
                      Value& selectionActive) :
         transportSource (source),
         zoomSlider (slider),
-        thumbnail (512, formatManager, thumbnailCache),
+        thumbnail (512, *formatManager, thumbnailCache),
         chopTree (chops),
         chopBounds (bounds),
         selectedChopId (selectedChop),

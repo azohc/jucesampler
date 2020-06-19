@@ -83,7 +83,7 @@ style=numeric,
 
 	\normalsize
 	Music production is at anyone's reach. Nowadays, computers, smartphones and tablets are able to run software that provides the necessary tools to compose music. Digital Audio Workstations (DAWs) are found at the more sophisticated end of the spectrum. These feature-packed programs are the type that you would find in locations ranging from the aspiring musician's personal computer to the most professional recording studio in your city. One of the most powerful characteristics of these environments is being extensible via plugins. \par	
-	The sampling techniques that emerged during the end of the 20th century gifted the world with new methods of music composition. The technique that this project develops upon consists in the creation of an instrument using audio recordings as its only source of sound. The nature of the process is far from complex and it can be streamlined to provide a fast way to design a bespoke instrument. By implementing this tool as a plugin, the instrument takes the form of a loadable module that is readily accessible to anybody working on a DAW.
+	The sampling techniques that emerged during the end of the 20th century gifted the world with new methods of music production. This project develops upon a technique that consists in the splitting of audio recordings. Users will be able to easily transform regions within an audio sample into notes to make a personalized instrument. The nature of the process is far from complex and it can be streamlined to provide a fast way to design a bespoke instrument. By implementing this tool as a plugin, the instrument takes the form of a loadable module that is readily accessible to anybody working on a DAW.
 	
 	\vspace*{\fill}
 	\large
@@ -99,8 +99,8 @@ style=numeric,
 	
 	\normalsize
 	Cualquier persona tiene a su alcance la producción musical. El mundo en el que vivimos esta plagado de dispositivos capaces de ejecutar un software que proporciona las herramientas necesarias para componer música. Las estaciones de audio digital son los programas que ofrecen la mayor gama de herramientas para la creación de música. Es el tipo de software que no puede faltar en los ordenadores de los músicos principiantes ni de los estudios de grabación más sofisticados. Una de las características más poderosas de estos entornos es la capacidad de ser enriquecidos mediante módulos externos (plugins). \par 
-	
-	A finales del siglo XX surgieron nuevas técnicas de muestreo, nuevas maneras de producir música utilizando grabaciones de sonido. Este proyecto utiliza estas técnicas de base para ofrecer una manera rápida de crear un instrumento a medida que utiliza regiones de una muestra para producir sonido. El proceso es sencillo por naturaleza y se puede implementar de forma eficiente para hacer un proceso sin demoras innecesarias del diseño de un instrumento basado en muestras. La implementación en forma de plugin hace que el instrumento sea accesible para todo el que trabaje con una estación de audio digital.
+	A finales del siglo XX surgieron nuevas técnicas de muestreo, nuevas maneras de producir música utilizando grabaciones de sonido. Este proyecto se basa en una técnica que consiste en desmenuzar una grabación de sonido. % TODO translate
+	para ofrecer una manera rápida de crear un instrumento a medida que utiliza regiones de una muestra para producir sonido. El proceso es sencillo por naturaleza y se puede implementar de forma eficiente para hacer un proceso sin demoras innecesarias del diseño de un instrumento basado en muestras. La implementación en forma de plugin hace que el instrumento sea accesible para todo el que trabaje con una estación de audio digital.
 
 	
 	\vspace*{\fill}
@@ -115,35 +115,39 @@ style=numeric,
 	
 	\newpage
 	% a. un índice, 
-	\tableofcontents
+	\tableofcontents % TODO try chapters instead of sections
 
 
 	% c. (25 pg entre c y d) una introducción con los antecedentes, objetivos y plan de trabajo, 
 	\newpage
-	\section{Introduction}
+	\section{Introduction} 
+	% TODO resumen capitulo
 	\subsection{Background}
 	\subsubsection{Sampler history}
-	The technique of sampling dates back to the 1960s when recordings were captured on tape. Thanks to a hardware design that made contact between the playback head and different sections of a moving tape, musicians could play the distinct recordings on keyboards of instruments such as the Mellotron. During the 1980s, the popularity of drum machines increased significantly. Many drum machines were sample-based, i.e. they created sounds using digitally stored samples, whereas the alternative was to synthesize sound in an analog fashion. \par
-	In 1988, the first Music Production Center (MPC) by Akai was made available to the public: a sample-based music workstation that was capable of arranging samples of all lengths in its sequencer to produce full fledged music tracks without the need for additional instruments or hardware. In a recipe for music, an MPC could be the only ingredient, reaching a vast number of musicians because of its affordability in comparison to previous means of music production. It is a tool that gave artists a new way to create music, a technique that has been a foundation to several genres and highly influential to music as a whole.\par
+	The technique of sampling dates back to the 1960s when recordings were captured on tape. Thanks to a hardware design that made contact between the playback head and different sections of a moving tape, musicians could play the distinct recordings on keyboards of instruments such as the Mellotron % TODO cita 
+	During the 1980s, the popularity of drum machines increased significantly. Many of them were sample-based, i.e. they created sounds using digitally stored samples, whereas the alternative was to synthesize sound in an analog fashion. This could be due to some sounds (the more harmonic type, in particular), being more successfully producible by synthesis than others, namely percussive sounds. Sampling offered a way to make naturally sounding rhythmic sections which synthesis could not.\par
+	In 1988, the first Music Production Center (MPC) by Akai % TODO cita
+	was made available to the public: a sample-based music workstation that was capable of arranging samples of all lengths in its sequencer to produce full fledged music tracks without the need for additional instruments or hardware. In a recipe for music, an MPC could be the only ingredient, reaching a vast number of musicians because of its affordability in comparison to previous means of music production. It is a tool that gave artists a new way to create music, a technique that has been a foundation to several genres and highly influential to music as a whole.\par
 	
 
 	\subsubsection{Pulse-Code Modulation}
 	\begin{figure}[h]
 		\centering
 		\includegraphics[width=0.5\textwidth]{pcm.png}
-		\caption{Linear pulse-code modulation at 4 bit depth. \cite{pcm_img}}
+		\caption{Linear pulse-code modulation at 4 bit depth.}
 		\label{fig:pcm}
 	\end{figure}
-	The method that makes sampling a possibility is Pulse-Code Modulation (PCM for short). Dating back to the 1930s, it consists of the digital representation of analog signals, and is subject to two parameters: sampling rate and bit depth. This technique processes an input analog signal by making readings at equidistant intervals. Commonly referred to as samples, these readings are what the resulting digital representation will be composed of. The sampling rate refers to how often samples will be read from the analog signal, and the bit depth indicates the amount of bits with which to describe each sample. Every time an analog reading is being converted into a digital sample, it is rounded to the nearest integer value in the range determined by the bit depth. This rounding process, visible in Figure \ref{fig:pcm} is known as quantization. Since samples are encoded to integers in binary, the levels to which they can be quantized are uniformly distributed. This describes the method of Linear PCM (LPCM), a sub-method of PCM that is used for audio CDs and the popular formats WAVE and AIFF, among other applications.\par
+	The method that makes sampling a possibility is Pulse-Code Modulation (PCM for short). Dating back to the 1930s, it consists of the digital representation of analog signals, and is subject to two parameters: sampling rate and bit depth. This technique processes an input analog signal by making readings of voltage levels at fixed time intervals and transforming them into numeric values. Commonly referred to as samples, these readings are what the resulting digital representation will be composed of. The sampling rate refers to how often samples will be read from the analog signal, and the bit depth indicates the amount of bits with dedicated to the storage of each sample. Every time an analog reading is being converted into a digital sample, it is rounded to the nearest integer value in the range determined by the bit depth. This rounding process, visible in Figure \ref{fig:pcm} \cite{pcm_img} is known as quantization. Since samples are encoded to integers in binary, the levels to which they can be quantized are uniformly distributed. This describes the method of Linear PCM (LPCM), a sub-method of PCM that is used for audio CDs and the popular formats WAVE and AIFF, among other applications.\par
 	
 
 	
 	\subsubsection{Modern music production} 	
- 	In a world of highly complex information systems, digital music production has been developed thoroughly. When it comes to modern music composition, Musical Instrument Digital Interface (MIDI from now on) protocols provide grounds for an alternative to regular, "analog" instruments. This standard erects a bridge for communication between digital instruments and computers, providing the world of digital music production with the tangible interfaces of normal instruments. The MIDI standard provides, among many other features, a communications protocol that encodes music events. This manifests in the form of messages which describe data such as the pressing, releasing, and velocity of musical notes. 	
+ 	In a world of highly complex information systems, digital music production has been developed thoroughly. When it comes to modern music composition, Musical Instrument Digital Interface (MIDI from now on) % TODO cita
+ 	protocol provides grounds for an alternative to regular, "analog" instruments. This standard erects a bridge for communication between digital instruments and computers, providing the world of digital music production with the tangible interfaces of normal instruments. The MIDI standard provides, among many other features, a communications protocol that encodes music events. This manifests in the form of messages which describe data such as the pressing, releasing, and velocity of musical notes. 	
 	 	
  	A digital audio workstation (DAW from here on out) is a software environment for music production. These workstations revolve around MIDI, which provides an encoded language for musical notes. See Table \ref{table:notes} for a table of the syllabic and alphabetical equivalents of musical notes. Note-related MIDI messages always store data regarding the note subject to the event. 
  	\par
-	\begin{table}[h]
+	\begin{table}[h] % TODO add MIDI code column
 		\centering
 		\begin{tabular}{c c}
 			Syllabic & Alphabetical \tabularnewline
@@ -159,11 +163,12 @@ style=numeric,
 		\caption{Musical notes in syllabic and alphabetical form}
 		\label{table:notes}
 	\end{table} 
-	One can have an extensive range of digital synthesizers, samplers, and effect chains all working simultaneously in a DAW, the type of software that provides a playground that routes audio between racks of components and effects, making music production a possibility to anyone that owns a computer. DAWs have an element called a sequencer, which serves as a sort of digital equivalent to sheet music. The sequencer is where producers draw out musical events, placing small rectangles on a grid to represent the notes, their length, and their duration. The arrangements of events are then encapsulated in what are called patterns. These patterns can be applied to instruments, such as synthesizers, or samplers, to trigger the sounds they produce. Patterns can be drawn out manually, auto generated, or recorded in real time with a MIDI controller. Auto generated patterns consist of filling a set length of time with notes separated by constant intervals, so as to mimic the timing of a metronome, for example. Patterns that are recorded in real time are made with the DAWs recording function, which is activated to record MIDI events from a controller. \par 
+	One can have an extensive range of digital synthesizers, samplers, and effect chains all working simultaneously in a DAW, the type of software that provides a playground that routes audio between racks of components and effects, making music production a possibility to anyone that owns a computer. DAWs have an element known as a \textit{piano roll}, which serves as a sort of digital equivalent to sheet music. The piano roll is where producers draw out musical events, placing small rectangles on a grid to represent the notes, their length, and their duration. % TODO image proll
+	The arrangements of events are then encapsulated in what are called patterns. These patterns can be applied to instruments, such as synthesizers, or samplers, to trigger the sounds they produce. Patterns can be drawn out manually, auto generated, or recorded in real time with a MIDI controller. Auto generated patterns may consist in filling a set length of time with notes separated by constant intervals, so as to mimic the timing of a metronome, for example. Patterns that are recorded in real time are made with the DAWs recording function, which is activated to record MIDI events from a controller. \par 
 
-	When recording patterns, incoming MIDI events are timestamped to then be displayed in chronological order and resemble the translation of the user's input. A user may have an instrument loaded during this recording period, so the user can know what sounds are being produced. It is important to highlight what is captured by the DAW is a sequence of MIDI events, not the actual sounds being produced by the instrument, meaning that a pattern is just a sequence of data, void of sound until an instrument that can process the events is associated to it. More so, since patterns are composed of MIDI events meant to trigger responses from instruments, there is no binding between them and instruments, and a pattern made for one instrument can perfectly be used for another. \par 
+	When recording patterns, incoming MIDI events are timestamped to then be displayed in chronological order and resemble the translation of the user's input. A user may have an instrument loaded during this recording period, so the user can hear what sounds are being produced. It is important to highlight what is captured by the DAW is a sequence of MIDI events, not the actual sounds being produced by the instrument, meaning that a pattern is just a sequence of data, void of sound until an instrument that can process the events is associated to it. More so, since patterns are composed of MIDI events meant to trigger responses from instruments, there is no binding between them and instruments, and a pattern made for one instrument can perfectly be used for another. \par 
 	
-	The relevant events associated to the pattern building process are: note-on events, the signal that a note has been pressed; note-off events, the signal that a note has been released. The subtraction of the timestamps associated to these two events determines how long a note is held down. A musical note is associated to note-on and note-off events, having the note and octave being encoded as an integer in the range of $[0, 127)$. In addition, associated to note-on events is an element called velocity, which is a measure of the intensity of the note. The velocity of a note is sometimes processed by instruments to generate softer or stronger sounds. Some samplers use note velocity to trigger a sample from a set, i.e. a lower intensity recording of a snare drum for lower velocities as opposed to a sample of a powerful snare drum hit when the velocity is a higher range.
+	The most relevant events associated to the pattern building process are: note-on events, the signal that a note has been pressed; note-off events, the signal that a note has been released. The subtraction of the timestamps associated to these two events determines how long a note is held down. A musical note is associated to note-on and note-off events, having the note and octave being encoded as an integer in the range of $[0, 128)$. In addition, associated to note-on events is an element called velocity, which is a measure of the intensity of the note. The velocity of a note is sometimes processed by instruments to generate softer or stronger sounds. Some samplers use note velocity to trigger a sample from a set, i.e. a lower intensity recording of a snare drum for lower velocities as opposed to a sample of a powerful snare drum hit when the velocity is a higher range.
  	\par
  	
 	DAWs can be extended with plugins in the form of effects or instruments. The former normally have a sound-based input-output relation with the DAW, meanwhile instruments will take MIDI messages and produce a sound as an output. The most common standard for plugins is Virtual Studio Technology (VST), created by a german company called Steinberg. VST plugins have multi platform support on major operating systems, however, plugins must be exported for a target operating system, i.e. a VST plugin that is exported for Windows will not work on Mac OS or Linux. A possible VST plugin could be a sine wave based instrument, for example. The wave's frequency will depend on the key being pressed, and the force applied to the key will dictate the amplitude of the wave. This plugin, although simple, could be considered a synthesizer. \par 
@@ -223,6 +228,69 @@ style=numeric,
 		\item A series of effects for each chop: filters, compressors, 
 	\end{itemize}
 
+		\newpage	
+	\section{Plugin design}
+
+	This section will provide an overview of the the usage and configuration of the instrument in an audio workstation. In this guide, the DAW that will host the plugin is Reaper \cite{reaper} on a computer running Windows. This feature rich software can be evaluated for free, and has support for VST plugins. Download \cite{plugin} and place the plugin in the C:$\backslash$Program Files$\backslash$Common Files$\backslash$VST3 directory.
+	As additional preparation for the process, it is useful to have an audio file of WAVE format ready, as well as a MIDI controller connected to the machine.\par
+	
+	To begin, open Reaper and open the \textit{Preferences} dialog under the \textit{Options} menu. In the list of categories on the left, select the \textit{MIDI Devices} (figure \ref{fig:udevoff}) option under the \textit{Audio} section. 
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=0.7\textwidth]{u/dev_off.png}
+		\caption{MIDI devices preferences.}
+		\label{fig:udevoff}
+	\end{figure}
+	
+	Your MIDI controller should appear in the upper box of MIDI inputs. Right click on the device and enable it if is disabled as shown in figure \ref{fig:udevon}.
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=0.7\textwidth]{u/dev_on.png}
+		\caption{An enabled MIDI controller.}
+		\label{fig:udevon}
+	\end{figure}
+	
+	Next, add an instrument track from the \textit{Insert} menu, with the \textit{Virtual instrument on new track...} option. On the window that pops up, you can type JCS in the filter field on the bottom. The plugin should appear as shown on figure \ref{fig:load}. If it isn't shown, make sure Sampler.vst3 exists in the directory C:$\backslash$Program Files$\backslash$Common Files$\backslash$VST3 and refresh the list under \textit{FX} $\rightarrow$ \textit{Scan for new plugins}. Press OK to load the sampler onto the instrument track, and a new window will pop up with the a blank plugin.
+	
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=0.9\textwidth]{u/load.png}
+		\caption{Selecting the plugin in the virtual instrument dialog.}
+		\label{fig:load}
+	\end{figure}
+	
+	~\\
+	~\\
+	Start by loading a WAVE file as the main audio sample with the \textit{Load} button on the top left corner. The waveform representation of the file will be visible in the thumbnail. The slider to the right of the thumbnail is a control of the thumbnail's scale, while the slider beneath is for horizontal scrolling when the scale is larger than the thumbnail's boundaries. The preview's playback can be controlled with the \textit{Play}, \textit{Pause}, and \textit{Stop} buttons on the panel to the left. \par 
+	The bar located above the thumbnail holds a \textit{Position} label, which indicates the position of the playback head for the audio preview. This position is also relevant for the manual creation of subsections. Playback can be looped in the full boundaries of the audio file with the \textit{Toggle Full Loop} button. The playback position can be manually positioned by clicking on any part of the thumbnail, and a selection can be made if a click is dragged across the desired area. After making a selection, you can loop the audio preview within the selection's boundaries with the \textit{Toggle Loop Selection} button. \par
+	
+	Chop creation can happen in two different ways:
+	\paragraph{Manual chopping\\}
+	The two buttons located above the thumbnail on the top right corner of the plugin create chops. The first, \textit{Chop From Here} will use the region between the current position and the end of the sample to create a chop. The second option will only be available if a selection is exists in the thumbnail, and it will create a chop with boundaries equal to those of the selection.
+	\paragraph{Automatic chopping\\}
+	If your audio clip has noticeable peaks, where the level of sound changes notably and within a short time frame, then automatic chopping provides a fast way to split the sample into regions separated by sharp peaks. The \textit{Chop} button will create as many chops as chops are detected. This number will differ depending on the configurations of the mode and threshold, which can be modified with the button and slider. The changes made to these two options will be reflected in the label placed under them, which indicates how many chops are detected with the current configuration.\par
+	
+	\begin{figure}[h!]
+		\centering
+		\includegraphics[width=0.9\textwidth]{u/learn.png}
+		\caption{Reassigning trigger notes with MIDI Learn.}
+		\label{fig:learn}
+	\end{figure}	
+	
+	~\\
+	After chopping the sample, the table under the thumbnail will display the details for each chop. Trigger notes can be changed from the last column in the table, or they can be changed by pressing a note on your controller with the MIDI Learn function. To do this, select a chop from the table by clicking on it and press the MIDI Learn button located under the table. As shown in figure \ref{fig:learn}, a label that reads \textit{Press New Trigger Note} will be displayed, and the trigger note will be updated to the next note you press on the controller. \par
+	
+	A chop can be selected for further editing with a simple left click on a row from the table, or you can scroll through the chops with the arrows on the top left part of the lowest panel. The selected chop's playback can be tweaked with the envelope parameters in this lower panel. Each parameter will affect the way the chop sounds over time. The purpose of each parameter is explained in section \ref{st}. The instrument's polyphony can be changed in this panel as well: to allow for more than one chop to sound at the same time, change the \textit{Playback Mode} on the top right part of the lower panel to POLY. When set to MONO, chops are played exclusively, and the triggering of one chop will cut off the playback of any other.
+	
+	The instrument is now playable, and a series of notes can be sequenced in Reaper. You can try out different combinations of notes to see the order in which they sound best to you. To record your sequence, press the red \textit{Record} button visible in figure \ref{fig:rec}. When recording, Reaper will save the MIDI notes you press into a MIDI item, which can be found in the playlist to the right of the instrument rack. \par
+	
+	
+	\begin{figure}[h!]
+		\centering
+		\includegraphics[width=0.9\textwidth]{u/rec.png}
+		\caption{Record button in Reaper.}
+		\label{fig:rec}
+	\end{figure}
 	
 	\newpage
 	\section{Implementation}
@@ -251,9 +319,7 @@ style=numeric,
 	
 	
 	\newpage	
-	\subsection{Audio preview}
-	% TODO (REVEIW): Visualización con AudioThumbnail && AudioTransport, Sources, como se combina todo para leer & reproducir sonido
-	
+	\subsection{Audio preview}	
 	The first step in developing the sampler consisted in loading an audio file. With the help of the \textit{Draw audio waveforms} tutorial \cite{audiothumbnail}, I was quickly able to identify the classes I would need to load, and, additionally, display a visual representation of an audio file. For starts, a \textit{FileChooser} object is used to create a dialog box that selects files or folders. One can limit the formats allowed for selection by specifying semicolon separated regular expressions in its constructor. Using the string \texttt{"*.wav"} as the \texttt{filePatternsAllowed} parameter will only allow users to select WAVE files, for example. The class offers several member functions named with "\texttt{browseFor}" as a prefix, and \texttt{browseForFileToOpen()} opens a dialog box to select a file for opening, returning a boolean value that indicates whether the user selected a file or not. In the former case, the FileChooser's \texttt{getResult()} function will return the \textit{File} object that was selected. \par
 	The class that would provide the visual representation of the audio file is the \textit{AudioThumbnail} class. It works hand in hand with the \textit{AudioThumbnailCache} class, which serves as a cache memory of audio file representations. Together, they store and print waveform representations of audio files. I created a separate class \textit{SamplerThumbnail} to bundle the \textit{AudioThumbnail} object and its related objects and functions into a separate component. For the thumbnail view to load the audio file, I created a public function \texttt{setFile(const File\& file)} within the \textit{SamplerThumbnail} class. Within \texttt{setFile}, the audio file is loaded with the \texttt{setSource(FileInputSource* newSource)} function of \textit{AudioThumbnail}. The \textit{FileInputSource} object can be created from the \textit{File} received from the \textit{PluginEditor} by passing the file as the only parameter to the constructor of a \textit{FileInputSource} object. With this done, the \textit{AudioThumbnail} will load the waveform representation of user-selected audio files.\par
 	
@@ -319,70 +385,6 @@ style=numeric,
 	MidiBuffer\& midiMessages)} which is the point where the plugin's inputs are received for processing. Since the plugin has no need for input audio, the \texttt{buffer} parameter is unused, however, the \texttt{midiMessages} parameter is the way the plugin can listen and respond to the host workstation. When the plugin is loaded in a DAW, MIDI events are passed onto the plugin from the DAW itself. These events can come from a pattern of notes drawn out in the workstation's sequencer, or from notes being pressed on a MIDI controller, for example. In the \texttt{processBlock} function, the \texttt{midiMessages} buffer's contents are transferred to a \textit{MidiCollector} object that is stored in the \textit{SamplerAudioSource} class. The entirety of the incoming MIDI events from the host are redirected to the audio source through the midi message collector, and finally, all is left to the synthesizer, which has access to the stream of MIDI messages and is equipped with \textit{SamplerSound} and \textit{SamplerVoice} objects to render the audio regions of the main sample. The amount of sounds that can be played at any moment is dictated by the amount of voices the synthesizer has. This represents the instrument's polyphony and can be toggled between \textit{mono} and \textit{poly} mode, as explained in the subsection management section.
 	\par
 	
-		
-	\newpage	
-	\section{Plugin design}
-	% TODO reiterar las funciones a incluirse pero mediante elementos GUI y lo necesario de la interfaz (?)
-	This section will provide an overview of the the usage and configuration of the instrument in an audio workstation. In this guide, the DAW that will host the plugin is Reaper \cite{reaper} on a computer running Windows. This feature rich software can be evaluated for free, and has support for VST plugins. Download \cite{plugin} and place the plugin in the C:$\backslash$Program Files$\backslash$Common Files$\backslash$VST3 directory.
-	As additional preparation for the process, it is useful to have an audio file of WAVE format ready, as well as a MIDI controller connected to the machine.\par
-	
-	To begin, open Reaper and open the \textit{Preferences} dialog under the \textit{Options} menu. In the list of categories on the left, select the \textit{MIDI Devices} (figure \ref{fig:udevoff}) option under the \textit{Audio} section. 
-	\begin{figure}[h]
-		\centering
-		\includegraphics[width=0.7\textwidth]{u/dev_off.png}
-		\caption{MIDI devices preferences.}
-		\label{fig:udevoff}
-	\end{figure}
-	
-	Your MIDI controller should appear in the upper box of MIDI inputs. Right click on the device and enable it if is disabled as shown in figure \ref{fig:udevon}.
-	\begin{figure}[h]
-		\centering
-		\includegraphics[width=0.7\textwidth]{u/dev_on.png}
-		\caption{An enabled MIDI controller.}
-		\label{fig:udevon}
-	\end{figure}
-	
-	Next, add an instrument track from the \textit{Insert} menu, with the \textit{Virtual instrument on new track...} option. On the window that pops up, you can type JCS in the filter field on the bottom. The plugin should appear as shown on figure \ref{fig:load}. If it isn't shown, make sure Sampler.vst3 exists in the directory C:$\backslash$Program Files$\backslash$Common Files$\backslash$VST3 and refresh the list under \textit{FX} $\rightarrow$ \textit{Scan for new plugins}. Press OK to load the sampler onto the instrument track, and a new window will pop up with the a blank plugin.
-	
-	\begin{figure}[h]
-		\centering
-		\includegraphics[width=0.9\textwidth]{u/load.png}
-		\caption{Selecting the plugin in the virtual instrument dialog.}
-		\label{fig:load}
-	\end{figure}
-	
-	~\\
-	~\\
-	Start by loading a WAVE file as the main audio sample with the \textit{Load} button on the top left corner. The waveform representation of the file will be visible in the thumbnail. The slider to the right of the thumbnail is a control of the thumbnail's scale, while the slider beneath is for horizontal scrolling when the scale is larger than the thumbnail's boundaries. The preview's playback can be controlled with the \textit{Play}, \textit{Pause}, and \textit{Stop} buttons on the panel to the left. \par 
-	The bar located above the thumbnail holds a \textit{Position} label, which indicates the position of the playback head for the audio preview. This position is also relevant for the manual creation of subsections. Playback can be looped in the full boundaries of the audio file with the \textit{Toggle Full Loop} button. The playback position can be manually positioned by clicking on any part of the thumbnail, and a selection can be made if a click is dragged across the desired area. After making a selection, you can loop the audio preview within the selection's boundaries with the \textit{Toggle Loop Selection} button. \par
-	
-	Chop creation can happen in two different ways:
-	\paragraph{Manual chopping\\}
-	The two buttons located above the thumbnail on the top right corner of the plugin create chops. The first, \textit{Chop From Here} will use the region between the current position and the end of the sample to create a chop. The second option will only be available if a selection is exists in the thumbnail, and it will create a chop with boundaries equal to those of the selection.
-	\paragraph{Automatic chopping\\}
-	If your audio clip has noticeable peaks, where the level of sound changes notably and within a short time frame, then automatic chopping provides a fast way to split the sample into regions separated by sharp peaks. The \textit{Chop} button will create as many chops as chops are detected. This number will differ depending on the configurations of the mode and threshold, which can be modified with the button and slider. The changes made to these two options will be reflected in the label placed under them, which indicates how many chops are detected with the current configuration.\par
-	
-	\begin{figure}[h!]
-		\centering
-		\includegraphics[width=0.9\textwidth]{u/learn.png}
-		\caption{Reassigning trigger notes with MIDI Learn.}
-		\label{fig:learn}
-	\end{figure}	
-	
-	~\\
-	After chopping the sample, the table under the thumbnail will display the details for each chop. Trigger notes can be changed from the last column in the table, or they can be changed by pressing a note on your controller with the MIDI Learn function. To do this, select a chop from the table by clicking on it and press the MIDI Learn button located under the table. As shown in figure \ref{fig:learn}, a label that reads \textit{Press New Trigger Note} will be displayed, and the trigger note will be updated to the next note you press on the controller. \par
-	
-	A chop can be selected for further editing with a simple left click on a row from the table, or you can scroll through the chops with the arrows on the top left part of the lowest panel. The selected chop's playback can be tweaked with the envelope parameters in this lower panel. Each parameter will affect the way the chop sounds over time. The purpose of each parameter is explained in section \ref{st}. The instrument's polyphony can be changed in this panel as well: to allow for more than one chop to sound at the same time, change the \textit{Playback Mode} on the top right part of the lower panel to POLY. When set to MONO, chops are played exclusively, and the triggering of one chop will cut off the playback of any other.
-	
-	The instrument is now playable, and a series of notes can be sequenced in Reaper. You can try out different combinations of notes to see the order in which they sound best to you. To record your sequence, press the red \textit{Record} button visible in figure \ref{fig:rec}. When recording, Reaper will save the MIDI notes you press into a MIDI item, which can be found in the playlist to the right of the instrument rack. \par
-	
-
-	\begin{figure}[h!]
-		\centering
-		\includegraphics[width=0.9\textwidth]{u/rec.png}
-		\caption{Record button in Reaper.}
-		\label{fig:rec}
-	\end{figure}
 			
 	% d. (25 pg entre c y d) resultados y discusión crítica y razonada de los mismos, con sus conclusiones,
 	\newpage

@@ -211,15 +211,6 @@ public:
                     {
                         selectedChop = NONE;
                     }
-                    for (int i = 0; i < chopTree.getNumChildren(); i++)
-                    {
-                        Chop chop (chopTree.getChild(i));
-                        if (chop.getId() > deletedChopId)
-                        {
-                            auto id = chop.getId();
-                            chop.setId(id - 1);
-                        }
-                    }
                     chopTree.removeChild (Chop(chopTree, deletedChopId).state, nullptr);
                     reloadData();
                 break;

@@ -2,4 +2,4 @@
 
 ## Description
 
-A VST plugin sampler implemented with [JUCE](https://github.com/WeAreROLI/JUCE)
+A VSTi plugin based on sampling techniques implemented with [JUCE](https://github.com/WeAreROLI/JUCE)

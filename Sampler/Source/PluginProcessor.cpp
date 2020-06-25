@@ -230,15 +230,6 @@ void SamplerAudioProcessor::clearChopTree()
 int SamplerAudioProcessor::addChop(Chop& chop) 
 {
     auto newKey = chopTree.getNumChildren();
-    HashMap<int, int> ids;
-    for (int i = 0; i < newKey; i++)
-    {
-        Chop c = Chop(chopTree, i);
-        ids.set(c.getId(), 0);
-    }
-    while (ids.contains(newKey)) {
-        newKey++;
-    }
     chop.setId (newKey);
     chopTree.appendChild (chop.state, nullptr);
     
@@ -248,6 +239,16 @@ int SamplerAudioProcessor::addChop(Chop& chop)
 void SamplerAudioProcessor::removeChop(int id)
 {
     thumbnail.get()->deleteChopMarkers(id);
+}
+
+double SamplerAudioProcessor::getAutoChopThreshold()
+{
+    return autoChopThreshold;
+}
+
+void SamplerAudioProcessor::setAutoChopThreshold(double t)
+{
+    autoChopThreshold = t;
 }
 
 HashMap<int, std::pair<DrawableRectangle*, DrawableRectangle*>>* SamplerAudioProcessor::getChopBounds()

@@ -66,6 +66,8 @@ public:
     void clearChopTree();
     int addChop(Chop& chop);
     void removeChop(int id);
+    double getAutoChopThreshold();
+    void setAutoChopThreshold(double t);
     HashMap<int, std::pair<DrawableRectangle*, DrawableRectangle*>>* getChopBounds();
     void setListenerForMidiLearn (Value &value);
     Value getLastRecordedMidiNote() const;
@@ -106,6 +108,7 @@ private:
     Value listenForMidiLearn;
     Value lastRecordedMidiNote;
     bool updateLastRecordedMidiNote = false;
+    double autoChopThreshold = 1;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SamplerAudioProcessor)
 };

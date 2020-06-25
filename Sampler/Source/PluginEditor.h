@@ -141,6 +141,7 @@ public:
         chopThresholdSlider.setColour (Slider::thumbColourId, COLOR_FG);
         chopThresholdSlider.setRange (0, 3.6, 0.01);
         chopThresholdSlider.setEnabled (false);
+        chopThresholdSlider.onValueChange = [this] { processor.setAutoChopThreshold(chopThresholdSlider.getValue()); };
         chopThresholdSlider.onDragEnd = [this] { updateDetectedChopsLabel(); };
 
         addAndMakeVisible (onsetMethodButton);
@@ -199,6 +200,7 @@ public:
         processor.getThumbnail()->deleteAllMarkers();
         chopList.reset();
         chopSettings.reset();
+        processor.getChopTree().removeListener(this);
     }
 
     void paint (Graphics& g) override
@@ -277,7 +279,7 @@ public:
             startTimeChopButton.setEnabled (true);
             chopButton.setEnabled (true);
             chopThresholdSlider.setEnabled (true);
-            chopThresholdSlider.setValue (1);
+            chopThresholdSlider.setValue (processor.getAutoChopThreshold());
             updateDetectedChopsLabel();
             onsetMethodButton.setEnabled (true);
             chopList->reloadData();
@@ -457,8 +459,8 @@ private:
         uint_t hop_size = 256;
         uint_t n_frames = 0, read = 0;
         auto a_source = new_aubio_source(file, samplerate, hop_size);
-        auto a_onset = new_aubio_onset(ONSET_METHODS[onsetMethodNumber].getCharPointer(), buf_size, hop_size, aubio_source_get_samplerate(a_source));
-        auto threshset = aubio_onset_set_threshold(a_onset, chopThresholdSlider.getValue());
+        auto a_onset = new_aubio_onset(ONSET_METHODS[onsetMethodNumber].getCharPointer(), buf_size, hop_size, samplerate);
+        auto threshset = aubio_onset_set_threshold(a_onset, processor.getAutoChopThreshold());
         fvec_t * in = new_fvec (hop_size);
         fvec_t * out = new_fvec (2);
 
@@ -495,7 +497,7 @@ private:
     }
 
     void updateDetectedChopsLabel () {
-        auto v = chopThresholdSlider.getValue();
+        auto v = processor.getAutoChopThreshold();
         auto n = detectChopsOnset(false);
         detectedChopNumberLabel.setText (String(n) + "\nDetected Chops", dontSendNotification);
     }
@@ -578,10 +580,22 @@ private:
                                 ValueTree& childWhichHasBeenRemoved,
                                 int indexFromWhichChildWasRemoved) override
     {  
+        int deletedChopId = childWhichHasBeenRemoved[ID_CHOPID];
         if (parentTree.getNumChildren() == 0)
         {
             processor.getThumbnail()->setSelectedChopId(NONE);
             lastMidiNoteAssigned = INIT_NOTE_AUTO_ASSIGN;
+        } else
+        {
+            for (int i = 0; i < parentTree.getNumChildren(); i++)
+            {
+                Chop chop (parentTree.getChild(i));
+                if (chop.getId() > deletedChopId)
+                {
+                    auto id = chop.getId();
+                    chop.setId(id - 1);
+                }
+            }
         }
         processor.removeChop(childWhichHasBeenRemoved[ID_CHOPID]);
         samplerSource.makeSoundsFromChops(processor.getFileReaderSource()->getAudioFormatReader(), processor.getChopTree());
